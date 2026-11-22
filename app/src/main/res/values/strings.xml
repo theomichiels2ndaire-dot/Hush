@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Hush</string>
+    <string name="widget_desc">Pochette et commandes du son en cours</string>
+    <string name="widget_square_desc">Pochette du son en cours, lecture / pause</string>
+    <string name="widget_square_name">Hush carré</string>
+    <string name="widget_playlists_name">Hush playlists</string>
+    <string name="widget_playlists_desc">Tes playlists en pochettes : une touche pour lancer</string>
+    <string name="widget_disc_name">Hush disque</string>
+    <string name="widget_disc_desc">Un vinyle avec ta pochette, lecture / pause au centre</string>
+    <string name="widget_stats_name">Hush stats</string>
+    <string name="widget_stats_desc">Tes minutes du jour, ta série et le son de la semaine</string>
+</resources>

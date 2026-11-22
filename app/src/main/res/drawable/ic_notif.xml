@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Petite icône des notifs : l'onde de Hush -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="9"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M18,54 C23,24 31,24 36,54 S46,80 51,54 S58,38 63,54 S69,62 73,54" />
+    <path android:fillColor="#FFFFFFFF" android:pathData="M88,47 a7,7 0 1,1 0,14 a7,7 0 1,1 0,-14z" />
+</vector>

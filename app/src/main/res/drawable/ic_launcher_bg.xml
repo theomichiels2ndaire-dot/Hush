@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fond de l'icône (variante B) : noir pur, c'est l'onde qui porte la couleur -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#FF08070B" />
+</shape>

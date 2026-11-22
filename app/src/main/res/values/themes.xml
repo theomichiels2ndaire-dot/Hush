@@ -1,0 +1,15 @@
+<resources>
+    <style name="Theme.Hush" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Écran de démarrage : fond nuit + l'onde de Hush qui se dessine -->
+    <style name="Theme.Hush.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#FF140B12</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash</item>
+        <item name="windowSplashScreenAnimationDuration">700</item>
+        <item name="postSplashScreenTheme">@style/Theme.Hush</item>
+    </style>
+</resources>

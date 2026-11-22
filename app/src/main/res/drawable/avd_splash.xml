@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_splash_wave">
+    <target android:name="wave" android:animation="@animator/wave_draw" />
+    <target android:name="dot" android:animation="@animator/dot_in" />
+</animated-vector>

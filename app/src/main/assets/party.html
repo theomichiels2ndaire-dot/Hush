@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b10">
+<title>Hush · Soirée</title>
+<style>
+  :root { --ink:#0b0b10; --txt:#fff; --txt2:rgba(255,255,255,.62); --txt3:rgba(255,255,255,.38); --glass:rgba(255,255,255,.07); --edge:rgba(255,255,255,.12); --ok:#5ee6a8; --ko:#ff6b6b; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:var(--ink); color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
+  body { min-height:100vh; padding:max(18px,env(safe-area-inset-top)) 16px 40px; overflow-x:hidden; }
+  .bg { position:fixed; inset:-20%; z-index:-1; filter:blur(70px); opacity:.55; transition:background 1s; background:radial-gradient(40% 35% at 30% 20%, #5b3cf0, transparent 70%), radial-gradient(40% 40% at 80% 70%, #e0458b, transparent 70%); animation:drift 18s ease-in-out infinite alternate; }
+  @keyframes drift { to { transform:translate(4%, -3%) scale(1.08); } }
+  .glass { background:var(--glass); border:1px solid var(--edge); border-radius:22px; backdrop-filter:blur(24px) saturate(140%); -webkit-backdrop-filter:blur(24px) saturate(140%); }
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  header h1 { font-size:26px; margin:0; font-weight:800; letter-spacing:-.4px; }
+  header .who { font-size:13px; color:var(--txt2); background:var(--glass); border:1px solid var(--edge); padding:7px 12px; border-radius:99px; }
+  .now { display:flex; gap:14px; align-items:center; padding:14px; margin-bottom:16px; }
+  .now img, .now .ph { width:72px; height:72px; border-radius:14px; object-fit:cover; background:rgba(255,255,255,.08); flex:none; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+  .label { font-size:11px; font-weight:700; letter-spacing:1.2px; color:var(--txt2); text-transform:uppercase; }
+  .t { font-weight:800; font-size:17px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .a { color:var(--txt2); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .min { min-width:0; flex:1; }
+  .eq { display:inline-flex; gap:2px; align-items:flex-end; height:12px; margin-left:6px; vertical-align:middle; }
+  .eq i { width:3px; background:var(--ok); border-radius:2px; animation:eq .9s ease-in-out infinite; }
+  .eq i:nth-child(2) { animation-delay:.2s } .eq i:nth-child(3) { animation-delay:.4s }
+  @keyframes eq { 0%,100% { height:3px } 50% { height:12px } }
+  .search { display:flex; align-items:center; gap:10px; padding:0 14px; height:52px; border-radius:16px; margin-bottom:10px; }
+  .search input { flex:1; background:none; border:0; outline:0; color:var(--txt); font-size:16px; font-weight:600; }
+  .search input::placeholder { color:var(--txt3); }
+  .row { display:flex; align-items:center; gap:12px; padding:8px 6px; border-radius:14px; transition:background .2s, transform .15s; }
+  .row:active { transform:scale(.98); }
+  .row img { width:48px; height:48px; border-radius:8px; object-fit:cover; background:rgba(255,255,255,.08); flex:none; }
+  .add { flex:none; width:42px; height:42px; border-radius:50%; border:1px solid var(--edge); background:rgba(255,255,255,.12); color:var(--txt); font-size:24px; line-height:1; display:grid; place-items:center; transition:transform .15s, background .2s; }
+  .add:active { transform:scale(.85); }
+  .add.done { background:var(--ok); color:var(--ink); border-color:transparent; }
+  h2 { font-size:17px; font-weight:800; margin:22px 4px 8px; }
+  .by { font-size:12px; color:var(--txt3); }
+  .empty { color:var(--txt2); font-size:14px; padding:6px 4px; line-height:1.4; }
+  .E { display:inline-block; font-size:10px; font-weight:800; background:var(--txt2); color:var(--ink); border-radius:3px; padding:0 4px; margin-right:5px; vertical-align:1px; }
+  .toast { position:fixed; left:50%; bottom:max(24px,env(safe-area-inset-bottom)); transform:translate(-50%, 140%); background:#fff; color:var(--ink); font-weight:700; font-size:14px; padding:12px 18px; border-radius:99px; transition:transform .35s cubic-bezier(.2,.9,.3,1.2); max-width:90vw; text-align:center; }
+  .toast.on { transform:translate(-50%, 0); }
+  .toast.ko { background:var(--ko); color:#fff; }
+  .sheet { position:fixed; inset:0; background:rgba(0,0,0,.6); display:grid; place-items:center; padding:20px; z-index:9; }
+  .sheet .glass { width:100%; max-width:360px; padding:22px; background:rgba(25,25,34,.85); }
+  .sheet input { width:100%; height:50px; border-radius:14px; border:1px solid var(--edge); background:rgba(255,255,255,.08); color:#fff; font-size:17px; padding:0 14px; outline:0; margin:14px 0; }
+  .btn { width:100%; height:50px; border-radius:99px; border:0; background:#fff; color:var(--ink); font-size:16px; font-weight:800; }
+  .skel { height:64px; border-radius:14px; margin:6px 0; background:linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.1), rgba(255,255,255,.05)); background-size:200% 100%; animation:sh 1.2s infinite; }
+  @keyframes sh { to { background-position:-200% 0 } }
+  .fade { animation:in .35s ease both; }
+  @keyframes in { from { opacity:0; transform:translateY(8px) } }
+  .quiz { display:none; padding:16px; margin-bottom:16px; }
+  .quiz.on { display:block; animation:in .35s ease both; }
+  .quiz .big { font-size:24px; font-weight:800; margin:6px 0 12px; }
+  .ch { width:100%; text-align:left; border:1px solid var(--edge); background:rgba(255,255,255,.09); color:#fff; border-radius:18px; padding:14px 16px; margin:6px 0; transition:background .25s, transform .15s; }
+  .ch:active { transform:scale(.97); }
+  .ch b { display:block; font-size:16px; } .ch span { color:var(--txt2); font-size:13px; }
+  .ch.picked { background:rgba(255,255,255,.3); } .ch.right { background:var(--ok); color:var(--ink); } .ch.right span { color:rgba(0,0,0,.6); }
+  .ch.wrong { background:var(--ko); } .ch.dim { opacity:.4; }
+  .bar { height:6px; border-radius:99px; background:rgba(255,255,255,.12); overflow:hidden; margin:4px 0 10px; }
+  .bar i { display:block; height:100%; background:#fff; border-radius:99px; transition:width .25s linear; }
+  .sc { display:flex; justify-content:space-between; font-size:14px; padding:4px 2px; } .sc b { font-weight:800; }
+  .kara { display:none; padding:18px 16px; margin-bottom:16px; text-align:center; }
+  .kara.on { display:block; animation:in .35s ease both; }
+  .kara .prev, .kara .next { color:var(--txt3); font-size:16px; font-weight:700; min-height:22px; margin:6px 0; }
+  .kara .cur { font-size:26px; font-weight:800; line-height:1.25; margin:10px 0; background:linear-gradient(90deg,#fff var(--p,0%),rgba(255,255,255,.35) var(--p,0%)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<header><h1>Soirée Hush</h1><span class="who" id="who" onclick="askName()"></span></header>
+
+<div class="now glass" id="now">
+  <div class="ph"></div>
+  <div class="min"><div class="label">En ce moment</div><div class="t">…</div><div class="a"></div></div>
+</div>
+
+<div class="quiz glass" id="quiz"></div>
+<div class="kara glass" id="kara"><div class="label" id="ktitle">Karaoké</div><div class="prev" id="kprev"></div><div class="cur" id="kcur"></div><div class="next" id="knext"></div><div class="next" id="knext2"></div></div>
+
+<div class="search glass">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+  <input id="q" placeholder="Cherche un son à ajouter" autocomplete="off" enterkeyhint="search">
+</div>
+<div id="results"></div>
+
+<h2>À suivre</h2>
+<div id="queue"><div class="empty">Personne n'a encore rien ajouté. Lance-toi !</div></div>
+
+<div class="toast" id="toast"></div>
+<div class="sheet" id="sheet" style="display:none">
+  <div class="glass">
+    <div class="label">Bienvenue</div>
+    <div class="t" style="font-size:22px;margin-top:6px">C'est quoi ton prénom ?</div>
+    <div class="a" style="white-space:normal;margin-top:4px">Pour que tout le monde sache qui a mis ce son.</div>
+    <input id="name" maxlength="24" placeholder="Ton prénom" autocomplete="given-name">
+    <button class="btn" onclick="saveName()">C'est parti</button>
+  </div>
+</div>
+
+<script>
+const K = new URLSearchParams(location.search).get('k') || '';
+const $ = id => document.getElementById(id);
+let me = ''; try { me = localStorage.getItem('hushName') || ''; } catch (e) {}
+const esc = s => String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+function askName() { $('sheet').style.display = 'grid'; $('name').value = me; setTimeout(() => $('name').focus(), 50); }
+function saveName() {
+  const v = $('name').value.trim(); if (!v) return;
+  me = v; try { localStorage.setItem('hushName', v); } catch (e) {}
+  $('sheet').style.display = 'none'; $('who').textContent = me;
+}
+$('name').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
+if (!me) askName(); else $('who').textContent = me;
+
+let toastT;
+function toast(msg, ko) {
+  const t = $('toast'); t.textContent = msg; t.className = 'toast on' + (ko ? ' ko' : '');
+  clearTimeout(toastT); toastT = setTimeout(() => t.className = 'toast' + (ko ? ' ko' : ''), 2400);
+}
+
+let lastKey = null;
+async function refresh() {
+  try {
+    const r = await fetch('/api/state?k=' + K); if (!r.ok) return;
+    const s = await r.json();
+    const n = s.now;
+    if (n) {
+      const img = n.key !== lastKey ? `<img src="/api/cover?k=${K}&t=${encodeURIComponent(n.key)}" onerror="this.style.visibility='hidden'">` : $('now').querySelector('img, .ph').outerHTML;
+      lastKey = n.key;
+      $('now').innerHTML = img + `<div class="min"><div class="label">En ce moment${n.playing ? '<span class="eq"><i></i><i></i><i></i></span>' : ''}</div><div class="t">${esc(n.title)}</div><div class="a">${esc(n.artist)}</div></div>`;
+    }
+    $('queue').innerHTML = s.queue.length ? s.queue.map((q, i) => `
+      <div class="row fade" style="animation-delay:${i * 30}ms">
+        <img src="${esc(q.cover)}" onerror="this.style.visibility='hidden'">
+        <div class="min"><div class="t" style="font-size:15px">${esc(q.title)}</div><div class="a">${esc(q.artist)}${q.by ? ` <span class="by">· par ${esc(q.by)}</span>` : ''}</div></div>
+      </div>`).join('') : '<div class="empty">Personne n\'a encore rien ajouté. Lance-toi !</div>';
+  } catch (e) {}
+}
+
+let searchT, seq = 0;
+$('q').addEventListener('input', () => { clearTimeout(searchT); searchT = setTimeout(search, 380); });
+$('q').addEventListener('keydown', e => { if (e.key === 'Enter') { clearTimeout(searchT); search(); e.target.blur(); } });
+async function search() {
+  const q = $('q').value.trim();
+  if (!q) { $('results').innerHTML = ''; return; }
+  const my = ++seq;
+  $('results').innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+  try {
+    const r = await fetch('/api/search?k=' + K + '&q=' + encodeURIComponent(q));
+    const list = await r.json();
+    if (my !== seq) return;
+    $('results').innerHTML = list.length ? list.map((t, i) => `
+      <div class="row fade" style="animation-delay:${i * 25}ms">
+        <img src="${esc(t.cover)}" onerror="this.style.visibility='hidden'">
+        <div class="min"><div class="t" style="font-size:15px">${esc(t.title)}</div><div class="a">${t.explicit ? '<span class="E">E</span>' : ''}${esc(t.artist)}</div></div>
+        <button class="add" data-id="${esc(t.id)}" aria-label="Ajouter">+</button>
+      </div>`).join('') : '<div class="empty">Rien trouvé, essaie autrement.</div>';
+  } catch (e) { if (my === seq) $('results').innerHTML = '<div class="empty">Le téléphone de l\'hôte ne répond pas.</div>'; }
+}
+$('results').addEventListener('click', async e => {
+  const b = e.target.closest('.add'); if (!b || b.classList.contains('done')) return;
+  if (!me) { askName(); return; }
+  b.textContent = '…';
+  try {
+    const r = await fetch('/api/add?k=' + K, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ id:b.dataset.id, by:me }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) { b.classList.add('done'); b.textContent = '✓'; toast('Ajouté à la file !'); if (navigator.vibrate) navigator.vibrate(20); refresh(); }
+    else { b.textContent = '+'; toast(j.error || 'Impossible d\'ajouter', true); }
+  } catch (e2) { b.textContent = '+'; toast('Le téléphone de l\'hôte ne répond pas', true); }
+});
+
+refresh(); setInterval(refresh, 4000);
+
+// ---- blind test : les réponses arrivent sur ton téléphone
+let quizLeft = 0, quizDur = 1, quizAt = 0;
+async function quiz() {
+  try {
+    const r = await fetch('/api/quiz?k=' + K + '&by=' + encodeURIComponent(me || ''));
+    if (!r.ok) return;
+    const q = await r.json();
+    const box = $('quiz');
+    if (!q.on) { box.className = 'quiz glass'; return; }
+    box.className = 'quiz glass on';
+    const head = q.total ? `<div class="label">Blind test · manche ${q.index + 1} / ${q.total}</div>` : '<div class="label">Blind test</div>';
+    const scores = (q.scores || []).map((s, i) => `<div class="sc"><span>${i + 1}. ${esc(s.n)}</span><b>${s.s}</b></div>`).join('');
+    if (!me) { box.innerHTML = head + '<div class="big">Mets ton prénom pour jouer</div><button class="btn" onclick="askName()">OK</button>'; return; }
+    if (q.phase === 'playing') {
+      quizLeft = q.left; quizDur = q.dur; quizAt = Date.now();
+      if (q.typed) {
+        const done = q.picked >= 0;
+        if (!done && document.getElementById('qtext')) { tickBar(); return; } // ne pas effacer ce que tu tapes
+        box.innerHTML = head + '<div class="big">C\'est quoi ce son ?</div><div class="bar"><i id="qbar"></i></div>' +
+          (done ? '<div class="empty">Réponse envoyée, attends la fin…</div>'
+                : '<input id="qtext" class="ch" placeholder="Tape le titre…" autocomplete="off" style="width:100%;font-size:17px"><button class="btn" id="qsend">Valider</button>');
+        const send = async () => {
+          const v = (document.getElementById('qtext') || {}).value || '';
+          if (!v.trim()) return;
+          try { await fetch('/api/answer?k=' + K, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ by:me, text:v }) }); } catch (e3) {}
+          quiz();
+        };
+        const b2 = document.getElementById('qsend'); if (b2) b2.onclick = send;
+        const t2 = document.getElementById('qtext'); if (t2) t2.onkeydown = ev => { if (ev.key === 'Enter') send(); };
+        tickBar();
+        return;
+      }
+      box.innerHTML = head + '<div class="big">C\'est quoi ce son ?</div><div class="bar"><i id="qbar"></i></div>' +
+        q.choices.map((c, i) => `<button class="ch ${q.picked === i ? 'picked' : (q.picked >= 0 ? 'dim' : '')}" data-i="${i}"><b>${esc(c.t)}</b><span>${esc(c.a)}</span></button>`).join('') +
+        (q.picked >= 0 ? '<div class="empty">Réponse envoyée, attends la fin…</div>' : '');
+      tickBar();
+    } else if (q.phase === 'reveal') {
+      const msg = q.picked < 0 ? 'Temps écoulé !' : (q.gained > 0 ? `Bien joué ! +${q.gained}` : 'Raté…');
+      box.innerHTML = head + `<div class="big">${msg}</div><div class="a" style="margin-bottom:8px">C'était <b style="color:#fff">${esc(q.title)}</b> · ${esc(q.artist)}</div>` +
+        (q.typed && q.text ? `<div class="a" style="margin-bottom:8px">Ta réponse : « ${esc(q.text)} »</div>` : '') +
+        q.choices.map((c, i) => `<div class="ch ${i === q.correct ? 'right' : (i === q.picked ? 'wrong' : 'dim')}"><b>${esc(c.t)}</b><span>${esc(c.a)}</span></div>`).join('') +
+        `<h2 style="margin:14px 2px 4px">Classement</h2>${scores}`;
+    } else if (q.phase === 'finished') {
+      box.innerHTML = head + `<div class="big">Partie terminée !</div><div class="a">Tu as ${q.me} points</div><h2 style="margin:14px 2px 4px">Classement</h2>${scores}`;
+    } else {
+      box.innerHTML = head + '<div class="big">Prépare-toi…</div>' + (scores ? `<h2 style="margin:14px 2px 4px">Joueurs</h2>${scores}` : '');
+    }
+  } catch (e) {}
+}
+function tickBar() {
+  const b = $('qbar'); if (!b) return;
+  const left = Math.max(0, quizLeft - (Date.now() - quizAt));
+  b.style.width = (100 * left / quizDur) + '%';
+}
+setInterval(tickBar, 200);
+$('quiz').addEventListener('click', async e => {
+  const b = e.target.closest('button.ch'); if (!b || b.classList.contains('dim') || b.classList.contains('picked')) return;
+  b.classList.add('picked');
+  if (navigator.vibrate) navigator.vibrate(25);
+  try {
+    const r = await fetch('/api/answer?k=' + K, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ by:me, choice:+b.dataset.i }) });
+    if (!r.ok) toast('Trop tard !', true);
+  } catch (e2) {}
+  quiz();
+});
+quiz(); setInterval(quiz, 1000);
+
+// ---- karaoké : les paroles défilent en même temps que la musique
+let kara = null, karaAt = 0;
+async function karaoke() {
+  try {
+    const r = await fetch('/api/karaoke?k=' + K); if (!r.ok) return;
+    const k = await r.json();
+    const box = $('kara');
+    if (!k.on) { box.className = 'kara glass'; kara = null; return; }
+    box.className = 'kara glass on';
+    kara = k; karaAt = Date.now();
+    $('ktitle').textContent = 'Karaoké · ' + (k.title || '');
+  } catch (e) {}
+}
+function karaFrame() {
+  if (kara && kara.lines) {
+    const pos = kara.pos + (kara.playing ? Date.now() - karaAt : 0);
+    const L = kara.lines;
+    if (!L.length) { $('kcur').textContent = kara.plain ? 'Paroles non synchronisées' : 'Pas de paroles pour ce son'; }
+    else {
+      let i = -1; for (let j = 0; j < L.length; j++) { if (L[j][0] <= pos) i = j; else break; }
+      const cur = i >= 0 ? L[i] : null, nx = L[i + 1], nx2 = L[i + 2];
+      const end = nx ? nx[0] : (cur ? cur[0] + 4000 : 1);
+      const p = cur ? Math.min(1, Math.max(0, (pos - cur[0]) / Math.max(1, end - cur[0]))) : 0;
+      $('kprev').textContent = i > 0 ? L[i - 1][1] : '';
+      $('kcur').textContent = cur ? (cur[1] || '♪') : '♪';
+      $('kcur').style.setProperty('--p', (p * 100).toFixed(1) + '%');
+      $('knext').textContent = nx ? nx[1] : '';
+      $('knext2').textContent = nx2 ? nx2[1] : '';
+    }
+  }
+  requestAnimationFrame(karaFrame);
+}
+karaoke(); setInterval(karaoke, 2000); requestAnimationFrame(karaFrame);
+
+
+</script>
+</body>
+</html>

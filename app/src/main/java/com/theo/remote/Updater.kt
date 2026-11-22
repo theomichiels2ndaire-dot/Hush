@@ -1,0 +1,143 @@
+package com.theo.remote
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.core.content.FileProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+
+/**
+ * Mises à jour depuis GitHub : Hush regarde la dernière version publiée du dépôt,
+ * la télécharge et ouvre l'installation (par-dessus, sans perdre les données).
+ */
+object Updater {
+    private const val REPO = "theomichiels2ndaire-dot/Hush"
+
+    data class Release(val number: Int, val name: String, val apkUrl: String, val size: Long)
+
+    private val _available = MutableStateFlow<Release?>(null)
+    val available: StateFlow<Release?> = _available
+    /** Progression du téléchargement (0..1), null quand rien ne se télécharge. */
+    private val _progress = MutableStateFlow<Float?>(null)
+    val progress: StateFlow<Float?> = _progress
+    private var lastCheck = 0L
+
+    /** Numéro de cette version (1.N → N). */
+    fun current(): Int = BuildConfig.VERSION_NAME.substringAfter('.', "0").toIntOrNull() ?: 0
+
+    fun dismiss() { _available.value = null }
+
+    suspend fun check(force: Boolean = false) = withContext(Dispatchers.IO) {
+        if (!force && !Features.flags.value.autoUpdate) return@withContext
+        val now = System.currentTimeMillis()
+        if (!force && now - lastCheck < 6 * 3600_000L) return@withContext
+        lastCheck = now
+        runCatching {
+            val c = URL("https://api.github.com/repos/$REPO/releases/latest").openConnection() as HttpURLConnection
+            c.setRequestProperty("Accept", "application/vnd.github+json")
+            c.connectTimeout = 10_000; c.readTimeout = 10_000
+            if (c.responseCode != 200) {
+                if (force) TidalRemote.showToast("Impossible de vérifier les mises à jour")
+                return@runCatching
+            }
+            val j = JSONObject(c.inputStream.bufferedReader().readText())
+            val n = j.optString("tag_name").removePrefix("v").substringAfter('.', "0").toIntOrNull() ?: 0
+            val assets = j.optJSONArray("assets")
+            val apk = (0 until (assets?.length() ?: 0)).mapNotNull { assets?.optJSONObject(it) }
+                .firstOrNull { it.optString("name").endsWith(".apk") }
+            if (apk != null && n > current()) {
+                _available.value = Release(n, j.optString("name", "Hush 1.$n"), apk.optString("browser_download_url"), apk.optLong("size"))
+            } else if (force) TidalRemote.showToast("Hush est à jour")
+        }
+    }
+
+    /** Télécharge l'APK puis ouvre l'écran d'installation d'Android. */
+    suspend fun install(ctx: Context, r: Release) {
+        if (_progress.value != null) return
+        val app = ctx.applicationContext
+        _progress.value = 0f
+        val file = withContext(Dispatchers.IO) {
+            runCatching {
+                val dir = java.io.File(app.cacheDir, "share").apply { mkdirs() }
+                val out = java.io.File(dir, "Hush-update.apk")
+                var url = URL(r.apkUrl)
+                var c: HttpURLConnection
+                var hops = 0
+                // GitHub renvoie vers un autre serveur pour le fichier : on suit les redirections
+                while (true) {
+                    c = url.openConnection() as HttpURLConnection
+                    c.instanceFollowRedirects = false
+                    c.connectTimeout = 15_000; c.readTimeout = 30_000
+                    val code = c.responseCode
+                    if (code in 300..399 && hops < 5) { url = URL(url, c.getHeaderField("Location")); hops++; continue }
+                    break
+                }
+                val total = c.contentLengthLong.takeIf { it > 0 } ?: r.size
+                c.inputStream.use { input ->
+                    out.outputStream().use { o ->
+                        val buf = ByteArray(64 * 1024)
+                        var done = 0L
+                        while (true) {
+                            val k = input.read(buf); if (k < 0) break
+                            o.write(buf, 0, k); done += k
+                            if (total > 0) _progress.value = (done.toFloat() / total).coerceIn(0f, 1f)
+                        }
+                    }
+                }
+                out
+            }.getOrNull()
+        }
+        _progress.value = null
+        if (file == null) { TidalRemote.showToast("Téléchargement raté, réessaie"); return }
+        withContext(Dispatchers.Main) {
+            // Android demande une fois l'autorisation d'installer depuis Hush
+            if (Build.VERSION.SDK_INT >= 26 && !app.packageManager.canRequestPackageInstalls()) {
+                TidalRemote.showToast("Autorise Hush à installer des applis, puis retouche Installer")
+                app.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:${app.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                return@withContext
+            }
+            val uri = FileProvider.getUriForFile(app, app.packageName + ".share", file)
+            app.startActivity(
+                Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+    }
+}
+
+/** Petite notif quand un son est coupé avant la fin, avec qui l'a passé. */
+object EarlyCutAlert {
+    private const val CHANNEL = "early_cut"
+    private var lastAt = 0L
+
+    fun post(ctx: Context, title: String, remainingMs: Long, cause: String) {
+        if (!Features.flags.value.earlyCutAlert) return
+        val now = System.currentTimeMillis()
+        if (now - lastAt < 20_000) return // pas de rafale
+        lastAt = now
+        val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
+        if (Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel(CHANNEL) == null) {
+            nm.createNotificationChannel(NotificationChannel(CHANNEL, "Sons coupés avant la fin", NotificationManager.IMPORTANCE_LOW))
+        }
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return
+        val n = NotificationCompat.Builder(ctx, CHANNEL)
+            .setSmallIcon(R.drawable.ic_notif)
+            .setContentTitle("« $title » coupé ${remainingMs / 1000} s avant la fin")
+            .setContentText("Passé par : $cause")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Passé par : $cause\nDétails dans Réglages › Diagnostic."))
+            .setAutoCancel(true)
+            .build()
+        nm.notify(4711, n)
+    }
+}
