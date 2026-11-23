@@ -287,6 +287,7 @@ private fun SettingsScreen() {
         }
 
         SimpleModeCard()
+        UpdateCard()
         MostUsedCard()
 
         val shape = Rounded(22)

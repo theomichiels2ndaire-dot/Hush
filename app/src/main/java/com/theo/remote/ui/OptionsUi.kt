@@ -114,6 +114,34 @@ fun SimpleModeCard() {
     }
 }
 
+/** Version installée + bouton pour chercher une mise à jour. */
+@Composable
+fun UpdateCard() {
+    val scope = rememberCoroutineScope()
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val update by com.theo.remote.Updater.available.collectAsState()
+    val dl by com.theo.remote.Updater.progress.collectAsState()
+    SettingsCard {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Hush ${com.theo.remote.BuildConfig.VERSION_NAME}", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    when {
+                        dl != null -> "Téléchargement… ${((dl ?: 0f) * 100).toInt()} %"
+                        update != null -> "${update?.name} est dispo"
+                        else -> "Touche pour chercher une nouvelle version"
+                    },
+                    color = Txt2, fontSize = 13.sp,
+                )
+            }
+            PillButton(if (update != null) "Installer" else "Vérifier") {
+                val u = update
+                scope.launch { if (u != null) com.theo.remote.Updater.install(ctx, u) else com.theo.remote.Updater.check(force = true) }
+            }
+        }
+    }
+}
+
 /** Affichage : thème, pochette animée, économie. */
 @Composable
 fun DisplayCard() {

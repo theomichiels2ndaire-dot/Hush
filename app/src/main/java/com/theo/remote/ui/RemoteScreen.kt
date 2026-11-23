@@ -1,5 +1,6 @@
 package com.theo.remote.ui
 
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.toArgb
 import android.content.Intent
 import android.os.SystemClock
@@ -281,7 +282,16 @@ fun RemoteApp() {
                 val dl by com.theo.remote.Updater.progress.collectAsState()
                 val uctx = androidx.compose.ui.platform.LocalContext.current
                 val uscope = rememberCoroutineScope()
-                LaunchedEffect(Unit) { com.theo.remote.Updater.check() }
+                // vérifie à chaque retour dans l'appli (au plus toutes les 10 min)
+                val ulife = (uctx as? androidx.lifecycle.LifecycleOwner)?.lifecycle
+                DisposableEffect(ulife) {
+                    val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
+                        if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) uscope.launch { com.theo.remote.Updater.check() }
+                    }
+                    ulife?.addObserver(obs)
+                    if (ulife == null) uscope.launch { com.theo.remote.Updater.check() }
+                    onDispose { ulife?.removeObserver(obs) }
+                }
                 AnimatedVisibility(
                     visible = update != null && undo == null,
                     enter = slideInVertically(SoftSpringInt) { it / 2 } + fadeIn(),

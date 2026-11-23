@@ -37,17 +37,18 @@ object Updater {
 
     fun dismiss() { _available.value = null }
 
-    suspend fun check(force: Boolean = false) = withContext(Dispatchers.IO) {
+    suspend fun check(force: Boolean = false): Unit = withContext(Dispatchers.IO) {
         if (!force && !Features.flags.value.autoUpdate) return@withContext
         val now = System.currentTimeMillis()
-        if (!force && now - lastCheck < 6 * 3600_000L) return@withContext
+        if (!force && now - lastCheck < 10 * 60_000L) return@withContext
         lastCheck = now
         runCatching {
             val c = URL("https://api.github.com/repos/$REPO/releases/latest").openConnection() as HttpURLConnection
             c.setRequestProperty("Accept", "application/vnd.github+json")
+            c.setRequestProperty("User-Agent", "Hush/${BuildConfig.VERSION_NAME}")
             c.connectTimeout = 10_000; c.readTimeout = 10_000
             if (c.responseCode != 200) {
-                if (force) TidalRemote.showToast("Impossible de vérifier les mises à jour")
+                if (force) TidalRemote.showToast("Impossible de vérifier (erreur ${c.responseCode})")
                 return@runCatching
             }
             val j = JSONObject(c.inputStream.bufferedReader().readText())
@@ -58,7 +59,7 @@ object Updater {
             if (apk != null && n > current()) {
                 _available.value = Release(n, j.optString("name", "Hush 1.$n"), apk.optString("browser_download_url"), apk.optLong("size"))
             } else if (force) TidalRemote.showToast("Hush est à jour")
-        }
+        }.onFailure { if (force) TidalRemote.showToast("Impossible de vérifier : pas de connexion ?") }
     }
 
     /** Télécharge l'APK puis ouvre l'écran d'installation d'Android. */
