@@ -53,7 +53,7 @@ fun SharedLinkSheet() {
             Modifier.fillMaxWidth().clip(Rounded(18)).background(Surface2).padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Depuis ${u.source}", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            Text("Depuis ${u.source}" + (u.how?.let { " · $it" } ?: ""), color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             when {
                 u.loading -> {
                     Text("Recherche sur Tidal…", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)

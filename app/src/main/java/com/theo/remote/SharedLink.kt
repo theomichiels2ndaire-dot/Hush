@@ -27,7 +27,11 @@ object SharedLink {
         /** Les plateformes où le son est dispo (Spotify, Apple Music…) : nom → lien. */
         val platforms: List<Pair<String, String>> = emptyList(),
         val platformsLoading: Boolean = false,
+        /** Comment on l'a trouvé (ex. « reconnu à l'écoute »). */
+        val how: String? = null,
     )
+
+    @Volatile private var how: String? = null
 
     /** Raison précise quand on ne trouve pas de chanson (ex. « son original » TikTok). */
     @Volatile private var why: String? = null
@@ -45,13 +49,15 @@ object SharedLink {
         if (t.isEmpty()) return
         _ui.value = Ui(source = sourceOf(t), asked = t.take(80))
         scope.launch {
-            why = null
+            why = null; how = null
+            if ("tiktok" in t) _ui.value = _ui.value?.copy(how = "Écoute de la vidéo…")
             val found = withContext(Dispatchers.IO) { runCatching { resolve(t) }.getOrNull() }
             if (found == null) {
                 _ui.value = _ui.value?.copy(loading = false, error = why ?: "Impossible de lire ce lien")
                 return@launch
             }
             val (title, artist) = found
+            _ui.value = _ui.value?.copy(how = how)
             val res = runCatching { TidalApi.search("$title $artist".trim()) }.getOrDefault(emptyList())
             if (res.isEmpty()) {
                 _ui.value = _ui.value?.copy(loading = false, asked = listOf(artist, title).filter { it.isNotBlank() }.joinToString(" - "), error = "Pas sur Tidal", platformsLoading = true)
@@ -160,6 +166,54 @@ object SharedLink {
      */
     private fun tiktok(url: String): Pair<String, String>? {
         val full = finalUrl(url) ?: url
+        // 1) on « shazame » la vidéo : AudD va chercher le lien lui-même…
+        TidalRemote.appContext?.let { Recognizer.init(it) }
+        var recErr: String? = null
+        runCatching { Recognizer.identify(null, url = full) }.onFailure { recErr = it.message }.getOrNull()?.let {
+            how = "Reconnu à l'écoute"
+            return it.first to it.second
+        }
+        // 2) … sinon on récupère la vidéo et on lui envoie le fichier
+        downloadTikTok(full)?.let { video ->
+            runCatching { Recognizer.identify(video, "tiktok.mp4", "video/mp4") }.onFailure { recErr = it.message }.getOrNull()?.let {
+                how = "Reconnu à l'écoute"
+                return it.first to it.second
+            }
+        }
+        // 3) en dernier recours : le titre affiché par TikTok (pas toujours le vrai son)
+        val shown = shownTikTokSound(full) ?: run {
+            why = "Pas reconnu à l'écoute" + (recErr?.let { " ($it)" } ?: "") + ". " +
+                (why?.takeIf { "original" in it } ?: "Lance la vidéo et utilise « Identifier ».")
+            return null
+        }
+        how = "Titre affiché sur TikTok, pas reconnu à l'écoute" + (recErr?.let { " ($it)" } ?: "")
+        return shown
+    }
+
+    /** Télécharge la vidéo (au plus 10 Mo) le temps de la reconnaissance. Rien n'est gardé. */
+    private fun downloadTikTok(full: String): ByteArray? = runCatching {
+        val c = open(full)
+        val html = c.inputStream.bufferedReader().use { it.readText() }
+        val cookies = c.headerFields["Set-Cookie"].orEmpty().joinToString("; ") { it.substringBefore(';') }
+        val raw = Regex("\"(?:playAddr|downloadAddr)\":\"(https:[^\"]+)\"").find(html)?.groupValues?.get(1) ?: return@runCatching null
+        val video = unescape(raw).replace("\\u0026", "&")
+        val v = (URL(video).openConnection() as HttpURLConnection).apply {
+            connectTimeout = 10_000; readTimeout = 20_000
+            setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 16) Hush")
+            setRequestProperty("Referer", "https://www.tiktok.com/")
+            if (cookies.isNotBlank()) setRequestProperty("Cookie", cookies)
+        }
+        if (v.responseCode !in 200..299) return@runCatching null
+        val out = java.io.ByteArrayOutputStream()
+        v.inputStream.use { input ->
+            val buf = ByteArray(64 * 1024)
+            while (out.size() < 10 * 1024 * 1024) { val k = input.read(buf); if (k < 0) break; out.write(buf, 0, k) }
+        }
+        out.toByteArray().takeIf { it.size > 50_000 }
+    }.getOrNull()
+
+    /** Le nom du son affiché sur la vidéo TikTok (♬ …). */
+    private fun shownTikTokSound(full: String): Pair<String, String>? {
         var music: String? = null
         fetch("https://www.tiktok.com/oembed?url=" + URLEncoder.encode(full, "UTF-8"))?.let { raw ->
             val html = runCatching { JSONObject(raw).optString("html") }.getOrDefault("")

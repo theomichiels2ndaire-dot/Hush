@@ -148,7 +148,11 @@ object Recognizer {
     }
 
     /** Envoie l'extrait à AudD ; renvoie (titre, artiste, album) ou null si inconnu. */
-    private fun identify(wav: ByteArray): Triple<String, String, String>? {
+    /**
+     * Envoie à AudD soit un fichier (extrait micro, vidéo…), soit un lien que AudD va chercher lui-même.
+     * Renvoie (titre, artiste, album) ou null si inconnu.
+     */
+    internal fun identify(wav: ByteArray?, fileName: String = "hush.wav", mime: String = "audio/wav", url: String? = null): Triple<String, String, String>? {
         val boundary = "----hush" + System.currentTimeMillis()
         val c = URL("https://api.audd.io/").openConnection() as HttpURLConnection
         c.requestMethod = "POST"
@@ -161,9 +165,13 @@ object Recognizer {
                 out.write("--$boundary\r\nContent-Disposition: form-data; name=\"$name\"\r\n\r\n$value\r\n".toByteArray())
             }
             if (token.isNotBlank()) field("api_token", token)
-            out.write("--$boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"hush.wav\"\r\nContent-Type: audio/wav\r\n\r\n".toByteArray())
-            out.write(wav)
-            out.write("\r\n--$boundary--\r\n".toByteArray())
+            if (url != null) field("url", url)
+            if (wav != null) {
+                out.write("--$boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"$fileName\"\r\nContent-Type: $mime\r\n\r\n".toByteArray())
+                out.write(wav)
+                out.write("\r\n".toByteArray())
+            }
+            out.write("--$boundary--\r\n".toByteArray())
         }
         val code = c.responseCode
         val body = (if (code in 200..299) c.inputStream else c.errorStream)?.bufferedReader()?.readText().orEmpty()
