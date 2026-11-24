@@ -97,7 +97,7 @@ class MainActivity : ComponentActivity() {
                     androidx.compose.runtime.key(f.amoled) {
                         androidx.compose.foundation.layout.Box {
                             RemoteApp()
-                            com.theo.remote.ui.WhatsNewDialog()
+                            // l'ancienne fiche fixe est remplacée par les notes de version de GitHub (WhatsNewHost)
                             com.theo.remote.ui.LevelUpDialog()
                             com.theo.remote.ui.OfflineBanner()
                         }
