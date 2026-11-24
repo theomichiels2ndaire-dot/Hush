@@ -139,6 +139,94 @@ object Recognizer {
         return wav(pcm.toByteArray())
     }
 
+    /**
+     * Extrait audio d'une vidéo : décode la piste son et garde [seconds] s à partir de [startSec],
+     * en mono 16 bits (ce qu'attend la reconnaissance : 2 à 12 s d'audio). Rien n'est gardé ensuite.
+     */
+    internal fun clipFromVideo(ctx: Context, video: ByteArray, startSec: Int, seconds: Int = 12): ByteArray? {
+        val file = java.io.File(ctx.cacheDir, "hush_clip_src.mp4")
+        try {
+            file.writeBytes(video)
+            val ex = android.media.MediaExtractor()
+            ex.setDataSource(file.absolutePath)
+            val track = (0 until ex.trackCount).firstOrNull { ex.getTrackFormat(it).getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
+                ?: run { ex.release(); return null }
+            ex.selectTrack(track)
+            val fmt = ex.getTrackFormat(track)
+            val mime = fmt.getString(android.media.MediaFormat.KEY_MIME)!!
+            var rate = fmt.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE)
+            var channels = fmt.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT)
+            val durUs = if (fmt.containsKey(android.media.MediaFormat.KEY_DURATION)) fmt.getLong(android.media.MediaFormat.KEY_DURATION) else 0L
+            // vidéo trop courte : on prend ce qu'il y a
+            val start = if (durUs > 0 && startSec * 1_000_000L + seconds * 1_000_000L > durUs) ((durUs / 1_000_000L) - seconds).coerceAtLeast(0) else startSec.toLong()
+            ex.seekTo(start * 1_000_000L, android.media.MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+            val codec = android.media.MediaCodec.createDecoderByType(mime)
+            codec.configure(fmt, null, null, 0)
+            codec.start()
+            val pcm = ByteArrayOutputStream()
+            val info = android.media.MediaCodec.BufferInfo()
+            val startUs = start * 1_000_000L
+            val endUs = startUs + seconds * 1_000_000L
+            var inputDone = false
+            var done = false
+            var guard = 0
+            while (!done && guard++ < 20_000) {
+                if (!inputDone) {
+                    val i = codec.dequeueInputBuffer(5_000)
+                    if (i >= 0) {
+                        val buf = codec.getInputBuffer(i)!!
+                        val n = ex.readSampleData(buf, 0)
+                        if (n < 0 || ex.sampleTime > endUs) {
+                            codec.queueInputBuffer(i, 0, 0, 0, android.media.MediaCodec.BUFFER_FLAG_END_OF_STREAM); inputDone = true
+                        } else { codec.queueInputBuffer(i, 0, n, ex.sampleTime, 0); ex.advance() }
+                    }
+                }
+                val o = codec.dequeueOutputBuffer(info, 5_000)
+                when {
+                    o == android.media.MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                        val f = codec.outputFormat
+                        rate = f.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE)
+                        channels = f.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT)
+                    }
+                    o >= 0 -> {
+                        if (info.size > 0 && info.presentationTimeUs >= startUs && info.presentationTimeUs <= endUs) {
+                            val ob = codec.getOutputBuffer(o)!!.order(ByteOrder.LITTLE_ENDIAN)
+                            ob.position(info.offset); ob.limit(info.offset + info.size)
+                            val shorts = ob.asShortBuffer()
+                            // mélange en mono
+                            val frames = shorts.remaining() / channels.coerceAtLeast(1)
+                            val bb = ByteBuffer.allocate(frames * 2).order(ByteOrder.LITTLE_ENDIAN)
+                            for (fI in 0 until frames) {
+                                var sum = 0
+                                for (c in 0 until channels) sum += shorts.get(fI * channels + c).toInt()
+                                bb.putShort((sum / channels.coerceAtLeast(1)).toShort())
+                            }
+                            pcm.write(bb.array())
+                        }
+                        codec.releaseOutputBuffer(o, false)
+                        if (info.flags and android.media.MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) done = true
+                    }
+                }
+            }
+            runCatching { codec.stop() }; codec.release(); ex.release()
+            val bytes = pcm.toByteArray()
+            if (bytes.size < rate * 2 * 2) return null // moins de 2 s
+            return wavAt(bytes, rate)
+        } catch (e: Exception) {
+            return null
+        } finally {
+            file.delete()
+        }
+    }
+
+    private fun wavAt(pcm: ByteArray, rate: Int): ByteArray {
+        val h = ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN)
+        h.put("RIFF".toByteArray()); h.putInt(36 + pcm.size); h.put("WAVE".toByteArray())
+        h.put("fmt ".toByteArray()); h.putInt(16); h.putShort(1); h.putShort(1); h.putInt(rate); h.putInt(rate * 2); h.putShort(2); h.putShort(16)
+        h.put("data".toByteArray()); h.putInt(pcm.size)
+        return h.array() + pcm
+    }
+
     private fun wav(pcm: ByteArray): ByteArray {
         val h = ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN)
         h.put("RIFF".toByteArray()); h.putInt(36 + pcm.size); h.put("WAVE".toByteArray())

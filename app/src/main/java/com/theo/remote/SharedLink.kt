@@ -53,7 +53,7 @@ object SharedLink {
             if ("tiktok" in t) _ui.value = _ui.value?.copy(how = "Écoute de la vidéo…")
             val found = withContext(Dispatchers.IO) { runCatching { resolve(t) }.getOrNull() }
             if (found == null) {
-                _ui.value = _ui.value?.copy(loading = false, error = why ?: "Impossible de lire ce lien")
+                _ui.value = _ui.value?.copy(loading = false, error = why ?: "Impossible de lire ce lien", how = null)
                 return@launch
             }
             val (title, artist) = found
@@ -191,21 +191,28 @@ object SharedLink {
      */
     private fun tiktok(url: String): Pair<String, String>? {
         val full = finalUrl(url) ?: url
-        // 1) on « shazame » la vidéo : AudD va chercher le lien lui-même…
+        // 1) on récupère la vidéo, on en tire des extraits audio de 12 s et on les « shazame »
         TidalRemote.appContext?.let { Recognizer.init(it) }
         var recErr: String? = null
-        if (Recognizer.token.isNotBlank()) runCatching { Recognizer.identify(null, url = full) }.onFailure { recErr = it.message }.getOrNull()?.let {
+        val ctx = TidalRemote.appContext
+        val video = downloadTikTok(full)
+        if (video != null && ctx != null) {
+            var clips = 0
+            for (start in listOf(3, 15, 0)) {
+                val clip = Recognizer.clipFromVideo(ctx, video, start) ?: continue
+                clips++
+                runCatching { Recognizer.identify(clip) }.onFailure { recErr = it.message }.getOrNull()?.let {
+                    how = "Reconnu à l'écoute"
+                    return it.first to it.second
+                }
+                if (recErr != null && ("api_token" in recErr!! || "Limite" in recErr!!)) break
+            }
+            if (clips == 0 && recErr == null) recErr = "pas réussi à lire le son de la vidéo"
+        } else recErr = "vidéo TikTok pas récupérée"
+        // 2) sinon : AudD essaie d'aller chercher le lien lui-même
+        if (Recognizer.token.isNotBlank()) runCatching { Recognizer.identify(null, url = full) }.getOrNull()?.let {
             how = "Reconnu à l'écoute"
             return it.first to it.second
-        }
-        // 2) … sinon on récupère la vidéo et on lui envoie le fichier
-        val video = downloadTikTok(full)
-        if (video == null && recErr == null) recErr = "vidéo pas récupérée"
-        video?.let { video ->
-            runCatching { Recognizer.identify(video, "tiktok.mp4", "video/mp4") }.onFailure { recErr = it.message }.getOrNull()?.let {
-                how = "Reconnu à l'écoute"
-                return it.first to it.second
-            }
         }
         // 3) pas reconnu : on le dit, sans proposer le titre affiché par TikTok (souvent faux)
         why = "Son pas reconnu à l'écoute" + (recErr?.let { " : ${friendly(it)}" } ?: "") +
@@ -214,6 +221,7 @@ object SharedLink {
     }
 
     private fun friendly(e: String) = when {
+        "fingerprint" in e -> "le service n'a pas pu écouter ce fichier"
         "api_token" in e || "Clé AudD" in e -> "il faut ta clé AudD : Identifier › Ajouter une clé"
         "Limite" in e || "limit" in e -> "limite AudD du jour atteinte"
         else -> e
