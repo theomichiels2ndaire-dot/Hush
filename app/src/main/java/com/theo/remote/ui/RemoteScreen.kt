@@ -411,6 +411,8 @@ fun RemoteApp() {
         LaunchedEffect(Unit) { Net.init(offCtx) }
         if (com.theo.remote.Features.flags.collectAsState().value.clearStates) Box(Modifier.fillMaxSize()) { Box(Modifier.align(Alignment.TopCenter)) { OfflineBanner() } }
         // vérification au premier lancement (et tant que l'indispensable manque)
+        CleanupHost()
+        WhatsNewHost()
         SetupScreen()
 
         // ajout à une playlist (par-dessus tout)

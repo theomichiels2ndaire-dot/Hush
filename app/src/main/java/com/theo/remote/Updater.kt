@@ -116,6 +116,42 @@ object Updater {
     }
 }
 
+/** « Quoi de neuf » : après une mise à jour, les nouveautés des versions qu'on vient de sauter. */
+object WhatsNew {
+    data class Notes(val version: String, val lines: List<String>)
+    private val _notes = MutableStateFlow<List<Notes>>(emptyList())
+    val notes: StateFlow<List<Notes>> = _notes
+
+    suspend fun check(ctx: Context) = withContext(Dispatchers.IO) {
+        if (!Features.flags.value.whatsNew) return@withContext
+        val p = ctx.applicationContext.getSharedPreferences("hush_whatsnew", Context.MODE_PRIVATE)
+        val cur = Updater.current()
+        val seen = p.getInt("seen", 0)
+        // première installation : rien à raconter, on retient juste la version
+        if (seen == 0 || cur <= seen) { if (cur > seen) p.edit().putInt("seen", cur).apply(); return@withContext }
+        runCatching {
+            val c = URL("https://api.github.com/repos/theomichiels2ndaire-dot/Hush/releases?per_page=30").openConnection() as HttpURLConnection
+            c.setRequestProperty("Accept", "application/vnd.github+json")
+            c.setRequestProperty("User-Agent", "Hush/${BuildConfig.VERSION_NAME}")
+            c.connectTimeout = 10_000; c.readTimeout = 10_000
+            if (c.responseCode != 200) return@runCatching
+            val a = org.json.JSONArray(c.inputStream.bufferedReader().readText())
+            val out = (0 until a.length()).mapNotNull { i ->
+                val r = a.getJSONObject(i)
+                val n = r.optString("tag_name").removePrefix("v").substringAfter('.', "0").toIntOrNull() ?: return@mapNotNull null
+                if (n <= seen || n > cur) return@mapNotNull null
+                val lines = r.optString("body").lines().map { it.trim() }.filter { it.startsWith("- ") }.map { it.removePrefix("- ").trim() }
+                    .filter { it.isNotBlank() }
+                if (lines.isEmpty()) null else n to Notes("1.$n", lines)
+            }.sortedByDescending { it.first }.map { it.second }
+            _notes.value = out
+        }
+        p.edit().putInt("seen", cur).apply()
+    }
+
+    fun dismiss() { _notes.value = emptyList() }
+}
+
 /** Petite notif quand un son est coupé avant la fin, avec qui l'a passé. */
 object EarlyCutAlert {
     private const val CHANNEL = "early_cut"

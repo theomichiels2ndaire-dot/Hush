@@ -273,3 +273,41 @@ fun ReportCard() {
         PillButton("Revoir la vérification de départ", filled = false) { SetupGate.show() }
     }
 }
+
+// ================================================================ quoi de neuf
+
+/** Fiche « Quoi de neuf » après une mise à jour. */
+@Composable
+fun WhatsNewHost() {
+    val ctx = LocalContext.current
+    LaunchedEffect(Unit) { com.theo.remote.WhatsNew.check(ctx) }
+    val notes by com.theo.remote.WhatsNew.notes.collectAsState()
+    if (notes.isEmpty()) return
+    BackHandler { com.theo.remote.WhatsNew.dismiss() }
+    Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)).clickable { com.theo.remote.WhatsNew.dismiss() })
+        GlassPlate(
+            Rounded(30), 30.dp,
+            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(10.dp).fillMaxWidth(),
+        ) {
+            Column(
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text("Quoi de neuf", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black)
+                notes.forEach { n ->
+                    Text("Hush ${n.version}", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    n.lines.forEach { l ->
+                        Row {
+                            Text("•", color = Txt2, fontSize = 15.sp)
+                            Spacer(Modifier.width(8.dp))
+                            Text(l, color = Txt, fontSize = 15.sp, lineHeight = 21.sp)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                PillButton("Compris") { com.theo.remote.WhatsNew.dismiss() }
+            }
+        }
+    }
+}
