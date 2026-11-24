@@ -82,31 +82,56 @@ object SharedLink {
     }
 
     /**
-     * Où écouter ce son : on part du lien Tidal (ou d'Apple Music si pas sur Tidal)
-     * et song.link donne les liens de toutes les plateformes.
+     * Où écouter ce son. Plusieurs sources, pour ne pas dépendre d'une seule :
+     * song.link (toutes les plateformes d'un coup), puis Deezer et Apple Music en direct,
+     * et des liens de recherche pour Spotify, YouTube Music et SoundCloud.
      */
     private suspend fun findPlatforms(best: TidalApi.Result?, title: String, artist: String) {
-        val list = withContext(Dispatchers.IO) {
-            runCatching {
-                val from = if (best != null) "https://tidal.com/browse/track/${best.id}" else {
-                    val q = URLEncoder.encode("$title $artist".trim(), "UTF-8")
-                    val j = JSONObject(fetch("https://itunes.apple.com/search?term=$q&entity=song&limit=1&country=FR") ?: return@runCatching emptyList())
-                    j.optJSONArray("results")?.optJSONObject(0)?.optString("trackViewUrl")?.ifBlank { null } ?: return@runCatching emptyList()
-                }
-                val j = JSONObject(fetch("https://api.song.link/v1-alpha.1/links?userCountry=FR&url=" + URLEncoder.encode(from, "UTF-8")) ?: return@runCatching emptyList())
-                val links = j.optJSONObject("linksByPlatform") ?: return@runCatching emptyList()
-                val names = linkedMapOf(
-                    "tidal" to "Tidal", "spotify" to "Spotify", "appleMusic" to "Apple Music", "deezer" to "Deezer",
-                    "youtubeMusic" to "YouTube Music", "youtube" to "YouTube", "soundcloud" to "SoundCloud",
-                    "amazonMusic" to "Amazon Music", "audiomack" to "Audiomack",
-                )
-                names.mapNotNull { (k, name) -> links.optJSONObject(k)?.optString("url")?.ifBlank { null }?.let { name to it } }
-            }.getOrDefault(emptyList())
+        val t = best?.title ?: title
+        val a = best?.artists?.firstOrNull() ?: artist.split(",", "&", " feat").first().trim()
+        val q = "$t $a".trim()
+        val enc = URLEncoder.encode(q, "UTF-8")
+        val found = linkedMapOf<String, String>()
+        withContext(Dispatchers.IO) {
+            if (best != null) found["Tidal"] = "https://tidal.com/browse/track/${best.id}"
+            // Apple Music (recherche iTunes, publique)
+            val apple = runCatching {
+                val j = JSONObject(fetch("https://itunes.apple.com/search?term=$enc&entity=song&limit=5&country=FR") ?: return@runCatching null)
+                val arr = j.optJSONArray("results") ?: return@runCatching null
+                (0 until arr.length()).map { arr.getJSONObject(it) }
+                    .firstOrNull { n(it.optString("trackName")).startsWith(n(t)) || n(t).startsWith(n(it.optString("trackName"))) }
+                    ?.optString("trackViewUrl")?.ifBlank { null }
+            }.getOrNull()
+            // song.link : toutes les plateformes à partir de Tidal ou d'Apple Music
+            val from = found["Tidal"] ?: apple
+            if (from != null) runCatching {
+                val j = JSONObject(fetch("https://api.song.link/v1-alpha.1/links?userCountry=FR&url=" + URLEncoder.encode(from, "UTF-8")) ?: return@runCatching)
+                val links = j.optJSONObject("linksByPlatform") ?: return@runCatching
+                linkedMapOf(
+                    "spotify" to "Spotify", "appleMusic" to "Apple Music", "deezer" to "Deezer", "youtubeMusic" to "YouTube Music",
+                    "youtube" to "YouTube", "soundcloud" to "SoundCloud", "amazonMusic" to "Amazon Music", "audiomack" to "Audiomack", "tidal" to "Tidal",
+                ).forEach { (k, name) -> links.optJSONObject(k)?.optString("url")?.ifBlank { null }?.let { if (name !in found) found[name] = it } }
+            }
+            if (apple != null && "Apple Music" !in found) found["Apple Music"] = apple
+            // Deezer (API publique)
+            if ("Deezer" !in found) runCatching {
+                val j = JSONObject(fetch("https://api.deezer.com/search?q=$enc&limit=5") ?: return@runCatching)
+                val arr = j.optJSONArray("data") ?: return@runCatching
+                (0 until arr.length()).map { arr.getJSONObject(it) }
+                    .firstOrNull { n(it.optString("title_short").ifBlank { it.optString("title") }).let { x -> x.startsWith(n(t)) || n(t).startsWith(x) } }
+                    ?.optString("link")?.ifBlank { null }?.let { found["Deezer"] = it }
+            }
         }
+        // pas de lien direct trouvé : on propose au moins une recherche sur les grandes plateformes
+        val list = found.toList().toMutableList()
+        if (list.none { it.first == "Spotify" }) list += "Spotify (chercher)" to "https://open.spotify.com/search/" + URLEncoder.encode(q, "UTF-8").replace("+", "%20")
+        if (list.none { it.first.startsWith("YouTube") }) list += "YouTube Music (chercher)" to "https://music.youtube.com/search?q=$enc"
+        if (list.none { it.first == "SoundCloud" }) list += "SoundCloud (chercher)" to "https://soundcloud.com/search?q=$enc"
+
         // pas trouvé par la recherche Tidal, mais song.link connaît le son sur Tidal : on le récupère
-        if (best == null && list.any { it.first == "Tidal" }) {
-            val id = Regex("track/(\\d+)").find(list.first { it.first == "Tidal" }.second)?.groupValues?.get(1)
-            val res = runCatching { TidalApi.search("$title $artist".trim().ifBlank { title }) }.getOrDefault(emptyList())
+        if (best == null && found["Tidal"] != null) {
+            val id = Regex("track/(\\d+)").find(found["Tidal"]!!)?.groupValues?.get(1)
+            val res = runCatching { TidalApi.search(q.ifBlank { title }) }.getOrDefault(emptyList())
             res.firstOrNull { it.id == id }?.let { r ->
                 _ui.value = _ui.value?.copy(best = r, others = res.filter { it.id != r.id }.take(4), error = null)
             }
@@ -169,12 +194,14 @@ object SharedLink {
         // 1) on « shazame » la vidéo : AudD va chercher le lien lui-même…
         TidalRemote.appContext?.let { Recognizer.init(it) }
         var recErr: String? = null
-        runCatching { Recognizer.identify(null, url = full) }.onFailure { recErr = it.message }.getOrNull()?.let {
+        if (Recognizer.token.isNotBlank()) runCatching { Recognizer.identify(null, url = full) }.onFailure { recErr = it.message }.getOrNull()?.let {
             how = "Reconnu à l'écoute"
             return it.first to it.second
         }
         // 2) … sinon on récupère la vidéo et on lui envoie le fichier
-        downloadTikTok(full)?.let { video ->
+        val video = downloadTikTok(full)
+        if (video == null && recErr == null) recErr = "vidéo pas récupérée"
+        video?.let { video ->
             runCatching { Recognizer.identify(video, "tiktok.mp4", "video/mp4") }.onFailure { recErr = it.message }.getOrNull()?.let {
                 how = "Reconnu à l'écoute"
                 return it.first to it.second
@@ -182,12 +209,18 @@ object SharedLink {
         }
         // 3) en dernier recours : le titre affiché par TikTok (pas toujours le vrai son)
         val shown = shownTikTokSound(full) ?: run {
-            why = "Pas reconnu à l'écoute" + (recErr?.let { " ($it)" } ?: "") + ". " +
+            why = "Pas reconnu à l'écoute" + (recErr?.let { " (${friendly(it)})" } ?: "") + ". " +
                 (why?.takeIf { "original" in it } ?: "Lance la vidéo et utilise « Identifier ».")
             return null
         }
-        how = "Titre affiché sur TikTok, pas reconnu à l'écoute" + (recErr?.let { " ($it)" } ?: "")
+        how = "Titre affiché sur TikTok, pas reconnu à l'écoute" + (recErr?.let { " (${friendly(it)})" } ?: "")
         return shown
+    }
+
+    private fun friendly(e: String) = when {
+        "api_token" in e || "Clé AudD" in e -> "il faut ta clé AudD : Identifier › Ajouter une clé"
+        "Limite" in e || "limit" in e -> "limite AudD du jour atteinte"
+        else -> e
     }
 
     /** Télécharge la vidéo (au plus 10 Mo) le temps de la reconnaissance. Rien n'est gardé. */
@@ -231,7 +264,7 @@ object SharedLink {
             why = "Impossible de lire le son de cette vidéo TikTok"
             return null
         }
-        if (Regex("(?i)^(original sound|son original|sonido original|suono originale|originalton|som original)").containsMatchIn(m)) {
+        if (Regex("(?i)^(original sound|son original|sonido original|suono originale|originalton|som original|оригинальный звук|orijinal ses|dźwięk oryginalny|origineel geluid|оригінальний звук|الصوت الأصلي|オリジナル楽曲|오리지널 사운드|suara asli|âm thanh gốc|เสียงต้นฉบับ)").containsMatchIn(m)) {
             why = "C'est un son original (${m.substringAfter(" - ", "").ifBlank { "pas une chanson" }}) : pas une chanson référencée. Lance la vidéo et utilise « Identifier »."
             return null
         }
