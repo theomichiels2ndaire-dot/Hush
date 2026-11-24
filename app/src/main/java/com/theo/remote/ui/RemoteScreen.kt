@@ -407,7 +407,9 @@ fun RemoteApp() {
         CardsHost()
         InstantPlaylistHost()
         // pas de connexion : on le dit en haut
-        Box(Modifier.fillMaxSize()) { OfflineBanner(Modifier.align(Alignment.TopCenter)) }
+        val offCtx = androidx.compose.ui.platform.LocalContext.current
+        LaunchedEffect(Unit) { Net.init(offCtx) }
+        if (com.theo.remote.Features.flags.collectAsState().value.clearStates) Box(Modifier.fillMaxSize()) { Box(Modifier.align(Alignment.TopCenter)) { OfflineBanner() } }
         // vérification au premier lancement (et tant que l'indispensable manque)
         SetupScreen()
 

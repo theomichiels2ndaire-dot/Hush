@@ -67,52 +67,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-// ================================================================ connexion internet
-
-/** Hush est-il connecté à internet ? (suivi en direct) */
-object Net {
-    private val _online = MutableStateFlow(true)
-    val online: StateFlow<Boolean> = _online
-    private var started = false
-
-    fun start(ctx: Context) {
-        if (started) return
-        started = true
-        val cm = ctx.applicationContext.getSystemService(ConnectivityManager::class.java) ?: return
-        _online.value = cm.getNetworkCapabilities(cm.activeNetwork)?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        runCatching {
-            cm.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
-                override fun onAvailable(network: Network) { _online.value = true }
-                override fun onLost(network: Network) { _online.value = false }
-            })
-        }
-    }
-}
-
-/** Bandeau en haut quand il n'y a plus internet : on dit pourquoi ça ne charge pas. */
-@Composable
-fun OfflineBanner(modifier: Modifier = Modifier) {
-    val ctx = LocalContext.current
-    LaunchedEffect(Unit) { Net.start(ctx) }
-    val online by Net.online.collectAsState()
-    AnimatedVisibility(
-        visible = !online && Features.flags.collectAsState().value.clearStates,
-        enter = slideInVertically { -it } + fadeIn(),
-        exit = slideOutVertically { -it } + fadeOut(),
-        modifier = modifier,
-    ) {
-        Row(
-            Modifier.statusBarsPadding().padding(horizontal = 16.dp, vertical = 6.dp).clip(PillShape)
-                .background(Txt).padding(horizontal = 16.dp, vertical = 9.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("Pas de connexion", color = Ink, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
-            Spacer(Modifier.width(8.dp))
-            Text("tu vois ce que Hush a gardé", color = Ink.copy(alpha = 0.7f), fontSize = 13.sp)
-        }
-    }
-}
-
 // ================================================================ bulles d'aide
 
 /** Les gestes cachés, expliqués une seule fois chacun. */
