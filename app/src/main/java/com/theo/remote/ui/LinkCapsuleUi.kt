@@ -61,7 +61,8 @@ fun SharedLinkSheet() {
                 }
                 u.best == null -> {
                     Text(u.error ?: "Pas trouvé sur Tidal", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
-                    Text(u.asked, color = Txt2, fontSize = 13.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(u.asked, color = Txt2, fontSize = 13.sp, maxLines = 4, overflow = TextOverflow.Ellipsis)
+                    PlatformChips(u)
                     PillButton("Fermer", filled = false) { SharedLink.close() }
                 }
                 else -> {
@@ -79,12 +80,35 @@ fun SharedLinkSheet() {
                         PillButton("À la file", filled = false) { TidalRemote.addToQueue(r); TidalRemote.showToast("Ajouté à la file"); SharedLink.close() }
                         PillButton("Playlist", filled = false) { PlaylistEdit.pick(listOf(r)); SharedLink.close() }
                     }
+                    PlatformChips(u)
                     if (u.others.isNotEmpty()) {
                         Text("Pas le bon ?", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 4.dp))
                         u.others.forEach { o -> OtherRow(o) { SharedLink.pick(o) } }
                     }
                 }
             }
+        }
+    }
+}
+
+/** « Dispo sur » : les plateformes où on trouve ce son, chacune ouvre son lien. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun PlatformChips(u: SharedLink.Ui) {
+    if (!u.platformsLoading && u.platforms.isEmpty()) return
+    val uri = androidx.compose.ui.platform.LocalUriHandler.current
+    Text("Dispo sur", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 2.dp))
+    if (u.platformsLoading) {
+        Text("Recherche des plateformes…", color = Txt3, fontSize = 13.sp)
+        return
+    }
+    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        u.platforms.forEach { (name, link) ->
+            Text(
+                name, color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                modifier = Modifier.clip(PillShape).background(Color.White.copy(alpha = 0.1f))
+                    .bounceClick { runCatching { uri.openUri(link) } }.padding(horizontal = 12.dp, vertical = 8.dp),
+            )
         }
     }
 }

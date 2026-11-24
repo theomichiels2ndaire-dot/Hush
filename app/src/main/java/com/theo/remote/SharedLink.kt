@@ -24,7 +24,13 @@ object SharedLink {
         val best: TidalApi.Result? = null,
         val others: List<TidalApi.Result> = emptyList(),
         val error: String? = null,
+        /** Les plateformes où le son est dispo (Spotify, Apple Music…) : nom → lien. */
+        val platforms: List<Pair<String, String>> = emptyList(),
+        val platformsLoading: Boolean = false,
     )
+
+    /** Raison précise quand on ne trouve pas de chanson (ex. « son original » TikTok). */
+    @Volatile private var why: String? = null
 
     private val _ui = MutableStateFlow<Ui?>(null)
     val ui: StateFlow<Ui?> = _ui
@@ -39,15 +45,17 @@ object SharedLink {
         if (t.isEmpty()) return
         _ui.value = Ui(source = sourceOf(t), asked = t.take(80))
         scope.launch {
+            why = null
             val found = withContext(Dispatchers.IO) { runCatching { resolve(t) }.getOrNull() }
             if (found == null) {
-                _ui.value = _ui.value?.copy(loading = false, error = "Impossible de lire ce lien")
+                _ui.value = _ui.value?.copy(loading = false, error = why ?: "Impossible de lire ce lien")
                 return@launch
             }
             val (title, artist) = found
             val res = runCatching { TidalApi.search("$title $artist".trim()) }.getOrDefault(emptyList())
             if (res.isEmpty()) {
-                _ui.value = _ui.value?.copy(loading = false, asked = listOf(artist, title).filter { it.isNotBlank() }.joinToString(" - "), error = "Pas trouvé sur Tidal")
+                _ui.value = _ui.value?.copy(loading = false, asked = listOf(artist, title).filter { it.isNotBlank() }.joinToString(" - "), error = "Pas sur Tidal", platformsLoading = true)
+                findPlatforms(null, title, artist)
                 return@launch
             }
             val nt = n(title)
@@ -61,8 +69,43 @@ object SharedLink {
                 asked = listOf(artist, title).filter { it.isNotBlank() }.joinToString(" - "),
                 best = best,
                 others = res.filter { it.id != best.id }.take(4),
+                platformsLoading = true,
             )
+            findPlatforms(best, title, artist)
         }
+    }
+
+    /**
+     * Où écouter ce son : on part du lien Tidal (ou d'Apple Music si pas sur Tidal)
+     * et song.link donne les liens de toutes les plateformes.
+     */
+    private suspend fun findPlatforms(best: TidalApi.Result?, title: String, artist: String) {
+        val list = withContext(Dispatchers.IO) {
+            runCatching {
+                val from = if (best != null) "https://tidal.com/browse/track/${best.id}" else {
+                    val q = URLEncoder.encode("$title $artist".trim(), "UTF-8")
+                    val j = JSONObject(fetch("https://itunes.apple.com/search?term=$q&entity=song&limit=1&country=FR") ?: return@runCatching emptyList())
+                    j.optJSONArray("results")?.optJSONObject(0)?.optString("trackViewUrl")?.ifBlank { null } ?: return@runCatching emptyList()
+                }
+                val j = JSONObject(fetch("https://api.song.link/v1-alpha.1/links?userCountry=FR&url=" + URLEncoder.encode(from, "UTF-8")) ?: return@runCatching emptyList())
+                val links = j.optJSONObject("linksByPlatform") ?: return@runCatching emptyList()
+                val names = linkedMapOf(
+                    "tidal" to "Tidal", "spotify" to "Spotify", "appleMusic" to "Apple Music", "deezer" to "Deezer",
+                    "youtubeMusic" to "YouTube Music", "youtube" to "YouTube", "soundcloud" to "SoundCloud",
+                    "amazonMusic" to "Amazon Music", "audiomack" to "Audiomack",
+                )
+                names.mapNotNull { (k, name) -> links.optJSONObject(k)?.optString("url")?.ifBlank { null }?.let { name to it } }
+            }.getOrDefault(emptyList())
+        }
+        // pas trouvé par la recherche Tidal, mais song.link connaît le son sur Tidal : on le récupère
+        if (best == null && list.any { it.first == "Tidal" }) {
+            val id = Regex("track/(\\d+)").find(list.first { it.first == "Tidal" }.second)?.groupValues?.get(1)
+            val res = runCatching { TidalApi.search("$title $artist".trim().ifBlank { title }) }.getOrDefault(emptyList())
+            res.firstOrNull { it.id == id }?.let { r ->
+                _ui.value = _ui.value?.copy(best = r, others = res.filter { it.id != r.id }.take(4), error = null)
+            }
+        }
+        _ui.value = _ui.value?.copy(platforms = list, platformsLoading = false)
     }
 
     private fun n(x: String) = x.lowercase().substringBefore(" (").substringBefore(" [").replace(Regex("[^\\p{L}\\p{N}]"), "")
@@ -73,6 +116,7 @@ object SharedLink {
         "deezer" in t -> "Deezer"
         "apple.com" in t -> "Apple Music"
         "soundcloud" in t -> "SoundCloud"
+        "tiktok" in t -> "TikTok"
         else -> "Texte partagé"
     }
 
@@ -89,6 +133,7 @@ object SharedLink {
             "youtu" in url -> youtube(url)
             "deezer" in url -> deezer(url)
             "apple.com" in url -> apple(url)
+            "tiktok" in url -> tiktok(url)
             else -> pageTitle(url)?.let { cleanTitle(it) }
         }
     }
@@ -107,6 +152,40 @@ object SharedLink {
         val channel = j.optString("author_name").removeSuffix(" - Topic").replace(Regex("(?i)vevo$"), "").trim()
         val (t, a) = cleanTitle(title)
         return if (a.isNotBlank()) t to a else t to channel
+    }
+
+    /**
+     * Vidéo TikTok → le son utilisé. D'abord l'intégration officielle (oEmbed), qui affiche
+     * « ♬ Titre - Artiste » ; sinon la page de la vidéo. Un « son original » n'est pas une chanson.
+     */
+    private fun tiktok(url: String): Pair<String, String>? {
+        val full = finalUrl(url) ?: url
+        var music: String? = null
+        fetch("https://www.tiktok.com/oembed?url=" + URLEncoder.encode(full, "UTF-8"))?.let { raw ->
+            val html = runCatching { JSONObject(raw).optString("html") }.getOrDefault("")
+            music = Regex("title=\"♬\\s*([^\"]+)\"").find(html)?.groupValues?.get(1)
+                ?: Regex("♬\\s*([^<]+)<").find(html)?.groupValues?.get(1)
+        }
+        if (music == null) {
+            val page = fetch(full)
+            val i = page?.indexOf("\"music\":{") ?: -1
+            if (page != null && i >= 0) {
+                val chunk = page.substring(i, minOf(page.length, i + 3000))
+                val t = Regex("\"title\":\"([^\"]+)\"").find(chunk)?.groupValues?.get(1)
+                val a = Regex("\"authorName\":\"([^\"]+)\"").find(chunk)?.groupValues?.get(1)
+                if (t != null) music = if (a != null) "$t - $a" else t
+            }
+        }
+        val m = music?.let { android.text.Html.fromHtml(it, 0).toString().trim() } ?: run {
+            why = "Impossible de lire le son de cette vidéo TikTok"
+            return null
+        }
+        if (Regex("(?i)^(original sound|son original|sonido original|suono originale|originalton|som original)").containsMatchIn(m)) {
+            why = "C'est un son original (${m.substringAfter(" - ", "").ifBlank { "pas une chanson" }}) : pas une chanson référencée. Lance la vidéo et utilise « Identifier »."
+            return null
+        }
+        val cut = m.lastIndexOf(" - ")
+        return if (cut > 0) m.substring(0, cut).trim() to m.substring(cut + 3).trim() else m to ""
     }
 
     private fun deezer(url: String): Pair<String, String>? {
