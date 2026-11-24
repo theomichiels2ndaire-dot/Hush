@@ -207,14 +207,10 @@ object SharedLink {
                 return it.first to it.second
             }
         }
-        // 3) en dernier recours : le titre affiché par TikTok (pas toujours le vrai son)
-        val shown = shownTikTokSound(full) ?: run {
-            why = "Pas reconnu à l'écoute" + (recErr?.let { " (${friendly(it)})" } ?: "") + ". " +
-                (why?.takeIf { "original" in it } ?: "Lance la vidéo et utilise « Identifier ».")
-            return null
-        }
-        how = "Titre affiché sur TikTok, pas reconnu à l'écoute" + (recErr?.let { " (${friendly(it)})" } ?: "")
-        return shown
+        // 3) pas reconnu : on le dit, sans proposer le titre affiché par TikTok (souvent faux)
+        why = "Son pas reconnu à l'écoute" + (recErr?.let { " : ${friendly(it)}" } ?: "") +
+            ". Lance la vidéo à côté et utilise « Identifier »."
+        return null
     }
 
     private fun friendly(e: String) = when {
@@ -228,7 +224,10 @@ object SharedLink {
         val c = open(full)
         val html = c.inputStream.bufferedReader().use { it.readText() }
         val cookies = c.headerFields["Set-Cookie"].orEmpty().joinToString("; ") { it.substringBefore(';') }
-        val raw = Regex("\"(?:playAddr|downloadAddr)\":\"(https:[^\"]+)\"").find(html)?.groupValues?.get(1) ?: return@runCatching null
+        val vid = Regex("/video/(\\d+)").find(full)?.groupValues?.get(1) ?: return@runCatching null
+        // on part de la fiche de CETTE vidéo (sinon la page peut contenir d'autres vidéos suggérées)
+        val at = html.indexOf("\"id\":\"$vid\"").takeIf { it >= 0 } ?: return@runCatching null
+        val raw = Regex("\"(?:playAddr|downloadAddr)\":\"(https:[^\"]+)\"").find(html, at)?.groupValues?.get(1) ?: return@runCatching null
         val video = unescape(raw).replace("\\u0026", "&")
         val v = (URL(video).openConnection() as HttpURLConnection).apply {
             connectTimeout = 10_000; readTimeout = 20_000
