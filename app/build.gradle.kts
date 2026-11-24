@@ -28,6 +28,19 @@ android {
         buildConfigField("String", "TIDAL_CLIENT_SECRET", "\"${local.getProperty("tidal.clientSecret", "")}\"")
     }
 
+    // Sur GitHub : on signe avec la clé de l'Android Studio de Theo (déchiffrée par la compilation),
+    // sinon Android refuse d'installer la mise à jour par-dessus.
+    signingConfigs {
+        getByName("debug") {
+            System.getenv("HUSH_KEYSTORE")?.let { path ->
+                storeFile = file(path)
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+    }
+
     buildTypes {
         // La version installée depuis Android Studio est optimisée (R8, non déboguable) :
         // en mode « debug » classique, Compose est nettement plus lent et l'appli rame.
