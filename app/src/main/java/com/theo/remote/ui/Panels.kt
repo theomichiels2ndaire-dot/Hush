@@ -282,7 +282,7 @@ private fun SettingsScreen() {
         PanelTitle("Réglages")
         SettingsSearchField(query) { query = it }
         if (query.isNotBlank()) {
-            SettingsSearchResults(query) { section -> SettingsFold.showAll.value = true; pendingSection = section; query = "" }
+            SettingsSearchResults(query) { section -> SettingsFold.showAll.value = true; pendingSection = settingsGroup(section); query = "" }
             return@Column
         }
 
@@ -307,28 +307,26 @@ private fun SettingsScreen() {
             }
         }
         GesturesCard()
+        SettingsHeader("Paroles et recherche")
+        LyricsSearchCard()
         }
 
         FoldSection("Affichage") {
         DisplayCard()
         HomeSectionsCard()
+        SettingsHeader("Fun et découverte")
+        FunOptionsCard()
+        SettingsHeader("Stats")
+        StatsOptionsCard()
+        SettingsHeader("Tes notes")
+        NotesOptionsCard()
         }
 
-        FoldSection("Tes notes") { NotesOptionsCard() }
-
-        FoldSection("Playlists") { PlaylistOptionsCard() }
-
-        FoldSection("Fichiers locaux") { LocalOptionsCard() }
-
-        FoldSection("Fun et découverte") { FunOptionsCard() }
-
-        FoldSection("Stats") { StatsOptionsCard() }
-
-        FoldSection("Paroles et recherche") { LyricsSearchCard() }
-
-        FoldSection("Widgets et notifications") { WidgetsNotifCard() }
-
-        FoldSection("Tes goûts") {
+        FoldSection("Playlists") {
+        PlaylistOptionsCard()
+        SettingsHeader("Fichiers locaux")
+        LocalOptionsCard()
+        SettingsHeader("Tes goûts")
         FollowCard()
         StatsExcludeCard()
         if (com.theo.remote.Features.flags.collectAsState().value.concerts) ConcertsKeyCard()
@@ -336,10 +334,12 @@ private fun SettingsScreen() {
         BlockedCard()
         }
 
-        FoldSection("Données") {
+        FoldSection("Notifications") { WidgetsNotifCard() }
+
+        FoldSection("Avancé") {
         BackupCard()
         DiagnosticCard()
-        BugReportCard()
+        ReportCard()
         }
 
         SettingsHeader("Appareils")
@@ -478,4 +478,14 @@ private fun PanelFrame(glassy: Boolean, content: @Composable () -> Unit) {
         // la marge du haut prend la barre d'état : les pages dedans n'en rajoutent pas
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 8.dp, vertical = 8.dp),
     ) { content() }
+}
+
+/** Les anciennes rubriques des Réglages, rangées dans les 5 groupes. */
+internal fun settingsGroup(section: String): String = when (section) {
+    "Lecture", "Paroles et recherche" -> "Lecture"
+    "Affichage", "Fun et découverte", "Stats", "Tes notes" -> "Affichage"
+    "Playlists", "Fichiers locaux", "Tes goûts" -> "Playlists"
+    "Widgets et notifications" -> "Notifications"
+    "Données" -> "Avancé"
+    else -> section
 }

@@ -126,7 +126,8 @@ object MosaicCache {
 private val cascadeSeen = HashSet<Any>()
 
 /** Fondu + petite montée à la première apparition (une seule fois par élément), décalé selon la position. */
-fun Modifier.cascadeIn(index: Int, key: Any): Modifier = if (com.theo.remote.Features.flags.value.flatStyle) this else composed {
+// « Affichage instantané » : pas d'apparition en cascade, tout est là d'un coup
+fun Modifier.cascadeIn(index: Int, key: Any): Modifier = if (com.theo.remote.Features.flags.value.flatStyle || com.theo.remote.Features.flags.value.homeCache) this else composed {
     val first = remember(key) { key !in cascadeSeen && index < 14 }
     val a = remember(key) { Animatable(if (first) 0f else 1f) }
     LaunchedEffect(key) {

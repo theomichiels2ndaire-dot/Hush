@@ -184,7 +184,7 @@ fun GrowingPanel() {
         items(cands.distinctBy { it.id }, key = { it.id }) { r ->
             Row(
                 Modifier.animateItem().fillMaxWidth().glass(Rounded(18), fill = 0.08f)
-                    .bounceClick(pressedScale = 0.98f) { TidalRemote.play(r) }.padding(10.dp),
+                    .bounceClick(pressedScale = 0.98f, onLongClick = { TrackMenu.open(r) }) { TidalRemote.play(r) }.padding(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Cover(model = r.coverUrl, radius = 10.dp, modifier = Modifier.size(56.dp).shadow(8.dp, RoundedCornerShape(10.dp)))

@@ -499,7 +499,7 @@ fun CardsScreen() = CardEffects {
                             }
                             androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 items(danger.size, key = { "d" + danger[it].key }) { i ->
-                                    SongCard(danger[i], Modifier.width(112.dp).bounceClick(pressedScale = 0.95f) { CardsState.open = danger[i] })
+                                    SongCard(danger[i], Modifier.width(112.dp).bounceClick(pressedScale = 0.95f, onLongClick = { danger[i].let { c -> TrackMenu.open(TrackMenu.Target(c.title, c.artist, c.cover)) } }) { CardsState.open = danger[i] })
                                 }
                             }
                         }
@@ -539,7 +539,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.cardRows(l: List<Song
     val rows = l.chunked(3)
     items(rows.size, key = { "$tag-$it-" + rows[it].first().key }) { i ->
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            rows[i].forEach { c -> SongCard(c, Modifier.weight(1f).bounceClick(pressedScale = 0.95f) { CardsState.open = c }) }
+            rows[i].forEach { c -> SongCard(c, Modifier.weight(1f).bounceClick(pressedScale = 0.95f, onLongClick = { TrackMenu.open(TrackMenu.Target(c.title, c.artist, c.cover)) }) { CardsState.open = c }) }
             repeat(3 - rows[i].size) { Spacer(Modifier.weight(1f)) }
         }
     }

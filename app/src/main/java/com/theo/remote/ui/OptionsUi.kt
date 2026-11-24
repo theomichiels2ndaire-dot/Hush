@@ -163,6 +163,11 @@ fun DisplayCard() {
         OptionRow("Rang des sons partout", "Un petit losange de la couleur du rang à côté du titre dans le lecteur et dans les listes", f.cardBadges) { Features.set(f.copy(cardBadges = it)) }
         OptionRow("File en pochettes", "La file d'attente en grandes pochettes : maintiens une pochette pour la déplacer", f.queueCovers) { Features.set(f.copy(queueCovers = it)) }
         OptionRow("Playlist instantanée", "Dans la Biblio : écris « rap FR calme pour la nuit » et Hush fait la playlist avec tes favoris", f.instantPlaylist) { Features.set(f.copy(instantPlaylist = it)) }
+        OptionRow("Réponse immédiate", "Pause et ajout à une playlist changent tout de suite à l'écran, Tidal suit derrière", f.instantUi) { Features.set(f.copy(instantUi = it)) }
+        OptionRow("Affichage instantané", "Les écrans apparaissent d'un coup (sans cascade) et tes playlists s'affichent depuis le téléphone avant la mise à jour", f.homeCache) { Features.set(f.copy(homeCache = it)) }
+        OptionRow("Bulles d'aide", "Explique une fois les gestes cachés (glisser la pochette, appui long…)", f.gestureHints) { Features.set(f.copy(gestureHints = it)); if (it) Hints.reset(ctx) }
+        OptionRow("Messages quand ça bloque", "Bandeau « Pas de connexion » en haut quand internet coupe", f.clearStates) { Features.set(f.copy(clearStates = it)) }
+        OptionRow("Vérification au démarrage", "Au premier lancement, un écran vérifie Tidal, l'accès aux notifs et la batterie", f.setupCheck) { Features.set(f.copy(setupCheck = it)) }
         OptionRow("Mises à jour", "Hush te propose d'installer la nouvelle version dès qu'elle sort (vérifié à l'ouverture)", f.autoUpdate) { Features.set(f.copy(autoUpdate = it)); if (it) kotlinx.coroutines.MainScope().launch { com.theo.remote.Updater.check(force = true) } }
         OptionRow("Bouton Annuler", "5 s pour revenir en arrière après avoir retiré un son, vidé la file ou changé l'ordre", f.undoBar) { Features.set(f.copy(undoBar = it)) }
         OptionRow("Pas de doublons dans les playlists", "Un son déjà dans une playlist n'y est pas ajouté une 2e fois", f.noDuplicates) { Features.set(f.copy(noDuplicates = it)) }
@@ -671,6 +676,11 @@ object SettingsIndex {
         Flag("Pastille en haut à gauche", "Pillule pilule titre du son dans la barre d'état (enlève aussi la grande carte de la notif)", "Widgets et notifications", { it.statusPill }, { f, v -> f.copy(statusPill = v) }),
         Flag("File en pochettes", "File d'attente en grandes pochettes à déplacer", "Affichage", { it.queueCovers }, { f, v -> f.copy(queueCovers = v) }),
         Flag("Playlist instantanée", "Une playlist de tes favoris à partir d'une phrase", "Affichage", { it.instantPlaylist }, { f, v -> f.copy(instantPlaylist = v) }),
+        Flag("Réponse immédiate", "Pause et ajouts qui changent tout de suite à l'écran", "Affichage", { it.instantUi }, { f, v -> f.copy(instantUi = v) }),
+        Flag("Affichage instantané", "Pas d'apparition en cascade, playlists gardées sur le téléphone", "Affichage", { it.homeCache }, { f, v -> f.copy(homeCache = v) }),
+        Flag("Bulles d'aide", "Expliquer une fois les gestes cachés", "Affichage", { it.gestureHints }, { f, v -> f.copy(gestureHints = v) }),
+        Flag("Messages quand ça bloque", "Bandeau quand il n'y a plus de connexion", "Affichage", { it.clearStates }, { f, v -> f.copy(clearStates = v) }),
+        Flag("Vérification au démarrage", "Écran qui vérifie que tout est prêt au premier lancement", "Affichage", { it.setupCheck }, { f, v -> f.copy(setupCheck = v) }),
         Flag("Mises à jour", "Proposer la nouvelle version de Hush dès qu'elle sort", "Affichage", { it.autoUpdate }, { f, v -> f.copy(autoUpdate = v) }),
         Flag("Bouton Annuler", "Revenir en arrière après avoir retiré un son ou vidé la file", "Affichage", { it.undoBar }, { f, v -> f.copy(undoBar = v) }),
         Flag("Pas de doublons dans les playlists", "Ne jamais ajouter deux fois le même son à une playlist", "Playlists", { it.noDuplicates }, { f, v -> f.copy(noDuplicates = v) }),

@@ -166,7 +166,8 @@ object TidalRemote {
         return "Tidal Connect"
     }
     private var compat: MediaControllerCompat? = null
-    private var appContext: Context? = null
+    var appContext: Context? = null
+        private set
 
     /** Ce que TOI tu as choisi dans Hush ; c'est ça qui fait foi, pas l'état momentané de Tidal. */
     private var wantShuffle = false
@@ -873,7 +874,12 @@ object TidalRemote {
     private val controls get() = controller?.transportControls
 
     fun playPause() {
-        if (_state.value.isPlaying) controls?.pause() else controls?.play()
+        val c = controls
+        if (c == null) { showToast("Tidal ne joue rien : lance un son dans Tidal"); return }
+        val playing = _state.value.isPlaying
+        // réponse immédiate : le bouton change tout de suite, l'état réel de Tidal suit (et corrige si besoin)
+        if (Features.flags.value.instantUi) _state.update { it.copy(isPlaying = !playing) }
+        if (playing) c.pause() else c.play()
     }
 
     fun next(from: String? = null) {

@@ -281,7 +281,8 @@ private fun sectionStyle(title: String): Pair<androidx.compose.ui.graphics.vecto
         "Paroles et recherche" -> Icons.Rounded.Search to C(0xFFAF52DE)
         "Widgets et notifications" -> Icons.Rounded.Widgets to C(0xFF00B5C8)
         "Tes goûts" -> Icons.Rounded.Favorite to C(0xFFFF453A)
-        "Données" -> Icons.Rounded.Storage to C(0xFF8E8E93)
+        "Données", "Avancé" -> Icons.Rounded.Storage to C(0xFF8E8E93)
+        "Notifications" -> Icons.Rounded.Widgets to C(0xFF00B5C8)
         else -> Icons.Rounded.Settings to C(0xFF8E8E93)
     }
 }

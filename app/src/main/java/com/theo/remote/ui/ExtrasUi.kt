@@ -269,7 +269,7 @@ fun MixPanel() {
         itemsIndexed(items, key = { i, it -> "$i${it.title}" }) { i, it ->
             Row(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                    .bounceClick(pressedScale = 0.97f) { TidalRemote.playSequence(items.drop(i).map { x -> x.title to x.artist }) }
+                    .bounceClick(pressedScale = 0.97f, onLongClick = { TrackMenu.open(TrackMenu.Target(it.title, it.artist, null)) }) { TidalRemote.playSequence(items.drop(i).map { x -> x.title to x.artist }) }
                     .padding(vertical = 7.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

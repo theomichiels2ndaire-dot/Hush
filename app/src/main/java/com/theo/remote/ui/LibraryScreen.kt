@@ -80,12 +80,35 @@ object PlaylistStore {
 
     suspend fun load(force: Boolean = false) {
         if (!force && _list.value != null) return
+        // « Affichage instantané » : la liste gardée sur le téléphone s'affiche tout de suite, puis on la met à jour
+        if (_list.value == null && com.theo.remote.Features.flags.value.homeCache) readDisk()?.let { _list.value = it }
         mutex.lock()
         try {
-            if (!force && _list.value != null) return
-            _list.value = TidalApi.myPlaylists()
+            val fresh = TidalApi.myPlaylists()
+            _list.value = fresh
+            writeDisk(fresh)
         } finally {
             mutex.unlock()
+        }
+    }
+
+    private fun diskFile(): java.io.File? = com.theo.remote.TidalRemote.appContext?.let { java.io.File(it.filesDir, "playlists_cache.json") }
+
+    private suspend fun readDisk(): List<TidalApi.Playlist>? = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        runCatching {
+            val a = org.json.JSONArray(diskFile()?.takeIf { it.exists() }?.readText() ?: return@runCatching null)
+            (0 until a.length()).map { i ->
+                val o = a.getJSONObject(i)
+                TidalApi.Playlist(o.getString("id"), o.getString("name"), o.optInt("count"), o.optString("cover").ifBlank { null })
+            }.ifEmpty { null }
+        }.getOrNull()
+    }
+
+    private suspend fun writeDisk(list: List<TidalApi.Playlist>) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        runCatching {
+            val a = org.json.JSONArray()
+            list.forEach { p -> a.put(org.json.JSONObject().put("id", p.id).put("name", p.name).put("count", p.count).put("cover", p.coverUrl ?: "")) }
+            diskFile()?.writeText(a.toString())
         }
     }
 

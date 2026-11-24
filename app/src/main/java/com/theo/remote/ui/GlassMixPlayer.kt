@@ -136,6 +136,9 @@ internal fun GlassMixPlayer(s: TidalRemote.State, onClose: () -> Unit, onLyrics:
             }
         }
 
+        // le geste caché du lecteur, expliqué une fois
+        HintBubble("swipeCover", "Glisse la pochette vers la gauche ou la droite pour changer de son. Appui long sur le titre pour plus d'options.", Modifier.align(Alignment.Center).padding(horizontal = 24.dp))
+
         // barre du haut
         Row(
             Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 18.dp, vertical = 10.dp),
@@ -197,7 +200,7 @@ internal fun GlassMixPlayer(s: TidalRemote.State, onClose: () -> Unit, onLyrics:
                             Text(
                                 t?.title ?: "—", color = Txt, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.6).sp,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp)).bounceClick(pressedScale = 0.97f) {
+                                modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp)).bounceClick(pressedScale = 0.97f, onLongClick = { t?.let { TrackMenu.open(TrackMenu.Target(it.title, it.artist, it.art, album = it.album)) } }) {
                                     val ar = t?.artist.orEmpty(); val al = t?.album.orEmpty()
                                     when {
                                         al.isNotBlank() -> openDetail(Detail.AlbumByName(al, ar))

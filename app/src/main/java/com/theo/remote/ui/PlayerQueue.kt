@@ -229,7 +229,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                                 }
                                 Column(
                                     Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                                        .bounceClick(pressedScale = 0.97f) { com.theo.remote.MixQueue.jumpTo(i) }
+                                        .bounceClick(pressedScale = 0.97f, onLongClick = { when (e) { is com.theo.remote.LocalMusic.Entry.T -> TrackMenu.open(e.r); else -> TrackMenu.open(TrackMenu.Target(t, a, null)) } }) { com.theo.remote.MixQueue.jumpTo(i) }
                                         .padding(horizontal = 10.dp, vertical = 10.dp),
                                 ) {
                                     Text(t, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -266,7 +266,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(if (active) Color.White.copy(alpha = 0.08f) else Color.Transparent)
-                                        .bounceClick(pressedScale = 0.97f) { TidalRemote.skipToQueueItem(q.id) }
+                                        .bounceClick(pressedScale = 0.97f, onLongClick = { TrackMenu.open(TrackMenu.Target(q.title, q.subtitle, null)) }) { TidalRemote.skipToQueueItem(q.id) }
                                         .padding(horizontal = 10.dp, vertical = 10.dp),
                                 ) {
                                     Text(q.title, color = if (active) Ok else Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)

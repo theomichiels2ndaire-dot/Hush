@@ -120,15 +120,16 @@ object PlaylistEdit {
                     TidalRemote.showToast(if (tracks0.size == 1) "Déjà dans « ${p.name} »" else "Tous déjà dans « ${p.name} »")
                     return@launch
                 }
-                TidalApi.addToPlaylist(p.id, tracks.map { it.id })
+                // réponse immédiate : on confirme tout de suite, Tidal suit derrière (message d'erreur si ça rate)
                 val skipped = tracks0.size - tracks.size
                 TidalRemote.showToast(
                     (if (tracks.size == 1) "Ajouté à « ${p.name} »" else "${tracks.size} sons ajoutés à « ${p.name} »") +
                         if (skipped > 0) " · $skipped déjà dedans" else ""
                 )
+                TidalApi.addToPlaylist(p.id, tracks.map { it.id })
                 refresh(p.id)
             } catch (e: Exception) {
-                TidalRemote.showToast(e.message ?: "Échec de l'ajout")
+                TidalRemote.showToast("L'ajout à « ${p.name} » a échoué" + (e.message?.let { " : $it" } ?: ""))
             }
         }
     }

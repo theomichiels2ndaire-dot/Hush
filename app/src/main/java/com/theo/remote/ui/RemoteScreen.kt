@@ -406,6 +406,10 @@ fun RemoteApp() {
         // cartes de sons : une carte en grand, et l'annonce quand une carte monte
         CardsHost()
         InstantPlaylistHost()
+        // pas de connexion : on le dit en haut
+        Box(Modifier.fillMaxSize()) { OfflineBanner(Modifier.align(Alignment.TopCenter)) }
+        // vérification au premier lancement (et tant que l'indispensable manque)
+        SetupScreen()
 
         // ajout à une playlist (par-dessus tout)
         PlaylistPicker()

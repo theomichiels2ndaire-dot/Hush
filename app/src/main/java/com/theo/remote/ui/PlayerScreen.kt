@@ -260,7 +260,7 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
                     Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         title ?: "—", color = Txt, fontSize = 24.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp)).bounceClick(pressedScale = 0.97f) {
+                        modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp)).bounceClick(pressedScale = 0.97f, onLongClick = { t?.let { TrackMenu.open(TrackMenu.Target(it.title, it.artist, it.art, album = it.album)) } }) {
                             val ar = t?.artist.orEmpty()
                             val al = t?.album.orEmpty()
                             when {

@@ -333,6 +333,7 @@ fun SearchScreen(s: TidalRemote.State) {
                     }
                 }
                 if (results.isNotEmpty()) SearchLabel("Titres")
+                if (results.isNotEmpty()) HintBubble("longPressSong", "Appui long sur un son pour plus d'options. Glisse-le vers la gauche pour l'ajouter à la file.")
             }
             itemsIndexed((if (filterKind == 0 && !artistFirst) results.drop(1) else results).distinctBy { it.id }, key = { _, r -> r.id }) { i, r ->
                 TrackRow(r, playing = isCurrent(s, r), modifier = Modifier.animateItem().cascadeIn(i, "sr" + r.id)) { playFromSearch(r) }
