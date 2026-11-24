@@ -166,15 +166,12 @@ object SharedLink {
             music = Regex("title=\"♬\\s*([^\"]+)\"").find(html)?.groupValues?.get(1)
                 ?: Regex("♬\\s*([^<]+)<").find(html)?.groupValues?.get(1)
         }
-        if (music == null) {
-            val page = fetch(full)
-            val i = page?.indexOf("\"music\":{") ?: -1
-            if (page != null && i >= 0) {
-                val chunk = page.substring(i, minOf(page.length, i + 3000))
-                val t = Regex("\"title\":\"([^\"]+)\"").find(chunk)?.groupValues?.get(1)
-                val a = Regex("\"authorName\":\"([^\"]+)\"").find(chunk)?.groupValues?.get(1)
-                if (t != null) music = if (a != null) "$t - $a" else t
-            }
+        // sinon : la page de la vidéo, puis le lecteur intégré officiel (/embed/v2/…)
+        val id = Regex("/video/(\\d+)").find(full)?.groupValues?.get(1)
+        for (src in listOfNotNull(full, id?.let { "https://www.tiktok.com/embed/v2/$it" })) {
+            if (music != null) break
+            val page = fetch(src) ?: continue
+            music = musicFromPage(page)
         }
         val m = music?.let { android.text.Html.fromHtml(it, 0).toString().trim() } ?: run {
             why = "Impossible de lire le son de cette vidéo TikTok"
@@ -187,6 +184,23 @@ object SharedLink {
         val cut = m.lastIndexOf(" - ")
         return if (cut > 0) m.substring(0, cut).trim() to m.substring(cut + 3).trim() else m to ""
     }
+
+    /** Le son dans le code d'une page TikTok : bloc « music » (titre + auteur), sinon le texte « ♬ … ». */
+    private fun musicFromPage(page: String): String? {
+        for (marker in listOf("\"music\":{", "\"musicInfo\":{")) {
+            val i = page.indexOf(marker)
+            if (i < 0) continue
+            val chunk = page.substring(i, minOf(page.length, i + 3000))
+            val t = Regex("\"(?:title|musicName)\":\"([^\"]+)\"").find(chunk)?.groupValues?.get(1)
+            val a = Regex("\"(?:authorName|author|musicAuthor)\":\"([^\"]+)\"").find(chunk)?.groupValues?.get(1)
+            if (t != null) return unescape(if (a != null) "$t - $a" else t)
+        }
+        return Regex("♬\\s*([^<\"]{2,120})").find(page)?.groupValues?.get(1)?.let { unescape(it) }
+    }
+
+    /** « \\u00e9 » et compagnie → vrais caractères. */
+    private fun unescape(x: String) = Regex("\\\\u([0-9a-fA-F]{4})").replace(x) { it.groupValues[1].toInt(16).toChar().toString() }
+        .replace("\\/", "/")
 
     private fun deezer(url: String): Pair<String, String>? {
         // liens courts : on suit la redirection jusqu'à l'adresse du titre
