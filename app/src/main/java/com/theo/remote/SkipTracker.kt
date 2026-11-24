@@ -33,6 +33,7 @@ object SkipTracker {
             }
         }.getOrDefault(emptyMap())
         _ignored.value = p.getStringSet("skipsIgnored", emptySet()).orEmpty().toSet()
+        com.theo.remote.ui.PlaylistCleanup.init(context)
     }
 
     /** Appelé plusieurs fois par seconde par le lecteur. */
@@ -58,6 +59,8 @@ object SkipTracker {
         val old = _skips.value[key]
         _skips.value = _skips.value + (key to Skip(key, title, artist, (old?.count ?: 0) + 1, System.currentTimeMillis()))
         save()
+        // pour le nettoyage mensuel : dans quelle playlist il a été passé
+        com.theo.remote.ui.PlaylistCleanup.recordSkip(title, artist)
     }
 
     /** Sons à proposer de masquer : passés souvent, et plus souvent passés qu'écoutés. */

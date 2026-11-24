@@ -154,6 +154,10 @@ fun HomeScreen(
 
         if (!s.hasPermission || !s.connected) {
             Box(Modifier.padding(horizontal = Space.gutter)) { SetupCard(s) }
+            // nettoyage du mois (une fois par mois, s'il y a des sons que tu passes toujours)
+            val cleanPl by PlaylistStore.list.collectAsState()
+            LaunchedEffect(cleanPl) { PlaylistCleanup.refreshDue() }
+            CleanupCard(Modifier.padding(horizontal = Space.gutter))
         }
 
         // sections dans l'ordre choisi dans les Réglages

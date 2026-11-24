@@ -324,6 +324,7 @@ private fun SettingsScreen() {
 
         FoldSection("Playlists") {
         PlaylistOptionsCard()
+        CleanupNowCard()
         SettingsHeader("Fichiers locaux")
         LocalOptionsCard()
         SettingsHeader("Tes goûts")
