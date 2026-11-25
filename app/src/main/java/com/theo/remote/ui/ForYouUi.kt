@@ -82,8 +82,8 @@ fun ForYouRow() {
                 add(
                     ForYouCard(
                         "pl${e.id}", "Playlist du moment", e.name, com.theo.remote.PlaylistCovers.art(e.id, e.cover), Color(0xFF243B63),
-                        onPlay = { TidalRemote.setShuffle(false); NowPlaylist.set(e.id); TidalRemote.playPlaylist(e.name) },
-                        onOpen = { if (p != null) open(p) else { TidalRemote.setShuffle(false); NowPlaylist.set(e.id); TidalRemote.playPlaylist(e.name) } },
+                        onPlay = { TidalRemote.setShuffle(false); NowPlaylist.set(e.id); TidalRemote.playPlaylist(e.name, e.id) },
+                        onOpen = { if (p != null) open(p) else { TidalRemote.setShuffle(false); NowPlaylist.set(e.id); TidalRemote.playPlaylist(e.name, e.id) } },
                     ),
                 )
             }

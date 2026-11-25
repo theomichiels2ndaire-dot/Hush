@@ -170,6 +170,7 @@ fun DisplayCard() {
         OptionRow("Vérification au démarrage", "Au premier lancement, un écran vérifie Tidal, l'accès aux notifs et la batterie", f.setupCheck) { Features.set(f.copy(setupCheck = it)) }
         OptionRow("Mises à jour", "Hush te propose d'installer la nouvelle version dès qu'elle sort (vérifié à l'ouverture)", f.autoUpdate) { Features.set(f.copy(autoUpdate = it)); if (it) kotlinx.coroutines.MainScope().launch { com.theo.remote.Updater.check(force = true) } }
         OptionRow("Bouton Annuler", "5 s pour revenir en arrière après avoir retiré un son, vidé la file ou changé l'ordre", f.undoBar) { Features.set(f.copy(undoBar = it)) }
+        OptionRow("Lancer la bonne playlist", "Lance tes playlists par leur lien exact, pas par leur nom (évite qu'une autre playlist du même nom démarre)", f.exactLaunch) { Features.set(f.copy(exactLaunch = it)) }
         OptionRow("Nettoyage mensuel", "Une fois par mois, Hush te propose de retirer les sons que tu passes toujours dans une playlist", f.playlistCleanup) { Features.set(f.copy(playlistCleanup = it)) }
         OptionRow("Pas de doublons dans les playlists", "Un son déjà dans une playlist n'y est pas ajouté une 2e fois", f.noDuplicates) { Features.set(f.copy(noDuplicates = it)) }
         OptionRow("Alerte sons coupés", "Une petite notif quand un son passe au suivant avant la fin, avec qui l'a passé", f.earlyCutAlert) { Features.set(f.copy(earlyCutAlert = it)) }
@@ -684,6 +685,7 @@ object SettingsIndex {
         Flag("Vérification au démarrage", "Écran qui vérifie que tout est prêt au premier lancement", "Affichage", { it.setupCheck }, { f, v -> f.copy(setupCheck = v) }),
         Flag("Mises à jour", "Proposer la nouvelle version de Hush dès qu'elle sort", "Affichage", { it.autoUpdate }, { f, v -> f.copy(autoUpdate = v) }),
         Flag("Bouton Annuler", "Revenir en arrière après avoir retiré un son ou vidé la file", "Affichage", { it.undoBar }, { f, v -> f.copy(undoBar = v) }),
+        Flag("Lancer la bonne playlist", "Lancer tes playlists par leur lien exact plutôt que par leur nom", "Playlists", { it.exactLaunch }, { f, v -> f.copy(exactLaunch = v) }),
         Flag("Nettoyage mensuel", "Retirer les sons que tu passes toujours dans une playlist", "Playlists", { it.playlistCleanup }, { f, v -> f.copy(playlistCleanup = v) }),
         Flag("Pas de doublons dans les playlists", "Ne jamais ajouter deux fois le même son à une playlist", "Playlists", { it.noDuplicates }, { f, v -> f.copy(noDuplicates = v) }),
         Flag("Alerte sons coupés", "Notif quand un son est coupé avant la fin", "Lecture", { it.earlyCutAlert }, { f, v -> f.copy(earlyCutAlert = v) }),

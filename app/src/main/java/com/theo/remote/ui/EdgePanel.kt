@@ -275,7 +275,7 @@ object EdgePanel {
                             val art = remember(covers, id, cover) { PlaylistCovers.art(id, cover) }
                             Row(
                                 Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).bounceClick(pressedScale = 0.97f) {
-                                    TidalRemote.setShuffle(false); NowPlaylist.set(id); TidalRemote.playPlaylist(name); close()
+                                    TidalRemote.setShuffle(false); NowPlaylist.set(id); TidalRemote.playPlaylist(name, id); close()
                                 }.padding(4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {

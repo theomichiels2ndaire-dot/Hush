@@ -767,7 +767,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                     else {
                         TidalRemote.setShuffle(false)
                         NowPlaylist.set(p.id)
-                        TidalRemote.playPlaylist(p.name)
+                        TidalRemote.playPlaylist(p.name, p.id.takeIf { !isFav })
                     }
                 }
                 ActionPill(Icons.Rounded.Shuffle, "Aléatoire", filled = false, modifier = Modifier.weight(1f)) {
@@ -776,7 +776,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                     if (locals.isNotEmpty() || isFav || (com.theo.remote.Features.flags.value.smartShuffle && all.size >= 3)) playMixed(true)
                     else {
                         NowPlaylist.set(p.id)
-                        TidalRemote.playPlaylistShuffled(p.name)
+                        TidalRemote.playPlaylistShuffled(p.name, p.id.takeIf { !isFav })
                     }
                 }
             }
@@ -884,7 +884,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                             !isFav && locals.isEmpty() -> {
                                 NowPlaylist.set(p.id)
                                 val occ = all.take(at).count { it.title.equals(r.title, true) }
-                                TidalRemote.playPlaylistFrom(p.name, r.fullTitle, r.title, occ) { playMixed(false, startTrack = r.id) }
+                                TidalRemote.playPlaylistFrom(p.name, r.fullTitle, r.title, occ, p.id.takeIf { !isFav }) { playMixed(false, startTrack = r.id) }
                             }
                             else -> playMixed(false, startTrack = r.id)
                         }

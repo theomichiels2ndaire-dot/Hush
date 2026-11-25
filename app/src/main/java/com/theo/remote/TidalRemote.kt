@@ -139,6 +139,8 @@ object TidalRemote {
         val sentAt: Long = SystemClock.elapsedRealtime(),
         val query: String = "",
         val tries: Int = 0,
+        /** Artiste attendu : un son du même titre par un autre artiste n'est pas le bon. */
+        val artist: String = "",
     )
 
     /** Ce que le diagnostic vérifie, dans l'ordre d'importance pour le projet. */
@@ -827,7 +829,8 @@ object TidalRemote {
         // On vérifie que le titre lancé depuis Hush est bien celui demandé
         val launch = _state.value.launch
         if (changed && launch?.status == LaunchStatus.Pending) {
-            val ok = matches(track!!.title, launch.expected)
+            val ok = matches(track!!.title, launch.expected) &&
+                (launch.artist.isBlank() || norm(track.artist).contains(norm(launch.artist)) || norm(launch.artist).contains(norm(track.artist)))
             val canFix = !ok && Features.flags.value.fixVersions && launch.tries < 2 && launch.trackId.all { it.isDigit() }
             if (!ok && launch.tries == 0) Diag.add(Diag.Kind.OtherVersion, "« ${track.title} » au lieu de « ${launch.expected} »")
             if (canFix) {
@@ -933,7 +936,7 @@ object TidalRemote {
 
     fun play(result: TidalApi.Result) {
         clearContext()
-        launch(result.id, result.fullTitle, result.playQuery)
+        launch(result.id, result.fullTitle, result.playQuery, result.artists.firstOrNull().orEmpty())
     }
 
     /** Relancer un titre de l'historique (titre + artiste tels que Tidal les affiche). */
@@ -942,29 +945,46 @@ object TidalRemote {
         launch("$title|$artist", title, listOf(title, artist).filter { it.isNotBlank() }.joinToString(" "))
     }
 
-    /** Demande à Tidal de lancer une playlist par son nom (recherche « playlist »). */
-    fun playPlaylist(name: String) {
+    /**
+     * Lance une playlist. Avec son identifiant : par son lien exact (TA playlist, pas une autre qui porte le même nom) ;
+     * si Tidal ignore le lien, ou sans identifiant : recherche par nom.
+     */
+    fun playPlaylist(name: String, id: String? = null) {
         clearContext()
         val c = tidal() ?: return log("Pas de session Tidal active — lance un son dans Tidal d'abord")
+        if (id != null && Features.flags.value.exactLaunch) {
+            val beforeTrack = _state.value.track?.title
+            val beforeQueue = c.queueTitle?.toString()
+            c.transportControls.playFromUri(Uri.parse("https://tidal.com/browse/playlist/$id"), Bundle())
+            log("Playlist lancée (lien exact) : $name")
+            main.postDelayed({
+                val moved = _state.value.track?.title != beforeTrack || tidal()?.queueTitle?.toString() != beforeQueue
+                if (!moved) { log("Lien ignoré par Tidal → recherche par nom"); tidal()?.let { searchPlaylist(it, name) } }
+            }, 2500)
+        } else searchPlaylist(c, name)
+        appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putString("lastPlaylistName", name)?.apply()
+        reapplyShuffleSoon()
+    }
+
+    private fun searchPlaylist(c: MediaController, name: String) {
         val extras = Bundle().apply {
             putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/playlist")
             putString("android.intent.extra.playlist", name)
         }
         c.transportControls.playFromSearch(name, extras)
         log("Playlist lancée : $name")
-        appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putString("lastPlaylistName", name)?.apply()
-        reapplyShuffleSoon()
     }
+
 
     /**
      * Lance une playlist dans Tidal puis saute directement au son touché :
      * la suite reste exactement l'ordre de la playlist. Si Tidal ne montre pas ce son dans sa file
      * (playlist très longue), [fallback] prend le relais.
      */
-    fun playPlaylistFrom(name: String, fullTitle: String, title: String, occurrence: Int, fallback: () -> Unit) {
+    fun playPlaylistFrom(name: String, fullTitle: String, title: String, occurrence: Int, id: String? = null, fallback: () -> Unit) {
         val before = _state.value.queue.map { it.id to it.title }
         setShuffle(false)
-        playPlaylist(name)
+        playPlaylist(name, id)
         val started = SystemClock.elapsedRealtime()
         val check = object : Runnable {
             override fun run() {
@@ -1109,9 +1129,9 @@ object TidalRemote {
     }
 
     /** Playlist en aléatoire : on active l'aléatoire puis on la lance. */
-    fun playPlaylistShuffled(name: String) {
+    fun playPlaylistShuffled(name: String, id: String? = null) {
         setShuffle(true)
-        main.postDelayed({ playPlaylist(name) }, 80)
+        main.postDelayed({ playPlaylist(name, id) }, 80)
     }
 
     /** Lance les sons d'un artiste (recherche « artiste » côté Tidal). */
@@ -1146,14 +1166,14 @@ object TidalRemote {
         controls?.skipToQueueItem(id)
     }
 
-    private fun launch(id: String, expected: String, query: String) {
+    private fun launch(id: String, expected: String, query: String, artist: String = "") {
         val c = tidal() ?: run {
             // Tidal fermé entre deux sons : on le réveille et on réessaie une fois
             appContext?.let { wakeInBackground(it) }
-            main.postDelayed({ if (tidalCtl != null) launch(id, expected, query) }, 2500)
+            main.postDelayed({ if (tidalCtl != null) launch(id, expected, query, artist) }, 2500)
             return log("Tidal se réveille…")
         }
-        val launch = Launch(trackId = id, expected = expected, status = LaunchStatus.Pending, query = query)
+        val launch = Launch(trackId = id, expected = expected, status = LaunchStatus.Pending, query = query, artist = artist)
         _state.update { it.copy(launch = launch) }
         c.transportControls.playFromSearch(query, Bundle())
         log("Lancé : $expected")
