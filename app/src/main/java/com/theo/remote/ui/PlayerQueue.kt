@@ -202,17 +202,20 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                     DismissWhenAtTop(scroll)
                     Column(Modifier.weight(1f, fill = false).verticalScroll(scroll)) {
                     if (upNext.isNotEmpty()) {
-                        Text(if (qf.queueCovers) "À suivre · maintiens une pochette pour la déplacer" else "À suivre · maintiens ≡ pour déplacer, glisse sur le côté pour retirer", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        QueueHeader("À suivre", "Ta file", upNext.size,
+                            if (qf.queueCovers) "Maintiens une pochette pour la déplacer" else "Maintiens ≡ pour déplacer, glisse sur le côté pour retirer")
                         Spacer(Modifier.height(if (qf.queueCovers) 10.dp else 4.dp))
                         if (qf.queueCovers) CoverQueueGrid(upNext) else ReorderableUpNext(upNext)
                         Spacer(Modifier.height(12.dp))
-                        Text(if (mixUp.isNotEmpty()) "Puis la suite de la playlist" else if (ctxQueue.isNotEmpty()) "Puis la suite de ta lecture" else "Ensuite dans Tidal", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        if (mixUp.isNotEmpty()) QueueHeader("Puis la suite de la playlist", "Hush", mixUp.size)
+                        else if (ctxQueue.isNotEmpty()) QueueHeader("Puis la suite de ta lecture", "Hush", ctxQueue.size)
+                        else QueueHeader("Puis dans Tidal", "Tidal", null)
                         Spacer(Modifier.height(4.dp))
                     }
                     if (mixUp.isNotEmpty()) {
                         // playlist lancée par Hush : on montre la vraie suite de la playlist (pas la file interne de Tidal)
                         if (upNext.isEmpty()) {
-                            Text("Suite de la playlist" + if (s.shuffle) " · aléatoire" else "", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            QueueHeader("Suite de la playlist" + if (s.shuffle) " · aléatoire" else "", "Hush", mixUp.size)
                             Spacer(Modifier.height(4.dp))
                         }
                         if (qf.queueCovers) CoverStaticGrid(mixUp.map { e ->
@@ -240,7 +243,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                     } else if (ctxQueue.isNotEmpty()) {
                         // ce que tu écoutais avant que la file passe devant : Hush le reprend ensuite
                         if (upNext.isEmpty()) {
-                            Text("Suite de ta lecture", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            QueueHeader("Suite de ta lecture", "Hush", ctxQueue.size)
                             Spacer(Modifier.height(4.dp))
                         }
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -258,8 +261,15 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                         )
                         Spacer(Modifier.height(20.dp))
                     } else {
+                        // la file de Tidal à partir du son en cours (les sons déjà passés n'encombrent plus)
+                        val from = s.queue.indexOfFirst { it.id == s.activeQueueId }.coerceAtLeast(0)
+                        val ahead = s.queue.drop(from)
+                        if (upNext.isEmpty()) {
+                            QueueHeader("Ensuite dans Tidal", "Tidal", (ahead.size - 1).coerceAtLeast(0))
+                            Spacer(Modifier.height(4.dp))
+                        }
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            s.queue.forEach { q ->
+                            ahead.forEach { q ->
                                 val active = q.id == s.activeQueueId
                                 Column(
                                     Modifier
@@ -413,7 +423,8 @@ private val UpNextRowH = 58.dp
 @Composable
 private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
     val density = androidx.compose.ui.platform.LocalDensity.current
-    val rowPx = with(density) { UpNextRowH.toPx() }
+    // hauteur réelle d'une ligne, marges comprises (sinon la place visée dérivait au fil du glisser)
+    val rowPx = with(density) { (UpNextRowH + 4.dp).toPx() }
     val gate = LocalDismissGate.current
     val haptic = rememberHaptic()
     var dragFrom by remember { mutableIntStateOf(-1) }
@@ -422,7 +433,7 @@ private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
 
     Column {
         list.forEachIndexed { i, r ->
-            androidx.compose.runtime.key(r.id, i) {
+            androidx.compose.runtime.key(r.id) {
                 // décalage des autres lignes pendant qu'on en déplace une
                 val shift = when {
                     dragFrom < 0 || i == dragFrom -> 0f
@@ -430,14 +441,18 @@ private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
                     i in target until dragFrom -> rowPx
                     else -> 0f
                 }
-                val animShift by animateFloatAsState(shift, spring(dampingRatio = 0.8f, stiffness = 600f), label = "shift")
+                val shiftAnim = remember { Animatable(0f) }
+                LaunchedEffect(shift, dragFrom) {
+                    if (dragFrom < 0) shiftAnim.snapTo(0f) else shiftAnim.animateTo(shift, spring(dampingRatio = 0.85f, stiffness = 700f))
+                }
                 val dragging = i == dragFrom
                 SwipeAwayRow(
                     onRemove = { TidalRemote.removeFromQueue(i) },
                     modifier = Modifier
                         .zIndex(if (dragging) 1f else 0f)
                         .graphicsLayer {
-                            translationY = if (dragging) dragY else animShift
+                            // au lâcher, la liste est déjà dans le nouvel ordre : on ne rejoue pas le décalage
+                            translationY = if (dragging) dragY else if (dragFrom < 0) 0f else shiftAnim.value
                             // le son qu'on déplace se soulève : plus grand, ombre portée
                             val sc = if (dragging) 1.06f else 1f
                             scaleX = sc; scaleY = sc
@@ -462,7 +477,7 @@ private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
                         RatingBadge(r.title, r.artistLine)
                         // poignée : on la tient et on déplace
                         Box(
-                            Modifier.size(44.dp).pointerInput(list.size) {
+                            Modifier.size(44.dp).pointerInput(list.size, i) {
                                 awaitEachGesture {
                                     val down = awaitFirstDown(requireUnconsumed = false)
                                     gate?.let { it.blocked++ } // la fenêtre ne se ferme pas pendant qu'on déplace
@@ -497,9 +512,30 @@ private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
     }
 }
 
+/** Titre d'une partie de la file, avec d'où viennent les sons (ta file Hush ou Tidal) et combien il y en a. */
+@Composable
+private fun QueueHeader(title: String, source: String, count: Int?, hint: String? = null) {
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+            Spacer(Modifier.width(8.dp))
+            val tidal = source == "Tidal"
+            Box(
+                Modifier.clip(PillShape).background(if (tidal) Color.White.copy(alpha = 0.10f) else Ok.copy(alpha = 0.18f)).padding(horizontal = 8.dp, vertical = 2.dp),
+            ) { Text(source, color = if (tidal) Txt2 else Ok, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
+            if (count != null && count > 0) {
+                Spacer(Modifier.width(8.dp))
+                Text("$count son${if (count > 1) "s" else ""}", color = Txt2, fontSize = 12.sp)
+            }
+        }
+        if (hint != null) Text(hint, color = Txt3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
+
 /** Ligne qu'on fait glisser sur le côté pour la retirer (fond rouge + corbeille). */
 @Composable
 private fun SwipeAwayRow(onRemove: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    val currentRemove by androidx.compose.runtime.rememberUpdatedState(onRemove)
     val offset = remember { Animatable(0f) }
     var width by remember { mutableIntStateOf(1) }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
@@ -521,13 +557,14 @@ private fun SwipeAwayRow(onRemove: () -> Unit, modifier: Modifier = Modifier, co
             Modifier
                 .graphicsLayer { translationX = offset.value }
                 .pointerInput(Unit) {
+                    // (onRemove relu à chaque fois : après un déplacement, la ligne n'a plus le même numéro)
                     detectHorizontalDragGestures(
                         onDragEnd = {
                             scope.launch {
                                 if (kotlin.math.abs(offset.value) > width * 0.35f) {
                                     haptic()
                                     offset.animateTo(if (offset.value > 0) width.toFloat() else -width.toFloat(), tween(180))
-                                    onRemove()
+                                    currentRemove()
                                     offset.snapTo(0f)
                                 } else {
                                     offset.animateTo(0f, spring(dampingRatio = 0.7f, stiffness = 500f))
