@@ -83,7 +83,8 @@ fun TrackMenuSheet(backdrop: Backdrop? = null) {
     var last by remember { mutableStateOf<TrackMenu.Target?>(null) }
     t?.let { last = it }
     val open = LocalOpenDetail.current
-    BackHandler(enabled = t != null) { TrackMenu.close() }
+    // ajouté à l'ouverture (et pas au démarrage) : le retour ferme d'abord le menu, même ouvert depuis le lecteur
+    if (t != null) BackHandler { TrackMenu.close() }
 
     Box(Modifier.fillMaxSize()) {
         AnimatedVisibility(t != null, enter = fadeIn(tween(180)), exit = fadeOut(tween(180))) {

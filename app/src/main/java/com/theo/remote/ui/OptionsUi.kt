@@ -172,6 +172,8 @@ fun DisplayCard() {
         OptionRow("Bouton Annuler", "5 s pour revenir en arrière après avoir retiré un son, vidé la file ou changé l'ordre", f.undoBar) { Features.set(f.copy(undoBar = it)) }
         OptionRow("Lancer le bon son", "Lance tes playlists et tes sons par leur lien exact, pas par une recherche (évite qu'un autre son ou une autre playlist démarre)", f.exactLaunch) { Features.set(f.copy(exactLaunch = it)) }
         OptionRow("Recherche maline", "Tes sons déjà écoutés apparaissent dès la première lettre, et les fautes de frappe sont corrigées (« drak » → Drake)", f.smartSearch) { Features.set(f.copy(smartSearch = it)) }
+        OptionRow("Retour sans fausse sortie", "Sur l'Accueil, il faut faire retour deux fois pour quitter Hush", f.safeBack) { Features.set(f.copy(safeBack = it)) }
+        OptionRow("Économie de données", "En 4G/5G, les vignettes sont chargées en plus petit et les pochettes vidéo attendent le Wi-Fi", f.dataSaver) { Features.set(f.copy(dataSaver = it)) }
         OptionRow("Rapport après un plantage", "Si Hush plante, il te propose au lancement suivant de copier le rapport en un tap", f.crashPrompt) { Features.set(f.copy(crashPrompt = it)) }
         OptionRow("Économie de batterie", "Écran éteint, Hush surveille Tidal moins souvent (sauf en fin de son, pour les enchaînements)", f.batterySaver) { Features.set(f.copy(batterySaver = it)) }
         OptionRow("Playlist sans intrus", "Quand tu lances une playlist, la file « À suivre » est vidée (annulable), pour que rien d'autre ne s'y glisse", f.freshQueue) { Features.set(f.copy(freshQueue = it)) }
@@ -691,6 +693,8 @@ object SettingsIndex {
         Flag("Bouton Annuler", "Revenir en arrière après avoir retiré un son ou vidé la file", "Affichage", { it.undoBar }, { f, v -> f.copy(undoBar = v) }),
         Flag("Lancer le bon son", "Lancer tes playlists et tes sons par leur lien exact plutôt que par une recherche", "Playlists", { it.exactLaunch }, { f, v -> f.copy(exactLaunch = v) }),
         Flag("Recherche maline", "Résultats dès la première lettre et fautes de frappe corrigées", "Lecture", { it.smartSearch }, { f, v -> f.copy(smartSearch = v) }),
+        Flag("Retour sans fausse sortie", "Faire retour deux fois pour quitter depuis l'Accueil", "Affichage", { it.safeBack }, { f, v -> f.copy(safeBack = v) }),
+        Flag("Économie de données", "Vignettes plus légères et pas de pochettes vidéo en données mobiles", "Avancé", { it.dataSaver }, { f, v -> f.copy(dataSaver = v) }),
         Flag("Rapport après un plantage", "Proposer de copier le rapport après un plantage", "Avancé", { it.crashPrompt }, { f, v -> f.copy(crashPrompt = v) }),
         Flag("Économie de batterie", "Surveiller Tidal moins souvent écran éteint", "Avancé", { it.batterySaver }, { f, v -> f.copy(batterySaver = v) }),
         Flag("Playlist sans intrus", "Vider la file « À suivre » quand tu lances une playlist", "Playlists", { it.freshQueue }, { f, v -> f.copy(freshQueue = v) }),

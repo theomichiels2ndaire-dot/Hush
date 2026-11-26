@@ -202,7 +202,7 @@ fun PlaylistPicker() {
         checking = false
     }
 
-    androidx.activity.compose.BackHandler(enabled = tracks != null) { PlaylistEdit.close() }
+    if (tracks != null) androidx.activity.compose.BackHandler { PlaylistEdit.close() }
     LaunchedEffect(tracks != null) { if (tracks != null && loggedIn) runCatching { PlaylistStore.load() } }
 
     Box(Modifier.fillMaxSize()) {
