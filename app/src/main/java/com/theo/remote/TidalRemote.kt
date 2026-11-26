@@ -1035,42 +1035,68 @@ object TidalRemote {
      * Lance une playlist. Avec son identifiant : par son lien exact (TA playlist, pas une autre qui porte le même nom) ;
      * si Tidal ignore le lien, ou sans identifiant : recherche par nom.
      */
-    fun playPlaylist(name: String, id: String? = null) {
+    fun playPlaylist(name: String, id: String? = null, woke: Boolean = false) {
         clearContext()
         startingPlaylist()
-        val c = tidal() ?: return log("Pas de session Tidal active — lance un son dans Tidal d'abord")
-        if (id != null && Features.flags.value.exactLaunch) {
+        val c = tidal() ?: run {
+            // Tidal fermé (coupé par Android) : on le réveille et on relance une fois
+            if (!woke) {
+                appContext?.let { wakeInBackground(it) }
+                showToast("Tidal se réveille…")
+                main.postDelayed({ if (tidalCtl != null) playPlaylist(name, id, woke = true) else showToast("Ouvre Tidal une fois, puis relance") }, 2500)
+            }
+            return log("Pas de session Tidal active — réveil de Tidal")
+        }
+        val sent = SystemClock.elapsedRealtime()
+        playlistSentAt = sent
+        if (id != null && Features.flags.value.exactLaunch && playlistLinkMode != 0) {
             val beforeTrack = _state.value.track?.title
             val beforeQueue = c.queueTitle?.toString()
             val beforeIds = _state.value.queue.map { it.id }
-            val sent = SystemClock.elapsedRealtime()
-            playlistSentAt = sent
             c.transportControls.playFromUri(Uri.parse("https://tidal.com/browse/playlist/$id"), Bundle())
             log("Playlist lancée (lien exact) : $name")
-            // Tidal peut mettre plusieurs secondes à charger une grosse playlist : avant, au bout de 2,5 s,
-            // Hush lançait EN PLUS une recherche par nom… qui pouvait démarrer une autre playlist du même nom.
+            // on vérifie que Tidal a VRAIMENT lancé la playlist, sinon recherche par nom
             val watch = object : Runnable {
                 override fun run() {
                     if (playlistSentAt != sent) return // une autre lecture a été lancée entre-temps
+                    val ctl = tidal() ?: return
                     val st = _state.value
-                    val state = tidal()?.playbackState?.state
-                    val moved = st.track?.title != beforeTrack || tidal()?.queueTitle?.toString() != beforeQueue ||
-                        st.queue.map { it.id } != beforeIds
-                    val loading = state == PlaybackState.STATE_BUFFERING || state == PlaybackState.STATE_CONNECTING
+                    val pbState = ctl.playbackState?.state
+                    val qTitle = ctl.queueTitle?.toString()
+                    val named = qTitle != null && QueueLogic.norm(qTitle) == QueueLogic.norm(name)
+                    val changed = named || st.track?.title != beforeTrack ||
+                        (qTitle != beforeQueue && qTitle != null) || st.queue.map { it.id } != beforeIds
+                    val loading = pbState == PlaybackState.STATE_BUFFERING || pbState == PlaybackState.STATE_CONNECTING
                     val waited = SystemClock.elapsedRealtime() - sent
                     when {
-                        moved -> return
-                        loading && waited < 12_000 -> main.postDelayed(this, 400)
-                        waited < 6000 -> main.postDelayed(this, 400)
-                        else -> { log("Lien ignoré par Tidal → recherche par nom"); tidal()?.let { searchPlaylist(it, name) } }
+                        changed -> {
+                            playlistIgnored = 0
+                            if (playlistLinkMode != 1) playlistLinkMode = 1
+                            // chargée mais en pause : on lance la lecture
+                            if (!loading && pbState != PlaybackState.STATE_PLAYING) ctl.transportControls.play()
+                        }
+                        loading && waited < 10_000 -> main.postDelayed(this, 300)
+                        waited < 3500 -> main.postDelayed(this, 300)
+                        else -> {
+                            playlistIgnored++
+                            if (playlistIgnored >= 2 && playlistLinkMode == -1) { playlistLinkMode = 0; log("Tidal ignore les liens de playlists : recherche par nom") }
+                            log("Lien ignoré par Tidal → recherche par nom")
+                            searchPlaylist(ctl, name)
+                        }
                     }
                 }
             }
-            main.postDelayed(watch, 600)
+            main.postDelayed(watch, 500)
         } else searchPlaylist(c, name)
         appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putString("lastPlaylistName", name)?.apply()
         reapplyShuffleSoon()
     }
+
+    /** -1 pas encore su, 1 Tidal accepte les liens de playlists, 0 il les ignore. */
+    private var playlistLinkMode: Int
+        get() = appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.getInt("plLink", -1) ?: -1
+        set(v) { appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putInt("plLink", v)?.apply() }
+    private var playlistIgnored = 0
 
     private var playlistSentAt = 0L
 
@@ -1333,6 +1359,9 @@ object TidalRemote {
     /** Nouvel essai pour lancer la bonne version : d'abord le lien exact du son, puis une recherche plus précise. */
     private fun retryLaunch(prev: Launch) {
         val c = tidal() ?: return
+        // entre-temps tu as lancé autre chose (une playlist…) : on ne relance pas l'ancien son par-dessus
+        val now = _state.value.launch
+        if (now == null || now.sentAt != prev.sentAt) return
         val l = prev.copy(status = LaunchStatus.Pending, tries = prev.tries + 1, sentAt = SystemClock.elapsedRealtime(), actual = null)
         _state.update { it.copy(launch = l) }
         if (l.tries == 1) {
