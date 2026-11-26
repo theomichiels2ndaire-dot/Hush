@@ -6,6 +6,8 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.zIndex
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.ViewAgenda
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.NightsStay
 import androidx.compose.material.icons.rounded.Repeat
@@ -56,6 +58,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -152,9 +155,27 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                         Text("File d'attente", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.4).sp, modifier = Modifier.weight(1f))
                         // passer de la liste aux pochettes (et inversement)
                         Box(
-                            Modifier.clip(PillShape).background(Color.White.copy(alpha = 0.1f))
-                                .bounceClick { com.theo.remote.Features.set(qf.copy(queueCovers = !qf.queueCovers)) }.padding(horizontal = 12.dp, vertical = 7.dp),
-                        ) { Text(if (qf.queueCovers) "Liste" else "Pochettes", color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                            Modifier.size(40.dp).clip(PillShape).background(Color.White.copy(alpha = 0.08f))
+                                .bounceClick { com.theo.remote.Features.set(qf.copy(queueCovers = !qf.queueCovers)) },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                if (qf.queueCovers) Icons.Rounded.ViewAgenda else Icons.Rounded.GridView,
+                                contentDescription = if (qf.queueCovers) "Afficher en liste" else "Afficher en pochettes",
+                                tint = Txt, modifier = Modifier.size(20.dp),
+                            )
+                        }
+                        if (upNext.isNotEmpty() || ctxQueue.isNotEmpty() || mixUp.isNotEmpty()) {
+                            Spacer(Modifier.width(8.dp))
+                            var confirm by remember { mutableStateOf(false) }
+                            LaunchedEffect(confirm) { if (confirm) { delay(3000); confirm = false } }
+                            Box(
+                                Modifier.height(40.dp).clip(PillShape).background(Color.White.copy(alpha = 0.08f))
+                                    .bounceClick { if (confirm) { TidalRemote.clearQueue(); confirm = false } else confirm = true }
+                                    .padding(horizontal = 14.dp),
+                                contentAlignment = Alignment.Center,
+                            ) { Text(if (confirm) "Sûr ?" else "Vider", color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                        }
                     }
                     Spacer(Modifier.height(12.dp))
                     // pochettes des sons de la file Tidal : donnée par Tidal, sinon retrouvée dans la playlist en cours ou ton historique
@@ -179,34 +200,27 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                             null -> ctxQueue.firstOrNull()?.let { Triple(it.title, it.artist, null) }
                                 ?: tidalAhead.firstOrNull()?.let { Triple(it.title, it.subtitle, tidalCover(it)) }
                         }
-                    if (nextUp != null) {
-                        NextUpCard(nextUp.first, nextUp.second, nextUp.third) { TidalRemote.next() }
-                        Spacer(Modifier.height(12.dp))
-                    }
-                    Row(Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        // « + 10 sons comme ça » : tes favoris proches du son en cours, ajoutés à la file
-                        val qctx = LocalContext.current
-                        val qscope = rememberCoroutineScope()
-                        var filling by remember { mutableStateOf(false) }
-                        PillButton(if (filling) "Je cherche…" else "+ 10 sons comme ça") {
-                            val cur = s.track ?: return@PillButton
-                            if (filling) return@PillButton
-                            filling = true
-                            qscope.launch {
-                                val got = runCatching {
-                                    InstantPlaylist.similar(qctx, cur.title, cur.artist, upNext.map { it.id }.toSet())
-                                }.getOrDefault(emptyList())
-                                if (got.isNotEmpty()) TidalRemote.replaceQueue(TidalRemote.upNext.value + got)
-                                TidalRemote.showToast(if (got.isEmpty()) "Rien de proche dans tes favoris" else "${got.size} sons ajoutés à la file")
-                                filling = false
+                    // le son en cours, en petite carte avec sa progression
+                    s.track?.let { cur ->
+                        Row(
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha = 0.06f)).padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Cover(bitmap = cur.art, radius = 10.dp, modifier = Modifier.size(48.dp))
+                            Spacer(Modifier.width(12.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("En cours", color = Ok, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(cur.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                if (cur.artist.isNotBlank()) Text(cur.artist, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
-                        }
-                        PillButton("Sons similaires", filled = false) { TidalRemote.playSimilar(); close() }
-                        if (upNext.isNotEmpty() || ctxQueue.isNotEmpty() || mixUp.isNotEmpty()) {
-                            var confirm by remember { mutableStateOf(false) }
-                            LaunchedEffect(confirm) { if (confirm) { delay(3000); confirm = false } }
-                            PillButton(if (confirm) "Sûr ? Touche encore" else "Vider la file", filled = false) {
-                                if (confirm) { TidalRemote.clearQueue(); confirm = false } else confirm = true
+                            if (cur.durationMs > 0) {
+                                var tick by remember { mutableStateOf(0L) }
+                                LaunchedEffect(s.isPlaying) { while (s.isPlaying) { delay(1000); tick++ } }
+                                val frac = remember(tick, s.positionMs, s.positionUpdatedAt) { (s.livePosition().toFloat() / cur.durationMs).coerceIn(0f, 1f) }
+                                Spacer(Modifier.width(10.dp))
+                                Box(Modifier.width(64.dp).height(4.dp).clip(PillShape).background(Color.White.copy(alpha = 0.15f))) {
+                                    Box(Modifier.fillMaxHeight().fillMaxWidth(frac).background(Txt))
+                                }
                             }
                         }
                     }
@@ -219,11 +233,14 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                         QueueHeader("À suivre", upNext.size)
                         Spacer(Modifier.height(if (qf.queueCovers) 10.dp else 4.dp))
                         if (qf.queueCovers) CoverQueueGrid(upNext) else ReorderableUpNext(upNext)
-                        Spacer(Modifier.height(12.dp))
-                        if (mixUp.isNotEmpty()) QueueHeader("Puis la playlist", mixUp.size)
-                        else if (ctxQueue.isNotEmpty()) QueueHeader("Puis ta lecture", ctxQueue.size)
-                        else if (tidalAhead.isNotEmpty()) QueueHeader("Puis", tidalAhead.size)
-                        Spacer(Modifier.height(4.dp))
+                        val after = if (mixUp.isNotEmpty()) mixUp.size else if (ctxQueue.isNotEmpty()) ctxQueue.size else tidalAhead.size
+                        if (after > 0) {
+                            Spacer(Modifier.height(14.dp))
+                            Box(Modifier.fillMaxWidth().height(1.dp).background(Color.White.copy(alpha = 0.08f)))
+                            Spacer(Modifier.height(14.dp))
+                            QueueHeader("Ensuite", after)
+                            Spacer(Modifier.height(if (qf.queueCovers) 10.dp else 4.dp))
+                        }
                     }
                     if (mixUp.isNotEmpty()) {
                         // playlist lancée par Hush : on montre la vraie suite de la playlist (pas la file interne de Tidal)
@@ -243,13 +260,19 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                                     is com.theo.remote.LocalMusic.Entry.L -> e.t.title to "${e.t.artist} · fichier local"
                                     is com.theo.remote.LocalMusic.Entry.T -> e.r.fullTitle to e.r.artistLine
                                 }
-                                Column(
+                                Row(
                                     Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                                         .bounceClick(pressedScale = 0.97f, onLongClick = { when (e) { is com.theo.remote.LocalMusic.Entry.T -> TrackMenu.open(e.r); else -> TrackMenu.open(TrackMenu.Target(t, a, null)) } }) { com.theo.remote.MixQueue.jumpTo(i) }
-                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                        .padding(horizontal = 4.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Text(t, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    if (a.isNotBlank()) Text(a, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    val cov: Any? = when (e) { is com.theo.remote.LocalMusic.Entry.T -> e.r.coverUrl; is com.theo.remote.LocalMusic.Entry.L -> e.t.art?.let { java.io.File(it) } }
+                                    Cover(model = cov, radius = 8.dp, modifier = Modifier.size(44.dp))
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(t, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        if (a.isNotBlank()) Text(a, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    }
                                 }
                             }
                         }
@@ -261,9 +284,13 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                         }
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             ctxQueue.forEach { c ->
-                                Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
-                                    Text(c.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    if (c.artist.isNotBlank()) Text(c.artist, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Cover(model = coverOf[com.theo.remote.QueueLogic.norm(c.title)], radius = 8.dp, modifier = Modifier.size(44.dp))
+                                    Spacer(Modifier.width(12.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(c.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        if (c.artist.isNotBlank()) Text(c.artist, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    }
                                 }
                             }
                         }
@@ -275,7 +302,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                         Spacer(Modifier.height(20.dp))
                     } else {
                         // le premier est déjà en grand au-dessus : la liste commence au suivant
-                        val rest = if (nextFromTidal) tidalAhead.drop(1) else tidalAhead
+                        val rest = tidalAhead
                         if (upNext.isEmpty() && rest.isNotEmpty()) {
                             QueueHeader("Ensuite", rest.size)
                             Spacer(Modifier.height(if (qf.queueCovers) 10.dp else 4.dp))
@@ -300,6 +327,27 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                                 }
                             }
                         }
+                    }
+                    // en bas de la file : remplir avec des sons proches, ou passer aux sons similaires
+                    Spacer(Modifier.height(18.dp))
+                    Row(Modifier.horizontalScroll(androidx.compose.foundation.rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val qctx = LocalContext.current
+                        val qscope = rememberCoroutineScope()
+                        var filling by remember { mutableStateOf(false) }
+                        PillButton(if (filling) "Je cherche…" else "+ 10 sons comme ça", filled = false) {
+                            val cur = s.track ?: return@PillButton
+                            if (filling) return@PillButton
+                            filling = true
+                            qscope.launch {
+                                val got = runCatching {
+                                    InstantPlaylist.similar(qctx, cur.title, cur.artist, upNext.map { it.id }.toSet())
+                                }.getOrDefault(emptyList())
+                                if (got.isNotEmpty()) TidalRemote.replaceQueue(TidalRemote.upNext.value + got)
+                                TidalRemote.showToast(if (got.isEmpty()) "Rien de proche dans tes favoris" else "${got.size} sons ajoutés à la file")
+                                filling = false
+                            }
+                        }
+                        PillButton("Sons similaires", filled = false) { TidalRemote.playSimilar(); close() }
                     }
                     Spacer(Modifier.height(16.dp))
                     } // fin de la zone qui défile
