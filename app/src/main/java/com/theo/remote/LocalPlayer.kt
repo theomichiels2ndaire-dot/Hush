@@ -432,6 +432,22 @@ object MixQueue {
         publish()
     }
 
+    /** Déplace un son de la suite (places comptées depuis le prochain son). */
+    fun move(from: Int, to: Int) {
+        val rest = all.drop(cursor)
+        if (from !in rest.indices || to !in rest.indices || from == to) return
+        all = all.take(cursor) + QueueLogic.move(rest, from, to)
+        publish()
+    }
+
+    /** Retire un son de la suite. */
+    fun removeAt(index: Int) {
+        val e = all.getOrNull(cursor + index) ?: return
+        all = all.filterIndexed { i, _ -> i != cursor + index }
+        original = original?.let { o -> val k = o.indexOf(e); if (k >= 0) o.filterIndexed { i, _ -> i != k } else o }
+        publish()
+    }
+
     /** La suite de la playlist arrive après le lancement (chargement en arrière-plan). */
     fun extend(more: List<LocalMusic.Entry>, shuffle: Boolean) {
         if (all.isEmpty() || more.isEmpty()) return

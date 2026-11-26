@@ -213,15 +213,6 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                                 Text(cur.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 if (cur.artist.isNotBlank()) Text(cur.artist, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
-                            if (cur.durationMs > 0) {
-                                var tick by remember { mutableStateOf(0L) }
-                                LaunchedEffect(s.isPlaying) { while (s.isPlaying) { delay(1000); tick++ } }
-                                val frac = remember(tick, s.positionMs, s.positionUpdatedAt) { (s.livePosition().toFloat() / cur.durationMs).coerceIn(0f, 1f) }
-                                Spacer(Modifier.width(10.dp))
-                                Box(Modifier.width(64.dp).height(4.dp).clip(PillShape).background(Color.White.copy(alpha = 0.15f))) {
-                                    Box(Modifier.fillMaxHeight().fillMaxWidth(frac).background(Txt))
-                                }
-                            }
                         }
                     }
                     Spacer(Modifier.height(16.dp))
@@ -253,28 +244,26 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                                 is com.theo.remote.LocalMusic.Entry.L -> Triple(e.t.title, e.t.artist, null)
                                 is com.theo.remote.LocalMusic.Entry.T -> Triple(e.r.fullTitle, e.r.artistLine, e.r.coverUrl)
                             }
-                        }) { i -> com.theo.remote.MixQueue.jumpTo(i) } else
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            mixUp.forEachIndexed { i, e ->
-                                val (t, a) = when (e) {
-                                    is com.theo.remote.LocalMusic.Entry.L -> e.t.title to "${e.t.artist} · fichier local"
-                                    is com.theo.remote.LocalMusic.Entry.T -> e.r.fullTitle to e.r.artistLine
+                        }) { i -> com.theo.remote.MixQueue.jumpTo(i) } else {
+                        // clé stable (pas la place) : une ligne déplacée garde son état, sans saut
+                        val seen = HashMap<String, Int>()
+                        ReorderableRows(
+                            mixUp.map { e ->
+                                val id = when (e) { is com.theo.remote.LocalMusic.Entry.T -> e.r.id; is com.theo.remote.LocalMusic.Entry.L -> "l" + e.t.id }
+                                val n = seen.merge(id, 1, Int::plus) ?: 1
+                                when (e) {
+                                    is com.theo.remote.LocalMusic.Entry.T -> QRow("$id#$n", e.r.fullTitle, e.r.artistLine, e.r.coverUrl, e.r)
+                                    is com.theo.remote.LocalMusic.Entry.L -> QRow("$id#$n", e.t.title, "${e.t.artist} · fichier local", e.t.art?.let { java.io.File(it) })
                                 }
-                                Row(
-                                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                                        .bounceClick(pressedScale = 0.97f, onLongClick = { when (e) { is com.theo.remote.LocalMusic.Entry.T -> TrackMenu.open(e.r); else -> TrackMenu.open(TrackMenu.Target(t, a, null)) } }) { com.theo.remote.MixQueue.jumpTo(i) }
-                                        .padding(horizontal = 4.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    val cov: Any? = when (e) { is com.theo.remote.LocalMusic.Entry.T -> e.r.coverUrl; is com.theo.remote.LocalMusic.Entry.L -> e.t.art?.let { java.io.File(it) } }
-                                    Cover(model = cov, radius = 8.dp, modifier = Modifier.size(44.dp))
-                                    Spacer(Modifier.width(12.dp))
-                                    Column(Modifier.weight(1f)) {
-                                        Text(t, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        if (a.isNotBlank()) Text(a, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    }
-                                }
-                            }
+                            },
+                            onMove = { f, t -> com.theo.remote.MixQueue.move(f, t) },
+                            onRemove = { k ->
+                                val snap = com.theo.remote.MixQueue.snapshot()
+                                com.theo.remote.MixQueue.removeAt(k)
+                                TidalRemote.offerUndo("Retiré de la suite", "mixRemove") { com.theo.remote.MixQueue.restore(snap) }
+                            },
+                            onTap = { k -> com.theo.remote.MixQueue.jumpTo(k) },
+                        )
                         }
                     } else if (ctxQueue.isNotEmpty()) {
                         // ce que tu écoutais avant que la file passe devant : Hush le reprend ensuite
@@ -484,6 +473,23 @@ private val UpNextRowH = 58.dp
  */
 @Composable
 private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
+    ReorderableRows(
+        list.map { QRow(it.id, it.fullTitle, it.artistLine, it.coverUrl, it) },
+        onMove = { f, t -> TidalRemote.moveInQueue(f, t) },
+        onRemove = { i -> TidalRemote.removeFromQueue(i) },
+        onTap = null,
+    )
+}
+
+/** Une ligne de la file (son de « À suivre » ou de la suite). */
+internal data class QRow(val key: Any, val title: String, val artist: String, val cover: Any?, val result: com.theo.remote.TidalApi.Result? = null)
+
+/**
+ * Liste qu'on réordonne au doigt : maintiens un son (n'importe où sur la ligne, ou la poignée ≡)
+ * puis glisse-le à sa place ; glisse-le sur le côté pour le retirer.
+ */
+@Composable
+private fun ReorderableRows(list: List<QRow>, onMove: (Int, Int) -> Unit, onRemove: (Int) -> Unit, onTap: ((Int) -> Unit)?) {
     val density = androidx.compose.ui.platform.LocalDensity.current
     // hauteur réelle d'une ligne, marges comprises (sinon la place visée dérivait au fil du glisser)
     val rowPx = with(density) { (UpNextRowH + 4.dp).toPx() }
@@ -495,7 +501,7 @@ private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
 
     Column {
         list.forEachIndexed { i, r ->
-            androidx.compose.runtime.key(r.id) {
+            androidx.compose.runtime.key(r.key) {
                 // décalage des autres lignes pendant qu'on en déplace une
                 val shift = when {
                     dragFrom < 0 || i == dragFrom -> 0f
@@ -509,7 +515,7 @@ private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
                 }
                 val dragging = i == dragFrom
                 SwipeAwayRow(
-                    onRemove = { TidalRemote.removeFromQueue(i) },
+                    onRemove = { onRemove(i) },
                     modifier = Modifier
                         .zIndex(if (dragging) 1f else 0f)
                         .graphicsLayer {
@@ -527,16 +533,30 @@ private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
                         Modifier.fillMaxWidth().height(UpNextRowH)
                             .clip(RoundedCornerShape(12.dp))
                             .background(if (dragging) Color(0xFF2E2F3D) else Color(0xFF15161D))
+                            // maintenir n'importe où sur la ligne puis glisser : on déplace le son
+                            .pointerInput(list.size, i) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { dragFrom = i; dragY = 0f; haptic(); gate?.let { it.blocked++ } },
+                                    onDragEnd = {
+                                        val to = (dragFrom + kotlin.math.round(dragY / rowPx).toInt()).coerceIn(0, list.lastIndex)
+                                        if (to != dragFrom && dragFrom >= 0) { onMove(dragFrom, to); haptic() }
+                                        dragFrom = -1; dragY = 0f
+                                        gate?.let { it.blocked-- }
+                                    },
+                                    onDragCancel = { dragFrom = -1; dragY = 0f; gate?.let { it.blocked-- } },
+                                ) { c, d -> c.consume(); dragY += d.y }
+                            }
+                            .then(if (onTap != null) Modifier.bounceClick(pressedScale = 0.98f) { onTap(i) } else Modifier)
                             .padding(horizontal = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Cover(model = r.coverUrl, radius = 8.dp, modifier = Modifier.size(44.dp).shadow(if (dragging) 10.dp else 4.dp, RoundedCornerShape(8.dp)))
+                        Cover(model = r.cover, radius = 8.dp, modifier = Modifier.size(44.dp).shadow(if (dragging) 10.dp else 4.dp, RoundedCornerShape(8.dp)))
                         Spacer(Modifier.width(10.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(r.fullTitle, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(r.artistLine, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(r.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            if (r.artist.isNotBlank()) Text(r.artist, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
-                        RatingBadge(r.title, r.artistLine)
+                        r.result?.let { RatingBadge(it.title, it.artistLine) }
                         // poignée : on la tient et on déplace
                         Box(
                             Modifier.size(44.dp).pointerInput(list.size, i) {
@@ -556,7 +576,7 @@ private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
                                         }
                                     } finally {
                                         val to = (dragFrom + kotlin.math.round(dragY / rowPx).toInt()).coerceIn(0, list.lastIndex)
-                                        if (to != dragFrom && dragFrom >= 0) { TidalRemote.moveInQueue(dragFrom, to); haptic() }
+                                        if (to != dragFrom && dragFrom >= 0) { onMove(dragFrom, to); haptic() }
                                         dragFrom = -1
                                         dragY = 0f
                                         gate?.let { it.blocked-- }
