@@ -126,7 +126,7 @@ fun HomeScreen(
     val forgotten = remember(visible) { History.forgotten(visible) }
     val recents = remember(visible) { visible.drop(6).take(20) }
 
-    val homeScroll = rememberScrollState()
+    val homeScroll = rememberSteadyScrollState()
     LaunchedEffect(Unit) { NavEvents.reselect.collect { if (it == "Home") homeScroll.animateScrollTo(0) } }
     Box(Modifier.fillMaxSize()) {
     Column(

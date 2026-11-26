@@ -99,7 +99,7 @@ fun StatsScreen() {
     }
     val wrapYear by com.theo.remote.Features.flags.collectAsState()
 
-    val statsScroll = rememberScrollState()
+    val statsScroll = rememberSteadyScrollState()
     LaunchedEffect(Unit) { NavEvents.reselect.collect { if (it == "Stats") statsScroll.animateScrollTo(0) } }
     // couleur de ton son n°1 : elle teinte toute la page (façon Replay)
     val acc = rememberModelCoverColors(statsState?.topTracks?.firstOrNull()?.first?.cover)
