@@ -60,44 +60,76 @@ object Updater {
             val apk = (0 until (assets?.length() ?: 0)).mapNotNull { assets?.optJSONObject(it) }
                 .firstOrNull { it.optString("name").endsWith(".apk") }
             if (apk != null && n > current()) {
-                _available.value = Release(n, j.optString("name", "Hush 1.$n"), apk.optString("browser_download_url"), apk.optLong("size"))
+                val rel = Release(n, j.optString("name", "Hush 1.$n"), apk.optString("browser_download_url"), apk.optLong("size"))
+                _available.value = rel
+                // en Wi-Fi : on télécharge déjà en fond, « Installer » sera immédiat
+                TidalRemote.appContext?.let { prefetch(it, rel) }
             } else if (force) TidalRemote.showToast("Hush est à jour")
         }.onFailure { if (force) TidalRemote.showToast("Impossible de vérifier : pas de connexion ?") }
     }
 
-    /** Télécharge l'APK puis ouvre l'écran d'installation d'Android. */
+    private fun apkFile(app: Context, r: Release) = java.io.File(java.io.File(app.cacheDir, "share").apply { mkdirs() }, "Hush-update-${r.number}.apk")
+
+    /** La version déjà téléchargée d'avance, si elle est complète. */
+    private fun ready(app: Context, r: Release): java.io.File? =
+        apkFile(app, r).takeIf { it.exists() && it.length() > 0 && (r.size <= 0 || it.length() == r.size) }
+
+    @Volatile private var prefetching = false
+
+    /** Téléchargement discret en fond, seulement en Wi-Fi (et si l'option est activée). */
+    private fun prefetch(ctx: Context, r: Release) {
+        val app = ctx.applicationContext
+        if (!Features.flags.value.prefetchUpdate || prefetching || ready(app, r) != null) return
+        val cm = app.getSystemService(android.net.ConnectivityManager::class.java) ?: return
+        if (runCatching { cm.isActiveNetworkMetered }.getOrDefault(true)) return
+        prefetching = true
+        try {
+            // les anciennes versions téléchargées ne servent plus
+            apkFile(app, r).parentFile?.listFiles()?.filter { it.name.startsWith("Hush-update") && it.name != apkFile(app, r).name }?.forEach { it.delete() }
+            val tmp = java.io.File(apkFile(app, r).path + ".part")
+            if (download(r, tmp, progress = false) && (r.size <= 0 || tmp.length() == r.size)) tmp.renameTo(apkFile(app, r)) else tmp.delete()
+        } catch (_: Exception) {
+        } finally { prefetching = false }
+    }
+
+    /** Télécharge l'APK de GitHub (en suivant ses redirections). */
+    private fun download(r: Release, out: java.io.File, progress: Boolean): Boolean = runCatching {
+        var url = URL(r.apkUrl)
+        var c: HttpURLConnection
+        var hops = 0
+        while (true) {
+            c = url.openConnection() as HttpURLConnection
+            c.instanceFollowRedirects = false
+            c.connectTimeout = 15_000; c.readTimeout = 30_000
+            val code = c.responseCode
+            if (code in 300..399 && hops < 5) { url = URL(url, c.getHeaderField("Location")); hops++; continue }
+            break
+        }
+        val total = c.contentLengthLong.takeIf { it > 0 } ?: r.size
+        c.inputStream.use { input ->
+            out.outputStream().use { o ->
+                val buf = ByteArray(64 * 1024)
+                var done = 0L
+                while (true) {
+                    val k = input.read(buf); if (k < 0) break
+                    o.write(buf, 0, k); done += k
+                    if (progress && total > 0) _progress.value = (done.toFloat() / total).coerceIn(0f, 1f)
+                }
+            }
+        }
+        true
+    }.getOrDefault(false)
+
+    /** Télécharge l'APK (sauf s'il est déjà prêt) puis ouvre l'écran d'installation d'Android. */
     suspend fun install(ctx: Context, r: Release) {
         if (_progress.value != null) return
         val app = ctx.applicationContext
-        _progress.value = 0f
-        val file = withContext(Dispatchers.IO) {
+        val pre = ready(app, r)
+        if (pre == null) _progress.value = 0f
+        val file = pre ?: withContext(Dispatchers.IO) {
             runCatching {
-                val dir = java.io.File(app.cacheDir, "share").apply { mkdirs() }
-                val out = java.io.File(dir, "Hush-update.apk")
-                var url = URL(r.apkUrl)
-                var c: HttpURLConnection
-                var hops = 0
-                // GitHub renvoie vers un autre serveur pour le fichier : on suit les redirections
-                while (true) {
-                    c = url.openConnection() as HttpURLConnection
-                    c.instanceFollowRedirects = false
-                    c.connectTimeout = 15_000; c.readTimeout = 30_000
-                    val code = c.responseCode
-                    if (code in 300..399 && hops < 5) { url = URL(url, c.getHeaderField("Location")); hops++; continue }
-                    break
-                }
-                val total = c.contentLengthLong.takeIf { it > 0 } ?: r.size
-                c.inputStream.use { input ->
-                    out.outputStream().use { o ->
-                        val buf = ByteArray(64 * 1024)
-                        var done = 0L
-                        while (true) {
-                            val k = input.read(buf); if (k < 0) break
-                            o.write(buf, 0, k); done += k
-                            if (total > 0) _progress.value = (done.toFloat() / total).coerceIn(0f, 1f)
-                        }
-                    }
-                }
+                val out = apkFile(app, r)
+                if (!download(r, out, progress = true)) error("échec")
                 out
             }.getOrNull()
         }
