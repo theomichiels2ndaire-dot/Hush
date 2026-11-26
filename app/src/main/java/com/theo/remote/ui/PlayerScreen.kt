@@ -364,7 +364,7 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
             Text(fmt(shownPos), color = timeColor, fontSize = timeSize, fontFamily = timeFont, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.CenterStart))
             // qualité + petit bouton des appareils (option) juste à côté
             Row(Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
-                if (!com.theo.remote.Features.flags.collectAsState().value.lightUi) QualityBadge(t?.title, t?.artist)
+                QualityBadge(t?.title, t?.artist)
                 if (com.theo.remote.Features.flags.collectAsState().value.deviceChip) {
                     Spacer(Modifier.width(6.dp))
                     DeviceButton()

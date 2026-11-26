@@ -219,7 +219,7 @@ internal fun GlassMixPlayer(s: TidalRemote.State, onClose: () -> Unit, onLyrics:
                                 },
                             )
                             Spacer(Modifier.width(8.dp))
-                            if (!com.theo.remote.Features.flags.value.lightUi) QualityBadge(t?.title, t?.artist)
+                            QualityBadge(t?.title, t?.artist)
                         }
                     }
                     Spacer(Modifier.width(12.dp))

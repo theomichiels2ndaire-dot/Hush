@@ -172,7 +172,7 @@ fun DisplayCard() {
         OptionRow("Bouton Annuler", "5 s pour revenir en arrière après avoir retiré un son, vidé la file ou changé l'ordre", f.undoBar) { Features.set(f.copy(undoBar = it)) }
         OptionRow("Lancer le bon son", "Lance tes playlists et tes sons par leur lien exact, pas par une recherche (évite qu'un autre son ou une autre playlist démarre)", f.exactLaunch) { Features.set(f.copy(exactLaunch = it)) }
         OptionRow("Recherche maline", "Tes sons déjà écoutés apparaissent dès la première lettre, et les fautes de frappe sont corrigées (« drak » → Drake)", f.smartSearch) { Features.set(f.copy(smartSearch = it)) }
-        OptionRow("Écrans allégés", "Accueil et lecteur sans les sections et petits textes secondaires (date, qualité, album, cartes…)", f.lightUi) { Features.set(f.copy(lightUi = it)) }
+        OptionRow("Écrans allégés", "Accueil et lecteur sans les sections et petits textes secondaires (date, album, cartes…)", f.lightUi) { Features.set(f.copy(lightUi = it)) }
         OptionRow("Playlists gardées sur le téléphone", "En Wi-Fi et en charge, Hush garde tes playlists en entier : tout s'ouvre et se mélange direct, même hors connexion", f.preloadPlaylists) { Features.set(f.copy(preloadPlaylists = it)) }
         OptionRow("Mises à jour prêtes d'avance", "En Wi-Fi, la nouvelle version se télécharge en fond : « Installer » est immédiat", f.prefetchUpdate) { Features.set(f.copy(prefetchUpdate = it)) }
         OptionRow("Retour sans fausse sortie", "Sur l'Accueil, il faut faire retour deux fois pour quitter Hush", f.safeBack) { Features.set(f.copy(safeBack = it)) }
