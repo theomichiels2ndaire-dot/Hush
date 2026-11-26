@@ -44,6 +44,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.firstOrNull
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -84,11 +86,11 @@ fun Modifier.bounceClick(
     val view = androidx.compose.ui.platform.LocalView.current
     val tick = pressedScale < 1f
     val click: () -> Unit = {
-        if (tick && com.theo.remote.Features.flags.value.haptics) view.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+        if (tick) Haptics.tap(view)
         onClick()
     }
     val long: (() -> Unit)? = onLongClick?.let { l -> {
-        if (com.theo.remote.Features.flags.value.haptics) view.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
+        Haptics.long(view)
         l()
     } }
     this
@@ -261,17 +263,30 @@ object Space {
 @Composable
 fun rememberHaptic(strong: Boolean = false): () -> Unit {
     val view = androidx.compose.ui.platform.LocalView.current
-    return remember(view, strong) {
-        {
-            val type = when {
-                strong && android.os.Build.VERSION.SDK_INT >= 30 -> android.view.HapticFeedbackConstants.CONFIRM
-                strong -> android.view.HapticFeedbackConstants.KEYBOARD_TAP
-                android.os.Build.VERSION.SDK_INT >= 27 -> android.view.HapticFeedbackConstants.KEYBOARD_PRESS
-                else -> android.view.HapticFeedbackConstants.KEYBOARD_TAP
-            }
-            view.performHapticFeedback(type)
-        }
+    return remember(view, strong) { { if (strong) Haptics.confirm(view) else Haptics.tap(view) } }
+}
+
+/**
+ * Les vibrations de Hush, les mêmes partout : une petite tape légère pour les boutons et les gestes,
+ * une plus franche pour confirmer (ajouté, aimé…), et l'appui long. Jamais deux d'affilée pour un seul geste.
+ */
+object Haptics {
+    private var lastAt = 0L
+    private var lastLevel = 0
+
+    private fun play(view: android.view.View, type: Int, level: Int) {
+        if (!com.theo.remote.Features.flags.value.haptics) return
+        val now = android.os.SystemClock.uptimeMillis()
+        // le bouton a déjà vibré pour ce même toucher (sauf si c'est une confirmation, plus forte)
+        if (now - lastAt < 80 && level <= lastLevel) return
+        lastAt = now; lastLevel = level
+        view.performHapticFeedback(type)
     }
+
+    fun tap(view: android.view.View) = play(view, android.view.HapticFeedbackConstants.KEYBOARD_TAP, 1)
+    fun confirm(view: android.view.View) = play(view,
+        if (android.os.Build.VERSION.SDK_INT >= 30) android.view.HapticFeedbackConstants.CONFIRM else android.view.HapticFeedbackConstants.KEYBOARD_TAP, 2)
+    fun long(view: android.view.View) = play(view, android.view.HapticFeedbackConstants.LONG_PRESS, 2)
 }
 
 // ---------------------------------------------------------------- squelettes de chargement
@@ -696,4 +711,35 @@ fun Modifier.flyFrom(from: androidx.compose.ui.geometry.Rect?): Modifier = compo
             translationX = (from.center.x - r.center.x) * k
             translationY = (from.center.y - r.center.y) * k
         }
+}
+
+/**
+ * Comme rememberScrollState, mais la position est vraiment retrouvée en revenant sur l'onglet :
+ * même si le contenu se charge un peu après (sinon on se retrouvait remonté en haut).
+ */
+@Composable
+fun rememberSteadyScrollState(): androidx.compose.foundation.ScrollState {
+    val st = androidx.compose.foundation.rememberScrollState()
+    var saved by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableIntStateOf(0) }
+    androidx.compose.runtime.LaunchedEffect(st) {
+        val target = saved
+        if (target > 0 && st.value < target) {
+            kotlinx.coroutines.withTimeoutOrNull(2500) {
+                androidx.compose.runtime.snapshotFlow { st.maxValue }.filter { it >= target }.firstOrNull()
+            }
+            st.scrollTo(target.coerceAtMost(st.maxValue))
+        }
+        androidx.compose.runtime.snapshotFlow { st.value }.collect { saved = it }
+    }
+    return st
+}
+
+/**
+ * Changement de son : pochette, fond, couleurs et titre passent au son suivant ensemble,
+ * en un seul fondu de même durée (au lieu de bouger chacun à son rythme).
+ */
+object SongChange {
+    fun ms(): Int = if (com.theo.remote.Features.flags.value.smoothChange) 1000 else 600
+    fun <T> spec(delay: Int = 0): androidx.compose.animation.core.TweenSpec<T> =
+        androidx.compose.animation.core.tween(ms() - delay, delayMillis = delay, easing = androidx.compose.animation.core.FastOutSlowInEasing)
 }

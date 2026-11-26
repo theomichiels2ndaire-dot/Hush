@@ -333,6 +333,7 @@ fun QuickRateStar(title: String?, artist: String?) {
     var holding by remember { mutableStateOf(false) }
     var value by remember { mutableIntStateOf(0) }
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val hapticView = androidx.compose.ui.platform.LocalView.current
     val density = androidx.compose.ui.platform.LocalDensity.current
     val step = with(density) { 40.dp.toPx() }
     val dead = with(density) { 14.dp.toPx() }
@@ -364,7 +365,7 @@ fun QuickRateStar(title: String?, artist: String?) {
                     value = 0
                     // la note est poussée directement au menu en verre (pas besoin d'attendre l'écran)
                     if (glassStars) PlayerOverlay.stars = 0
-                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                    Haptics.long(hapticView)
                     val startY = down.position.y
                     while (true) {
                         val ev = awaitPointerEvent()
