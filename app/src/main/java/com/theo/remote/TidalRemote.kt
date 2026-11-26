@@ -291,10 +291,7 @@ object TidalRemote {
     fun moveInQueue(from: Int, to: Int) {
         val before = _upNext.value
         if (from != to && from in before.indices && to in before.indices) offerUndo("Ordre changé", "moveQueue") { _upNext.value = before; saveUpNext() }
-        _upNext.update { list ->
-            if (from !in list.indices || to !in list.indices || from == to) list
-            else list.toMutableList().apply { add(to, removeAt(from)) }
-        }
+        _upNext.update { list -> QueueLogic.move(list, from, to) }
         saveUpNext()
     }
 
@@ -319,7 +316,7 @@ object TidalRemote {
     fun removeFromQueue(index: Int) {
         val before = _upNext.value
         before.getOrNull(index)?.let { r -> offerUndo("Retiré de la file : ${r.title}") { _upNext.value = before; saveUpNext() } }
-        _upNext.update { list -> list.filterIndexed { i, _ -> i != index } }
+        _upNext.update { list -> QueueLogic.removeAt(list, index) }
         saveUpNext()
     }
 
@@ -380,6 +377,28 @@ object TidalRemote {
     /** Ce qui vient après : la file Hush d'abord, puis la suite de ta lecture. */
     fun peekNext(): Pair<String, String>? =
         _upNext.value.firstOrNull()?.let { it.title to it.artistLine } ?: _context.value.firstOrNull()?.let { it.title to it.artist }
+
+    /** Un son voisin, pour l'aperçu quand tu glisses le mini-lecteur (cover = lien, fichier ou null). */
+    data class Peek(val title: String, val artist: String, val cover: Any?)
+
+    /** Le son qui arrivera si tu passes au suivant (true) ou au précédent (false). null = on ne sait pas. */
+    fun peekAdjacent(next: Boolean): Peek? {
+        if (LocalPlayer.active) return null
+        val st = _state.value
+        val qi = st.queue.indexOfFirst { it.id == st.activeQueueId }
+        if (!next) {
+            if (MixQueue.active || st.livePosition() > 3000) return null // revient au début du son, ou géré par Hush
+            return st.queue.getOrNull(qi - 1)?.takeIf { qi > 0 }?.let { Peek(it.title, it.subtitle, null) }
+        }
+        _upNext.value.firstOrNull()?.let { return Peek(it.fullTitle, it.artistLine, it.coverUrl) }
+        if (MixQueue.hasNext()) when (val e = MixQueue.peekNext()) {
+            is LocalMusic.Entry.T -> return Peek(e.r.fullTitle, e.r.artistLine, e.r.coverUrl)
+            is LocalMusic.Entry.L -> return Peek(e.t.title, e.t.artist, e.t.art?.let { java.io.File(it) })
+            null -> {}
+        }
+        _context.value.firstOrNull()?.let { return Peek(it.title, it.artist, null) }
+        return st.queue.getOrNull(qi + 1)?.takeIf { qi >= 0 }?.let { Peek(it.title, it.subtitle, null) }
+    }
 
     /** Lance le prochain son prévu. Renvoie false s'il n'y a rien. */
     private fun fireNext(): Boolean {
@@ -864,8 +883,7 @@ object TidalRemote {
         // On vérifie que le titre lancé depuis Hush est bien celui demandé
         val launch = _state.value.launch
         if (changed && launch?.status == LaunchStatus.Pending) {
-            val ok = matches(track!!.title, launch.expected) &&
-                (launch.artist.isBlank() || norm(track.artist).contains(norm(launch.artist)) || norm(launch.artist).contains(norm(track.artist)))
+            val ok = QueueLogic.isRightSong(track!!.title, track.artist, launch.expected, launch.artist)
             val canFix = !ok && Features.flags.value.fixVersions && launch.tries < 2 && launch.trackId.all { it.isDigit() }
             if (!ok && launch.tries == 0) Diag.add(Diag.Kind.OtherVersion, "« ${track.title} » au lieu de « ${launch.expected} »")
             if (canFix) {
