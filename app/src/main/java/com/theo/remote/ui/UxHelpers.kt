@@ -311,3 +311,57 @@ fun WhatsNewHost() {
         }
     }
 }
+
+/**
+ * Hush a planté la dernière fois : au lancement suivant, une carte propose de copier le rapport
+ * (à coller à Claude) ou de l'envoyer, en un tap. Une seule fois par plantage.
+ */
+@Composable
+fun CrashPromptHost() {
+    val ctx = LocalContext.current
+    if (!Features.flags.collectAsState().value.crashPrompt) return
+    val notes by com.theo.remote.WhatsNew.notes.collectAsState()
+    var crash by remember { mutableStateOf<CrashLog.Crash?>(null) }
+    LaunchedEffect(Unit) {
+        val p = ctx.getSharedPreferences("hush_crash", Context.MODE_PRIVATE)
+        val last = CrashLog.list().maxByOrNull { it.at }
+        if (!p.contains("seen")) { p.edit().putLong("seen", last?.at ?: 0L).apply(); return@LaunchedEffect }
+        if (last != null && last.at > p.getLong("seen", 0L)) crash = last
+    }
+    val c = crash ?: return
+    if (notes.isNotEmpty()) return // « Quoi de neuf » d'abord
+    fun done() {
+        ctx.getSharedPreferences("hush_crash", Context.MODE_PRIVATE).edit().putLong("seen", c.at).apply()
+        crash = null
+    }
+    BackHandler { done() }
+    Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)).clickable { done() })
+        GlassPlate(
+            Rounded(30), 30.dp,
+            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(10.dp).fillMaxWidth(),
+        ) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Hush a planté", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black)
+                Text("Copie le rapport et colle-le à Claude : la cause sera trouvée bien plus vite.", color = Txt2, fontSize = 15.sp, lineHeight = 21.sp)
+                Text(c.title, color = Txt3, fontSize = 12.sp, maxLines = 2)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PillButton("Copier le rapport") {
+                        ctx.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("Rapport Hush", buildReport(ctx)))
+                        TidalRemote.showToast("Rapport copié")
+                        done()
+                    }
+                    PillButton("Envoyer", filled = false) {
+                        val i = Intent(Intent.ACTION_SEND).setType("text/plain")
+                            .putExtra(Intent.EXTRA_SUBJECT, "Plantage Hush ${BuildConfig.VERSION_NAME}")
+                            .putExtra(Intent.EXTRA_TEXT, buildReport(ctx))
+                        ctx.startActivity(Intent.createChooser(i, "Envoyer le rapport").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        done()
+                    }
+                }
+                Text("Plus tard", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clip(Rounded(8)).bounceClick(pressedScale = 0.95f) { done() }.padding(horizontal = 4.dp, vertical = 6.dp))
+            }
+        }
+    }
+}
