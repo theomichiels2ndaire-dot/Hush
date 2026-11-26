@@ -34,16 +34,52 @@ object QueueLogic {
     /** Artiste principal (« Ninho, Jul » → « ninho », « Drake feat. X » → « drake »). */
     fun mainArtist(a: String) = a.split(",", "&", " feat", " ft.").first().trim().lowercase(Locale.ROOT)
 
+    /** Mélange équitable (Fisher–Yates) : chaque ordre a exactement la même chance. */
+    fun <T> fairShuffle(list: List<T>, rnd: java.util.Random): List<T> {
+        val a = list.toMutableList()
+        for (i in a.lastIndex downTo 1) {
+            val j = rnd.nextInt(i + 1)
+            val t = a[i]; a[i] = a[j]; a[j] = t
+        }
+        return a
+    }
+
     /**
-     * Évite deux sons du même artiste d'affilée quand c'est possible, en gardant au mieux l'ordre donné.
+     * « Frais d'abord » : les sons pas écoutés depuis longtemps (ou jamais) passent en premier,
+     * ceux d'aujourd'hui tout à la fin ; dans chaque groupe, l'ordre est vraiment au hasard.
      */
-    fun <T> spreadArtists(list: List<T>, artist: (T) -> String): List<T> {
-        val pool = list.toMutableList()
+    fun <T> freshOrder(list: List<T>, lastPlayed: (T) -> Long, now: Long, rnd: java.util.Random): List<T> {
+        val day = 24 * 3600_000L
+        fun bucket(x: T): Int {
+            val p = lastPlayed(x)
+            val age = now - p
+            return when {
+                p <= 0L || age >= 7 * day -> 0
+                age >= 3 * day -> 1
+                age >= day -> 2
+                else -> 3
+            }
+        }
+        return list.groupBy { bucket(it) }.toSortedMap().values.flatMap { fairShuffle(it, rnd) }
+    }
+
+    /**
+     * Espace les artistes : jamais le même artiste dans les [window] derniers sons quand c'est possible
+     * (sinon au moins pas deux d'affilée), en gardant au mieux l'ordre donné.
+     */
+    fun <T> spreadArtists(list: List<T>, window: Int = 3, artist: (T) -> String): List<T> {
+        val pool = list.map { it to mainArtist(artist(it)) }.toMutableList()
         val out = ArrayList<T>(pool.size)
+        val recent = ArrayDeque<String>()
         while (pool.isNotEmpty()) {
-            val prev = out.lastOrNull()?.let { mainArtist(artist(it)) }
-            val i = pool.indexOfFirst { mainArtist(artist(it)) != prev }.let { if (it < 0) 0 else it }
-            out += pool.removeAt(i)
+            // on ne regarde qu'un peu devant (rapide même pour 5000 sons) : l'ordre reste aléatoire
+            val look = minOf(pool.size, 60)
+            var i = (0 until look).firstOrNull { pool[it].second !in recent } ?: -1
+            if (i < 0) i = (0 until look).firstOrNull { pool[it].second != recent.lastOrNull() } ?: 0
+            val (item, a) = pool.removeAt(i)
+            out += item
+            recent.addLast(a)
+            while (recent.size > window) recent.removeFirst()
         }
         return out
     }

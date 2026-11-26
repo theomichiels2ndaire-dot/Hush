@@ -54,4 +54,35 @@ class QueueLogicTest {
         val songs = listOf("a1" to "A", "a2" to "A")
         assertEquals(2, QueueLogic.spreadArtists(songs) { it.second }.size)
     }
+
+    @Test fun fairShuffleKeepsEverything() {
+        val l = (1..50).toList()
+        val out = QueueLogic.fairShuffle(l, java.util.Random(7))
+        assertEquals(l.toSet(), out.toSet())
+        assertEquals(50, out.size)
+        assertTrue(out != l)
+    }
+
+    @Test fun fairShuffleIsEven() {
+        // chaque son a autant de chances d'être le premier
+        val counts = IntArray(5)
+        val r = java.util.Random(1)
+        repeat(50_000) { counts[QueueLogic.fairShuffle(listOf(0, 1, 2, 3, 4), r)[0]]++ }
+        counts.forEach { assertTrue("${counts.toList()}", it in 9_000..11_000) }
+    }
+
+    @Test fun freshFirst() {
+        val day = 24 * 3600_000L
+        val now = 100 * day
+        val played = mapOf("today" to now - 1000, "old" to now - 30 * day, "never" to 0L, "twoDays" to now - 2 * day)
+        val out = QueueLogic.freshOrder(played.keys.toList(), { played[it]!! }, now, java.util.Random(3))
+        assertEquals("today", out.last())
+        assertTrue(out.indexOf("twoDays") > out.indexOf("old") && out.indexOf("twoDays") > out.indexOf("never"))
+    }
+
+    @Test fun spreadWindowOfThree() {
+        val songs = listOf("a1" to "A", "a2" to "A", "b1" to "B", "b2" to "B", "c1" to "C", "c2" to "C", "d1" to "D", "d2" to "D")
+        val out = QueueLogic.spreadArtists(songs, window = 3) { it.second }
+        for (i in 1 until out.size) for (k in 1..3) if (i - k >= 0) assertTrue("$out", out[i].second != out[i - k].second)
+    }
 }
