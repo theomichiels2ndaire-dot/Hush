@@ -105,6 +105,39 @@ object TidalApi {
     private val artistCache = HashMap<String, ArtistPage>()
     private val albumCache = HashMap<String, AlbumPage>()
 
+    // ---------- pages artiste / album gardées sur le téléphone (instantanées, et lisibles sans réseau)
+    /** Dossier des pages gardées (donné au lancement de l'appli). */
+    @Volatile var detailDir: java.io.File? = null
+    private const val DETAIL_FRESH_MS = 12 * 3600_000L
+
+    private fun detailFile(kind: String, id: String) =
+        detailDir?.let { java.io.File(it.apply { mkdirs() }, kind + "_" + id.replace(Regex("[^A-Za-z0-9_-]"), "_") + ".json") }
+
+    private fun artistJson(a: Artist) = JSONObject().put("id", a.id).put("name", a.name).put("pic", a.pictureUrl ?: "")
+    private fun artistOf(o: JSONObject) = Artist(o.optString("id"), o.optString("name"), o.optString("pic").ifBlank { null })
+    private fun albumJson(a: Album) = JSONObject().put("id", a.id).put("title", a.title).put("artist", a.artist ?: "").put("cover", a.coverUrl ?: "")
+        .put("year", a.year ?: "").put("count", a.count).put("type", a.type ?: "").put("date", a.releaseDate ?: "")
+    private fun albumOf(o: JSONObject) = Album(o.optString("id"), o.optString("title"), o.optString("artist").ifBlank { null }, o.optString("cover").ifBlank { null },
+        o.optString("year").ifBlank { null }, o.optInt("count"), o.optString("type").ifBlank { null }, o.optString("date").ifBlank { null })
+
+    private fun saveDetail(kind: String, id: String, o: JSONObject) {
+        val f = detailFile(kind, id) ?: return
+        runCatching { SafeFile.write(f, o.put("at", System.currentTimeMillis()).toString()) }
+    }
+
+    /** (page, enregistrée il y a combien de ms) */
+    private fun <T> loadDetail(kind: String, id: String, parse: (JSONObject) -> T): Pair<T, Long>? {
+        val f = detailFile(kind, id) ?: return null
+        val text = SafeFile.read(f) ?: return null
+        return runCatching { val o = JSONObject(text); parse(o) to (System.currentTimeMillis() - o.optLong("at")) }.getOrNull()
+    }
+
+    private fun parseArtistPage(o: JSONObject) = ArtistPage(artistOf(o.getJSONObject("artist")),
+        History.decodeResults(o.optString("top")),
+        o.optJSONArray("albums")?.let { a -> (0 until a.length()).map { albumOf(a.getJSONObject(it)) } } ?: emptyList())
+
+    private fun parseAlbumPage(o: JSONObject) = AlbumPage(albumOf(o.getJSONObject("album")), History.decodeResults(o.optString("tracks")))
+
     private fun n(x: String) = x.lowercase().replace(Regex("[^\\p{L}\\p{N}]"), "")
 
     private fun artistFrom(o: JSONObject, byKey: Map<String, JSONObject>): Artist? {
@@ -187,6 +220,18 @@ object TidalApi {
     /** Page artiste : photo, sons populaires, albums. */
     suspend fun artistPage(artist: Artist): ArtistPage = withContext(Dispatchers.IO) {
         artistCache[artist.id]?.let { return@withContext it }
+        val saved = loadDetail("artist", artist.id, ::parseArtistPage)
+        if (saved != null && saved.second < DETAIL_FRESH_MS) return@withContext saved.first.also { artistCache[artist.id] = it }
+        val fresh = fetchArtistPage(artist)
+        // rien reçu (pas de réseau) : la version gardée, même ancienne
+        if (fresh.topTracks.isEmpty() && fresh.albums.isEmpty()) return@withContext saved?.first ?: fresh
+        artistCache[artist.id] = fresh
+        saveDetail("artist", artist.id, JSONObject().put("artist", artistJson(fresh.artist)).put("top", History.encodeResults(fresh.topTracks))
+            .put("albums", JSONArray().apply { fresh.albums.forEach { put(albumJson(it)) } }))
+        fresh
+    }
+
+    private suspend fun fetchArtistPage(artist: Artist): ArtistPage {
         val base = "$API/artists/${artist.id}"
 
         // photo (si la recherche ne l'a pas donnée)
@@ -212,13 +257,22 @@ object TidalApi {
             (0 until refs.length()).mapNotNull { i -> byKey["albums:${refs.getJSONObject(i).optString("id")}"]?.let { albumFrom(it, byKey) } }
         }.getOrNull() ?: emptyList()
 
-        ArtistPage(full, top.distinctBy { it.id }.take(10), albums.sortedByDescending { it.year ?: "" })
-            .also { artistCache[artist.id] = it }
+        return ArtistPage(full, top.distinctBy { it.id }.take(10), albums.sortedByDescending { it.year ?: "" })
     }
 
     /** Page album : pochette, infos, liste des titres. */
     suspend fun albumPage(album: Album): AlbumPage = withContext(Dispatchers.IO) {
         albumCache[album.id]?.let { return@withContext it }
+        val saved = loadDetail("album", album.id, ::parseAlbumPage)
+        if (saved != null && saved.second < DETAIL_FRESH_MS) return@withContext saved.first.also { albumCache[album.id] = it }
+        val fresh = try { fetchAlbumPage(album) } catch (e: Exception) { return@withContext saved?.first ?: throw e }
+        if (fresh.tracks.isEmpty() && saved != null) return@withContext saved.first
+        albumCache[album.id] = fresh
+        saveDetail("album", album.id, JSONObject().put("album", albumJson(fresh.album)).put("tracks", History.encodeResults(fresh.tracks)))
+        fresh
+    }
+
+    private suspend fun fetchAlbumPage(album: Album): AlbumPage {
         val base = "$API/albums/${album.id}"
         val full = if (album.coverUrl == null || album.artist == null) runCatching {
             val root = get("$base?countryCode=$COUNTRY&include=coverArt,artists")
@@ -237,7 +291,7 @@ object TidalApi {
         }
         // les titres d'un album n'ont pas leur propre pochette : on met celle de l'album
         val withCover = tracks.map { if (it.coverUrl == null) it.copy(coverUrl = full.coverUrl, album = it.album ?: full.title) else it }
-        AlbumPage(full, withCover).also { albumCache[album.id] = it }
+        return AlbumPage(full, withCover)
     }
 
     // ------------------------------------------------------------------ qualité du son en cours

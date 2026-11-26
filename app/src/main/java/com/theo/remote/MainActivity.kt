@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         CrashLog.install(this)
         Images.install(this)
+        TidalApi.detailDir = java.io.File(filesDir, "detail_cache")
         History.init(this)
         AutoResume.init(this)
         Recognizer.init(this) // partage TikTok : le jeton de reconnaissance doit être prêt tout de suite
