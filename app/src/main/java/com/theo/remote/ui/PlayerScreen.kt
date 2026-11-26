@@ -248,8 +248,9 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
             AnimatedContent(
                 targetState = t?.title to listOfNotNull(t?.artist?.ifBlank { null }, t?.album?.ifBlank { null }).joinToString(" — "),
                 transitionSpec = {
-                    (slideInHorizontally(spring(dampingRatio = 0.85f, stiffness = 340f)) { it / 6 } + fadeIn(tween(260))) togetherWith
-                        (slideOutHorizontally(tween(220)) { -it / 6 } + fadeOut(tween(160)))
+                    // le titre part pendant que la pochette commence son fondu, et le nouveau finit en même temps qu'elle
+                    (slideInHorizontally(SongChange.spec(160)) { it / 6 } + fadeIn(SongChange.spec(160))) togetherWith
+                        (slideOutHorizontally(tween(200)) { -it / 6 } + fadeOut(tween(160)))
                 },
                 modifier = Modifier.weight(1f),
                 label = "title",
@@ -832,7 +833,7 @@ private fun SwipeableCover(s: TidalRemote.State, onTap: () -> Unit = {}) {
         val accent = Ok
         if (disc) {
             // disque plat : un vinyle noir qui tourne, la pochette en étiquette au centre
-            Crossfade(t?.art, animationSpec = tween(350), label = "disc") { art ->
+            Crossfade(t?.art, animationSpec = SongChange.spec(), label = "disc") { art ->
                 Box(
                     Modifier.fillMaxSize().graphicsLayer {
                         val p = (offset.value / width).coerceIn(-1.5f, 1.5f)
@@ -861,7 +862,7 @@ private fun SwipeableCover(s: TidalRemote.State, onTap: () -> Unit = {}) {
             val tr = t
             if (flags.videoCovers && !flags.eco && tr != null) value = com.theo.remote.VideoCovers.get(tr.title, tr.artist, tr.album)
         }
-        Crossfade(t?.art, animationSpec = tween(350), label = "art") { art ->
+        Crossfade(t?.art, animationSpec = SongChange.spec(), label = "art") { art ->
             Box(Modifier.fillMaxSize()) {
             Cover(
                 bitmap = art,
@@ -1069,7 +1070,7 @@ private fun BigCover(s: TidalRemote.State, onClose: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Ambient(colors, strength = 1f, animated = true)
-        androidx.compose.animation.Crossfade(t?.art, animationSpec = tween(450), label = "bigArt") { art ->
+        androidx.compose.animation.Crossfade(t?.art, animationSpec = SongChange.spec(), label = "bigArt") { art ->
             Cover(bitmap = art, radius = 22.dp, modifier = Modifier.fillMaxWidth().padding(18.dp).aspectRatio(1f).shadow(40.dp, Rounded(22)))
         }
         Column(Modifier.align(Alignment.BottomCenter).systemBarsPadding().padding(bottom = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {

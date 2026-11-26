@@ -413,6 +413,7 @@ fun RemoteApp() {
         // vérification au premier lancement (et tant que l'indispensable manque)
         CleanupHost()
         WhatsNewHost()
+        CrashPromptHost()
         SetupScreen()
 
         // ajout à une playlist (par-dessus tout)
@@ -467,8 +468,8 @@ private fun MiniPlayer(s: TidalRemote.State, backdrop: Backdrop, onOpen: () -> U
     val progress = if (t.durationMs > 0) pos.toFloat() / t.durationMs else 0f
     val shape = Rounded(16)
     val cover = rememberCoverColors(t.art)
-    val tintA by animateColorAsState(cover.a, tween(700), label = "miniA")
-    val tintB by animateColorAsState(cover.b, tween(700), label = "miniB")
+    val tintA by animateColorAsState(cover.a, SongChange.spec(), label = "miniA")
+    val tintB by animateColorAsState(cover.b, SongChange.spec(), label = "miniB")
 
     val miniHaptic = rememberHaptic()
     val swipeHaptic = rememberHaptic(strong = true)

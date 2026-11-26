@@ -178,7 +178,7 @@ fun Ambient(colors: CoverColors, strength: Float, modifier: Modifier = Modifier,
     val flagsNow = com.theo.remote.Features.flags.collectAsState().value
     // style Pochette : fond noir uni ; en tête de page, la couleur de la pochette qui se fond dans le noir
     if (flagsNow.flatStyle && (themeable || header)) {
-        val top by animateColorAsState(androidx.compose.ui.graphics.lerp(colors.a, Color.Black, 0.38f), tween(700), label = "top")
+        val top by animateColorAsState(androidx.compose.ui.graphics.lerp(colors.a, Color.Black, 0.38f), SongChange.spec(), label = "top")
         Box(modifier.fillMaxSize().background(Ink)) {
             if (header) Box(
                 Modifier.fillMaxWidth().height(460.dp)
@@ -213,10 +213,9 @@ fun Ambient(colors: CoverColors, strength: Float, modifier: Modifier = Modifier,
         else -> colors
     }
     // changement de son en douceur (option) : les couleurs du fond glissent lentement de l'une à l'autre
-    val colorMs = if (flagsNow.smoothChange) 1600 else 900
-    val a by animateColorAsState(themed.a, tween(colorMs, easing = androidx.compose.animation.core.FastOutSlowInEasing), label = "a")
-    val b by animateColorAsState(themed.b, tween(colorMs + 200, easing = androidx.compose.animation.core.FastOutSlowInEasing), label = "b")
-    val c by animateColorAsState(themed.c, tween(colorMs + 400, easing = androidx.compose.animation.core.FastOutSlowInEasing), label = "c")
+    val a by animateColorAsState(themed.a, SongChange.spec(), label = "a")
+    val b by animateColorAsState(themed.b, SongChange.spec(), label = "b")
+    val c by animateColorAsState(themed.c, SongChange.spec(), label = "c")
     val stars = remember(bgTheme) {
         if (bgTheme != "bg:stars") emptyList() else {
             val r = kotlin.random.Random(42)

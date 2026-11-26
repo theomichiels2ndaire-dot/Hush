@@ -130,7 +130,7 @@ internal fun GlassMixPlayer(s: TidalRemote.State, onClose: () -> Unit, onLyrics:
                         ) { _, d -> total += d }
                     },
             ) {
-                Crossfade(t?.art, animationSpec = tween(450), label = "mixArt") { art ->
+                Crossfade(t?.art, animationSpec = SongChange.spec(), label = "mixArt") { art ->
                     if (art != null) Image(art.asImageBitmap(), contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 }
             }
