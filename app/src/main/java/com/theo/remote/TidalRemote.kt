@@ -686,6 +686,12 @@ object TidalRemote {
         }
     }
 
+    private var power: android.os.PowerManager? = null
+    private fun screenOn(): Boolean {
+        val pm = power ?: appContext?.getSystemService(android.os.PowerManager::class.java)?.also { power = it } ?: return true
+        return pm.isInteractive
+    }
+
     private val endWatcher = object : Runnable {
         override fun run() {
             checkEndOfQueue()
@@ -705,8 +711,15 @@ object TidalRemote {
             val remaining = if (t != null && t.durationMs > 0) t.durationMs - st.livePosition() else Long.MAX_VALUE
             val critical = nearEndKey != null || remaining < 25_000 || nowMs - keyChangedAt < 15_000 ||
                 st.launch?.status == LaunchStatus.Pending || LocalPlayer.active
+            // écran éteint : personne ne regarde l'écran, on surveille bien moins souvent —
+            // sauf la fin du son et les lancements, qui gardent la même précision (enchaînements intacts)
+            val screenOff = Features.flags.value.batterySaver && !screenOn()
+            val endZone = nearEndKey != null || remaining < 25_000 || st.launch?.status == LaunchStatus.Pending || LocalPlayer.active
             val delay = when {
-                !st.isPlaying && nearEndKey == null -> 1500L
+                !st.isPlaying && nearEndKey == null -> if (screenOff) 5000L else 1500L
+                screenOff && endZone -> 250L
+                screenOff && critical -> 600L
+                screenOff -> 2500L
                 critical -> 250L
                 else -> 600L
             }
