@@ -875,6 +875,7 @@ object TidalRemote {
         if (changed && wantShuffle) main.postDelayed({ enforceShuffle() }, 600)
         if (changed && previousTitle != null) {
             log("Titre → ${track!!.title}")
+            _state.value.track?.let { rememberPlayed(it) }
         }
         // message au futur toi qui arrive à échéance sur ce son
         if (changed) runCatching { TimeCapsule.onPlay(track!!.title, track.artist) }
@@ -894,6 +895,7 @@ object TidalRemote {
                 _state.update {
                     it.copy(launch = launch.copy(status = if (ok) LaunchStatus.Ok else LaunchStatus.OtherVersion, actual = track.title))
                 }
+                if (ok) lastGoodLaunch = launch
                 if (ok && launch.viaLink) { linkIgnored = 0; if (trackLinkMode != 1) trackLinkMode = 1 }
                 else if (ok && launch.tries > 0) { log("Bonne version retrouvée : ${launch.expected}"); Diag.add(Diag.Kind.Fixed, launch.expected) }
             }
@@ -966,14 +968,43 @@ object TidalRemote {
         }, 1500)
     }
 
+    // ---------- Sons d'avant ----------
+    // Les sons lancés par Hush (lien exact, file « À suivre »…) n'ont pas d'historique côté Tidal :
+    // « précédent » n'y faisait rien. Hush retient donc lui-même les derniers sons passés.
+    private data class Back(val title: String, val artist: String, val id: String?)
+    private val backStack = ArrayDeque<Back>()
+    private var goingBack = false
+    /** Le dernier son lancé par Hush et bien parti (pour retrouver son lien exact en revenant dessus). */
+    private var lastGoodLaunch: Launch? = null
+
+    private fun rememberPlayed(prev: Track) {
+        if (goingBack) { goingBack = false; return }
+        val l = lastGoodLaunch
+        val id = l?.trackId?.takeIf { it.isNotEmpty() && it.all { c -> c.isDigit() } && QueueLogic.sameTitle(prev.title, l.expected) }
+        if (backStack.lastOrNull()?.let { QueueLogic.sameTitle(it.title, prev.title) } == true) return
+        backStack.addLast(Back(prev.title, prev.artist, id))
+        while (backStack.size > 50) backStack.removeFirst()
+    }
+
     fun previous() {
-        lastPrevAt = SystemClock.elapsedRealtime()
-        // playlist enchaînée par Hush : Tidal ne connaît pas le son d'avant, c'est Hush qui y revient
-        if (MixQueue.active && !LocalPlayer.active) {
-            if (_state.value.livePosition() > 3000) seekTo(0) else MixQueue.back()
-            return
-        }
-        controls?.skipToPrevious()
+        val now = SystemClock.elapsedRealtime()
+        // deux appuis rapprochés : le 1er a remis le son au début, le 2e revient vraiment au son d'avant
+        val again = now - lastPrevAt < 2500
+        lastPrevAt = now
+        if (LocalPlayer.active) { controls?.skipToPrevious(); return }
+        if (!again && _state.value.livePosition() > 3000) { seekTo(0); return }
+        // playlist enchaînée par Hush : c'est Hush qui y revient
+        if (MixQueue.active) { MixQueue.back(); return }
+        // Tidal connaît le son d'avant dans sa file
+        val st = _state.value
+        val qi = st.queue.indexOfFirst { it.id == st.activeQueueId }
+        if (qi > 0) { controls?.skipToPrevious(); return }
+        // sinon : le dernier son passé retenu par Hush (et le son actuel revient juste après)
+        val b = backStack.removeLastOrNull()
+        if (b == null) { controls?.skipToPrevious(); return }
+        st.track?.let { cur -> _context.update { listOf(Ctx(cur.title, cur.artist)) + it } }
+        goingBack = true
+        launch(b.id ?: "${b.title}|${b.artist}", b.title, listOf(b.title, b.artist).filter { it.isNotBlank() }.joinToString(" "), b.artist)
     }
 
     fun seekTo(ms: Long) {
