@@ -56,11 +56,11 @@ fun SharedLinkSheet() {
             Text("Depuis ${u.source}" + (u.how?.let { " · $it" } ?: ""), color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
             when {
                 u.loading -> {
-                    Text("Recherche sur Tidal…", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                    Text("Recherche sur Tidal…", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
                     SkeletonList(2)
                 }
                 u.best == null -> {
-                    Text(u.error ?: "Pas trouvé sur Tidal", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(u.error ?: "Pas trouvé sur Tidal", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
                     Text(u.asked, color = Txt2, fontSize = 13.sp, maxLines = 4, overflow = TextOverflow.Ellipsis)
                     PlatformChips(u)
                     PillButton("Fermer", filled = false) { SharedLink.close() }
@@ -71,8 +71,8 @@ fun SharedLinkSheet() {
                         Cover(model = r.coverUrl, radius = 8.dp, modifier = Modifier.size(76.dp))
                         Spacer(Modifier.width(14.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(r.fullTitle, color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Text(r.artistLine, color = Txt2, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(r.fullTitle, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Text(r.artistLine, color = Txt2, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -122,7 +122,7 @@ private fun OtherRow(r: TidalApi.Result, onClick: () -> Unit) {
         Cover(model = r.coverUrl, radius = 6.dp, modifier = Modifier.size(40.dp))
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
-            Text(r.fullTitle, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(r.fullTitle, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(r.artistLine, color = Txt2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
@@ -144,13 +144,13 @@ fun CapsuleWriteDialog() {
             Modifier.fillMaxWidth().clip(Rounded(18)).background(Surface2).padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Message au futur toi", color = Txt, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Message au futur toi", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
             Text(
                 "Il ressortira quand tu réécouteras « $title », passé la date choisie.",
                 color = Txt2, fontSize = 13.sp, lineHeight = 18.sp,
             )
             Box(
-                Modifier.fillMaxWidth().heightIn(min = 110.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.06f)).padding(12.dp),
+                Modifier.fillMaxWidth().heightIn(min = 110.dp).clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.06f)).padding(12.dp),
             ) {
                 if (text.isEmpty()) Text("Ex : l'été à Rotterdam, en train avec les potes", color = Txt3, fontSize = 15.sp)
                 BasicTextField(
@@ -165,7 +165,7 @@ fun CapsuleWriteDialog() {
                     val on = i == choice
                     Text(
                         label, color = if (on) Ink else Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(if (on) Txt else Color.White.copy(alpha = 0.08f))
+                        modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(if (on) Txt else Color.White.copy(alpha = 0.08f))
                             .bounceClick { choice = i }.padding(horizontal = 12.dp, vertical = 8.dp),
                     )
                 }
@@ -197,7 +197,7 @@ fun CapsuleRevealDialog() {
                 "Message de toi · écrit le " + SimpleDateFormat("d MMMM yyyy", Locale.FRANCE).format(Date(cap.createdAt)),
                 color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold,
             )
-            Text("${cap.title} · ${cap.artist}", color = Ok, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("${cap.title} · ${cap.artist}", color = Ok, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(2.dp))
             Text(cap.text, color = Txt, fontSize = 20.sp, lineHeight = 27.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(6.dp))

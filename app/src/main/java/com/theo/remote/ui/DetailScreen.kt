@@ -152,7 +152,7 @@ fun ArtistScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                                 Text(
                                     if (r == 1) "Ton artiste n°1 ce mois-ci" else "Dans ton top $r ce mois-ci",
                                     color = Ink, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.clip(PillShape).background(accent).padding(horizontal = 10.dp, vertical = 4.dp),
+                                    modifier = Modifier.clip(PillShape).background(accent).padding(horizontal = 12.dp, vertical = 4.dp),
                                 )
                             }
                             Text(
@@ -188,7 +188,7 @@ fun ArtistScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                             ) { Icon(if (isF) Icons.Rounded.Check else Icons.Rounded.Add, contentDescription = if (isF) "Suivi" else "Suivre", tint = Txt, modifier = Modifier.size(22.dp)) }
                         }
                     }
-                    if (flags.discography) page?.let { Spacer(Modifier.height(10.dp)); DiscographyBar(name, it) }
+                    if (flags.discography) page?.let { Spacer(Modifier.height(12.dp)); DiscographyBar(name, it) }
                 }
             }
 
@@ -220,7 +220,7 @@ fun ArtistScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                                 )
                             }
                             Box(
-                                Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)).background(Txt)
+                                Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(Txt)
                                     .bounceClick { TidalRemote.playAlbum(latest.title, latest.artist ?: name) },
                                 contentAlignment = Alignment.Center,
                             ) { Icon(Icons.Rounded.PlayArrow, contentDescription = "Lire ${latest.title}", tint = Ink, modifier = Modifier.size(24.dp)) }
@@ -232,7 +232,7 @@ fun ArtistScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                             g.padding(top = 14.dp).fillMaxWidth().clip(Rounded(14)).background(Surface2).padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text("Toi et $name", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text("Toi et $name", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Row {
                                 MeStat(fmtHours(me.ms), "écoutées", Modifier.weight(1f))
                                 MeStat("${me.distinct}", if (me.distinct > 1) "sons différents" else "son", Modifier.weight(1f))
@@ -260,7 +260,7 @@ fun ArtistScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                                 }
                                 Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(r.fullTitle, color = if (playing || fav) accent else Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Text(r.fullTitle, color = if (playing || fav) accent else Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     Text(
                                         when {
                                             fav -> "Ton préféré · $n écoute${if (n > 1) "s" else ""}"
@@ -278,7 +278,7 @@ fun ArtistScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                         }
                         if (p.topTracks.size > 5) item(key = "more") {
                             Text(
-                                if (allTop) "Moins" else "Voir les ${p.topTracks.size}", color = Txt2, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                                if (allTop) "Moins" else "Voir les ${p.topTracks.size}", color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold,
                                 modifier = g.padding(top = 4.dp).clip(RoundedCornerShape(8.dp)).bounceClick { allTop = !allTop }.padding(vertical = 10.dp),
                             )
                         }
@@ -296,7 +296,7 @@ fun ArtistScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                                     val on = k == kind
                                     Text(
                                         label, color = if (on) Ink else Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(start = 6.dp).clip(RoundedCornerShape(10.dp)).background(if (on) Txt else Surface2)
+                                        modifier = Modifier.padding(start = 6.dp).clip(RoundedCornerShape(12.dp)).background(if (on) Txt else Surface2)
                                             .bounceClick { discKind = k }.padding(horizontal = 12.dp, vertical = 8.dp),
                                     )
                                 }
@@ -319,7 +319,7 @@ fun ArtistScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                                     ) {
                                         Cover(model = a.pictureUrl, radius = 48.dp, modifier = Modifier.size(96.dp))
                                         Spacer(Modifier.height(8.dp))
-                                        Text(a.name, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(a.name, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     }
                                 }
                             }
@@ -350,7 +350,7 @@ private fun ArtistButton(icon: ImageVector, label: String, bg: Color, fg: Color,
     ) {
         Icon(icon, contentDescription = null, tint = fg, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(8.dp))
-        Text(label, color = fg, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        Text(label, color = fg, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
     }
 }
 
@@ -470,9 +470,9 @@ fun AlbumScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Cover(model = a?.coverUrl?.let { TidalApi.bigPicture(it) }, radius = 18.dp, modifier = Modifier.size(290.dp).shadow(40.dp, Rounded(18), ambientColor = colors.a, spotColor = colors.a))
                     }
-                    Spacer(Modifier.height(22.dp))
+                    Spacer(Modifier.height(24.dp))
                     Column(g.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(title, color = Txt, fontSize = 28.sp, lineHeight = 31.sp, fontWeight = FontWeight.Black, maxLines = 3, overflow = TextOverflow.Ellipsis, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        Text(title, color = Txt, fontSize = 30.sp, lineHeight = 31.sp, fontWeight = FontWeight.Black, maxLines = 3, overflow = TextOverflow.Ellipsis, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         if (!artist.isNullOrBlank()) {
                             Text(
                                 artist, color = accent, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -532,19 +532,19 @@ fun AlbumScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                             g.padding(top = 18.dp).fillMaxWidth().glass(Rounded(20), fill = 0.10f).padding(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            Text("Toi et cet album", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                            Text("Toi et cet album", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
                             Row {
                                 MeStat("$heard/${p.tracks.size}", "sons écoutés", Modifier.weight(1f))
                                 MeStat("${counts.sum()}", "écoutes", Modifier.weight(1f))
                                 MeStat(if (heard == p.tracks.size) "Fini" else "${p.tracks.size - heard}", if (heard == p.tracks.size) "en entier" else "à découvrir", Modifier.weight(1f))
                             }
                             // avancement : une barre unie
-                            Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(Color.White.copy(alpha = 0.10f))) {
-                                Box(Modifier.fillMaxWidth(heard.toFloat() / p.tracks.size).height(6.dp).clip(RoundedCornerShape(3.dp)).background(accent))
+                            Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(4.dp)).background(Color.White.copy(alpha = 0.10f))) {
+                                Box(Modifier.fillMaxWidth(heard.toFloat() / p.tracks.size).height(6.dp).clip(RoundedCornerShape(4.dp)).background(accent))
                             }
                         }
                     }
-                    item(key = "tracksGap") { Spacer(Modifier.height(14.dp)) }
+                    item(key = "tracksGap") { Spacer(Modifier.height(16.dp)) }
                     itemsIndexed(p.tracks, key = { i, r -> "a$i-${r.id}" }) { i, r ->
                         val n = counts.getOrElse(i) { 0 }
                         val fav = i == favIdx
@@ -560,7 +560,7 @@ fun AlbumScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
                                 else Text("${i + 1}", color = if (fav) accent else Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                             }
                             Column(Modifier.weight(1f)) {
-                                Text(r.fullTitle, color = if (hi) accent else Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(r.fullTitle, color = if (hi) accent else Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 val feat = r.artistLine.takeIf { !it.equals(artist, true) }
                                 val tag = when {
                                     fav -> "Ton préféré · $n écoute${if (n > 1) "s" else ""}"

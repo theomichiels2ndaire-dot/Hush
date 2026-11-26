@@ -197,7 +197,7 @@ private fun Stories(r: Recap, onClose: () -> Unit) {
             }
             Text(
                 "Hush",
-                color = Txt.copy(alpha = 0.7f), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold,
+                color = Txt.copy(alpha = 0.7f), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold,
                 modifier = Modifier.align(Alignment.BottomStart).systemBarsPadding().padding(start = 28.dp, bottom = 36.dp),
             )
         }
@@ -217,7 +217,7 @@ private fun Stories(r: Recap, onClose: () -> Unit) {
                 }
             }
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Récap ${r.of}", color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text("Récap ${r.of}", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 Box(Modifier.size(36.dp).clip(PillShape).bounceClick(pressedScale = 0.85f, onClick = onClose), contentAlignment = Alignment.Center) {
                     Icon(Icons.Rounded.Close, contentDescription = "Fermer", tint = Txt, modifier = Modifier.size(24.dp))
                 }
@@ -239,12 +239,12 @@ private fun Stories(r: Recap, onClose: () -> Unit) {
                         paused = false
                     }
                 }
-                .padding(horizontal = 18.dp, vertical = 12.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Rounded.IosShare, contentDescription = null, tint = Ink, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
-            Text("Partager", color = Ink, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Partager", color = Ink, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
         }
     }
 }
@@ -281,7 +281,7 @@ private fun Slide(i: Int, r: Recap) {
     when (i) {
         0 -> Center {
             Big("Ton ${r.unit} ${r.of}", 44)
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(20.dp))
             Small("${st.plays} écoutes, ${st.distinctTracks} sons différents, ${st.distinctArtists} artistes.")
             Spacer(Modifier.height(6.dp))
             Small("On regarde ça ensemble ?")
@@ -290,7 +290,7 @@ private fun Slide(i: Int, r: Recap) {
             Small("Tu as écouté")
             CountUp(st.minutes) { "$it" }
             Big("minutes de musique", 30)
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(20.dp))
             val diff = if (r.prevMinutes > 0) ((st.minutes - r.prevMinutes) * 100 / r.prevMinutes).toInt() else null
             Small(
                 when {
@@ -304,9 +304,9 @@ private fun Slide(i: Int, r: Recap) {
             val top = st.topTracks.firstOrNull()
             Center {
                 Small("Ton son n°1")
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(20.dp))
                 Cover(model = top?.first?.cover, radius = 18.dp, modifier = Modifier.fillMaxWidth(0.78f).aspectRatio(1f).shadow(30.dp, Rounded(18)))
-                Spacer(Modifier.height(22.dp))
+                Spacer(Modifier.height(24.dp))
                 Big(top?.first?.title ?: "—", 32, maxLines = 2)
                 Small(top?.first?.artist.orEmpty())
                 Spacer(Modifier.height(8.dp))
@@ -315,18 +315,18 @@ private fun Slide(i: Int, r: Recap) {
         }
         3 -> Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
             Big("Ton top 5", 38)
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(24.dp))
             st.topTracks.take(5).forEachIndexed { n, (e, c) -> Stagger(n) { TopLine(n + 1, e.title, e.artist, c, e.cover) } }
         }
         4 -> {
             val top = st.topArtists.firstOrNull()
             Center {
                 Small("L'artiste de ton ${r.unit}")
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
                 Big(top?.first ?: "—", 50, maxLines = 2)
                 Spacer(Modifier.height(16.dp))
                 top?.let { Small("${it.second} écoutes · ${r.artistShare} % de ton ${r.unit}", bold = true) }
-                Spacer(Modifier.height(26.dp))
+                Spacer(Modifier.height(28.dp))
                 st.topArtists.drop(1).take(4).forEachIndexed { n, (a, c) ->
                     Stagger(n) { Small("${n + 2}. $a  ·  $c") }
                 }
@@ -345,7 +345,7 @@ private fun Slide(i: Int, r: Recap) {
                         else -> "Oiseau de nuit confirmé."
                     },
                 )
-                Spacer(Modifier.height(26.dp))
+                Spacer(Modifier.height(28.dp))
                 HourBars(st.perHour)
             }
         }
@@ -379,14 +379,14 @@ private fun Summary(r: Recap) {
                     Text("Top sons", color = Txt2, fontSize = 12.sp)
                     Spacer(Modifier.height(4.dp))
                     st.topTracks.take(5).forEachIndexed { n, (e, _) ->
-                        Text("${n + 1}. ${e.title}", color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("${n + 1}. ${e.title}", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
                 Column(Modifier.weight(1f)) {
                     Text("Top artistes", color = Txt2, fontSize = 12.sp)
                     Spacer(Modifier.height(4.dp))
                     st.topArtists.take(5).forEachIndexed { n, (a, _) ->
-                        Text("${n + 1}. $a", color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("${n + 1}. $a", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -396,7 +396,7 @@ private fun Summary(r: Recap) {
                     Spacer(Modifier.width(12.dp))
                     Column {
                         Text(if (r.year) "Son de l'année" else "Son du mois", color = Txt2, fontSize = 12.sp)
-                        Text(e.title, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(e.title, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -449,9 +449,9 @@ private fun TopLine(rank: Int, title: String, artist: String, count: Int, cover:
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(title, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(artist, color = Txt.copy(alpha = 0.75f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(artist, color = Txt.copy(alpha = 0.75f), fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Text("$count", color = Txt.copy(alpha = 0.75f), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text("$count", color = Txt.copy(alpha = 0.75f), fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
 }
 

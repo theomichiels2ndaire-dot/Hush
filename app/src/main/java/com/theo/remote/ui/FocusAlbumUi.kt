@@ -164,14 +164,14 @@ private fun FocusAlbumScreen(x: FocusAlbum.Session, s: TidalRemote.State) {
                 ) {
                     Box(Modifier.fillMaxWidth()) {
                         Box(
-                            Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(Color.Black.copy(alpha = 0.35f)).bounceClick { FocusAlbum.stop() },
+                            Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)).background(Color.Black.copy(alpha = 0.35f)).bounceClick { FocusAlbum.stop() },
                             contentAlignment = Alignment.Center,
                         ) { Icon(Icons.Rounded.Close, contentDescription = "Quitter l'écoute", tint = Txt, modifier = Modifier.size(22.dp)) }
                     }
                     Spacer(Modifier.height(8.dp))
                     Cover(model = x.cover?.let { TidalApi.bigPicture(it) }, radius = 12.dp, modifier = Modifier.size(280.dp))
-                    Spacer(Modifier.height(18.dp))
-                    Text(x.title, color = Txt, fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(20.dp))
+                    Text(x.title, color = Txt, fontSize = 26.sp, lineHeight = 28.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     Text(x.artist, color = Txt.copy(alpha = 0.75f), fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                     Spacer(Modifier.height(16.dp))
                     // un segment par son : ceux passés pleins, celui en cours qui se remplit
@@ -216,7 +216,7 @@ private fun FocusAlbumScreen(x: FocusAlbum.Session, s: TidalRemote.State) {
                         else Text("${i + 1}", color = if (past) Txt3 else Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     }
                     Text(
-                        r.fullTitle, color = when { now -> accent; past -> Txt3; else -> Txt }, fontSize = 16.sp, fontWeight = FontWeight.Bold,
+                        r.fullTitle, color = when { now -> accent; past -> Txt3; else -> Txt }, fontSize = 17.sp, fontWeight = FontWeight.Bold,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
                     )
                 }
@@ -225,7 +225,7 @@ private fun FocusAlbumScreen(x: FocusAlbum.Session, s: TidalRemote.State) {
         // un seul bouton : lecture / pause (pas de saut, c'est le principe)
         Box(
             Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 28.dp)
-                .size(72.dp).clip(RoundedCornerShape(10.dp)).background(accent).bounceClick { TidalRemote.playPause() },
+                .size(72.dp).clip(RoundedCornerShape(12.dp)).background(accent).bounceClick { TidalRemote.playPause() },
             contentAlignment = Alignment.Center,
         ) {
             Icon(if (s.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, contentDescription = if (s.isPlaying) "Pause" else "Lecture", tint = Ink, modifier = Modifier.size(38.dp))
@@ -242,21 +242,21 @@ private fun FocusEnd(x: FocusAlbum.Session, accent: Color) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Cover(model = x.cover, radius = 12.dp, modifier = Modifier.size(200.dp))
-        Spacer(Modifier.height(22.dp))
-        Text("Album écouté en entier", color = Txt, fontSize = 24.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(24.dp))
+        Text("Album écouté en entier", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
         Text("${x.title} · ${x.artist}", color = Txt2, fontSize = 15.sp, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(24.dp))
         if (com.theo.remote.Features.flags.value.ratings) {
             Box(
-                Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(10.dp)).background(accent)
+                Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(12.dp)).background(accent)
                     .bounceClick { FocusAlbum.stop(); Ratings.edit(Ratings.Kind.Album, x.title, mainArtist(x.artist), x.cover) },
                 contentAlignment = Alignment.Center,
-            ) { Text(if (rated != null) "Revoir ta note" else "Noter l'album", color = Ink, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold) }
-            Spacer(Modifier.height(10.dp))
+            ) { Text(if (rated != null) "Revoir ta note" else "Noter l'album", color = Ink, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold) }
+            Spacer(Modifier.height(12.dp))
         }
         Box(
-            Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(10.dp)).background(Surface2).bounceClick { FocusAlbum.stop() },
+            Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(12.dp)).background(Surface2).bounceClick { FocusAlbum.stop() },
             contentAlignment = Alignment.Center,
-        ) { Text("Fermer", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold) }
+        ) { Text("Fermer", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold) }
     }
 }

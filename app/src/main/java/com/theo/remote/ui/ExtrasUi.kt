@@ -104,7 +104,7 @@ fun KaraokePanel() {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             PanelTitle("Karaoké")
-            Text(listOfNotNull(t?.title, t?.artist).joinToString(" · "), color = Txt2, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(listOfNotNull(t?.title, t?.artist).joinToString(" · "), color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.weight(1f))
 
             val lines = lyrics?.synced.orEmpty()
@@ -115,7 +115,7 @@ fun KaraokePanel() {
                         lyrics == null -> "Je cherche les paroles…"
                         else -> "Pas de paroles synchronisées pour ce son"
                     },
-                    color = Txt2, fontSize = 18.sp, textAlign = TextAlign.Center,
+                    color = Txt2, fontSize = 17.sp, textAlign = TextAlign.Center,
                 )
             } else {
                 val i = lines.indexOfLast { it.timeMs <= pos }
@@ -123,8 +123,8 @@ fun KaraokePanel() {
                 val next = lines.getOrNull(i + 1)
                 val end = next?.timeMs ?: ((cur?.timeMs ?: 0L) + 4000)
                 val p = if (cur == null) 0f else ((pos - cur.timeMs).toFloat() / (end - cur.timeMs).coerceAtLeast(1)).coerceIn(0f, 1f)
-                Text(lines.getOrNull(i - 1)?.text.orEmpty(), color = Txt3, fontSize = 18.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2)
-                Spacer(Modifier.height(18.dp))
+                Text(lines.getOrNull(i - 1)?.text.orEmpty(), color = Txt3, fontSize = 20.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2)
+                Spacer(Modifier.height(20.dp))
                 AnimatedContent(
                     targetState = i,
                     transitionSpec = { (fadeIn(tween(220)) + slideInVertically(tween(260)) { it / 3 }) togetherWith (fadeOut(tween(160)) + slideOutVertically(tween(200)) { -it / 3 }) },
@@ -133,7 +133,7 @@ fun KaraokePanel() {
                     val line = lines.getOrNull(idx)?.text?.ifBlank { "♪" } ?: "♪"
                     FillText(line, if (idx == i) p else 1f)
                 }
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(20.dp))
                 Text(next?.text.orEmpty(), color = Txt2, fontSize = 20.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2)
                 Spacer(Modifier.height(6.dp))
                 Text(lines.getOrNull(i + 2)?.text.orEmpty(), color = Txt3, fontSize = 17.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, maxLines = 2)
@@ -204,7 +204,7 @@ fun MoodRow() {
                         .padding(12.dp),
                     contentAlignment = Alignment.BottomStart,
                 ) {
-                    Text(if (busy == m) "…" else m.label, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(if (busy == m) "…" else m.label, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
                 }
             }
         }
@@ -239,7 +239,7 @@ fun DailyMixCard() {
         Spacer(Modifier.width(Space.m))
         Column(Modifier.weight(1f)) {
             Text("Mix du jour", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-            Text("${items.size} sons", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+            Text("${items.size} sons", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
         }
         Box(
             Modifier.size(48.dp).shadow(10.dp, PillShape).clip(PillShape).background(Txt)
@@ -310,7 +310,7 @@ fun BadgesSection() {
         open?.let { b ->
             Column(Modifier.fillMaxWidth().glass(Rounded(18), fill = 0.08f, edge = 0.14f).padding(Space.m)) {
                 Text("${b.icon}  ${b.title}", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
-                Text(b.desc, color = Txt2, fontSize = 14.sp)
+                Text(b.desc, color = Txt2, fontSize = 15.sp)
                 Spacer(Modifier.height(8.dp))
                 Box(Modifier.fillMaxWidth().height(6.dp).clip(PillShape).background(Color.White.copy(alpha = 0.12f))) {
                     Box(Modifier.fillMaxWidth(b.progress).height(6.dp).background(if (b.unlocked) Ok else Txt))

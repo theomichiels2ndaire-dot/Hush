@@ -142,9 +142,9 @@ private fun Setup(ctx: Context) {
     Column(verticalArrangement = Arrangement.spacedBy(Space.m)) {
         Text(
             "Hush lance un extrait, trouve le bon titre. Plus tu réponds vite, plus tu gagnes de points.",
-            color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+            color = Txt2, fontSize = 15.sp, lineHeight = 20.sp,
         )
-        if (best > 0) Text("Ton record : $best points", color = Ok, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        if (best > 0) Text("Ton record : $best points", color = Ok, fontSize = 15.sp, fontWeight = FontWeight.Bold)
 
         SetupLabel("Les sons")
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -166,7 +166,7 @@ private fun Setup(ctx: Context) {
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Avec mes potes", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Avec mes potes", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
                 Text("Ils répondent sur leur téléphone via le QR code", color = Txt2, fontSize = 13.sp)
             }
             GlassSwitch(withFriends) { withFriends = it }
@@ -263,8 +263,8 @@ private fun PlayingRound(r: BlindTest.Round) {
     Column(verticalArrangement = Arrangement.spacedBy(Space.m)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Manche ${r.index + 1} / ${r.total}", color = Txt2, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                Text("C'est quoi ce son ?", color = Txt, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Manche ${r.index + 1} / ${r.total}", color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text("C'est quoi ce son ?", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
             }
             Timer(left.toFloat() / r.durationMs, (left / 1000 + 1).coerceAtMost(r.durationMs / 1000))
         }
@@ -330,7 +330,7 @@ private fun RevealRound(r: BlindTest.Round) {
                 },
             ) {}
         }
-        if (BlindTest.party) Scoreboard(scores, emptySet()) else Text("Score : ${scores[BlindTest.HOST] ?: 0}", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        if (BlindTest.party) Scoreboard(scores, emptySet()) else Text("Score : ${scores[BlindTest.HOST] ?: 0}", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -347,11 +347,11 @@ private fun Finished(ctx: Context) {
         Spacer(Modifier.height(Space.l))
         Text("Partie terminée", color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         if (ranking.size > 1) {
-            Text("${ranking.first().key} gagne !", color = Txt, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
+            Text("${ranking.first().key} gagne !", color = Txt, fontSize = 34.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
             Scoreboard(scores, emptySet())
         } else {
             Text("$mine points", color = Txt, fontSize = 48.sp, fontWeight = FontWeight.ExtraBold)
-            if (mine > oldBest && oldBest > 0) Text("Nouveau record !", color = Ok, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+            if (mine > oldBest && oldBest > 0) Text("Nouveau record !", color = Ok, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
             else if (oldBest > 0) Text("Ton record : ${maxOf(oldBest, mine)}", color = Txt2, fontSize = 15.sp)
         }
         Spacer(Modifier.height(Space.s))
@@ -380,11 +380,11 @@ private fun ChoiceButton(title: String, artist: String, state: ChoiceState, onCl
     Column(
         Modifier.fillMaxWidth().heightIn(min = 64.dp).clip(shape).background(bg).glass(shape, fill = 0f, edge = 0.12f)
             .bounceClick(pressedScale = 0.96f, onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.Center,
     ) {
         Text(title, color = fg, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        if (artist.isNotBlank()) Text(artist, color = fg.copy(alpha = 0.75f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (artist.isNotBlank()) Text(artist, color = fg.copy(alpha = 0.75f), fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -395,9 +395,9 @@ private fun Scoreboard(scores: Map<String, Int>, answeredNow: Set<String>) {
         Text("Classement", color = Txt2, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         scores.entries.sortedByDescending { it.value }.take(10).forEachIndexed { i, (name, pts) ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("${i + 1}", color = Txt2, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.width(24.dp))
+                Text("${i + 1}", color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.width(24.dp))
                 Text(name, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (name in answeredNow) Text("✓ ", color = Ok, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                if (name in answeredNow) Text("✓ ", color = Ok, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 Text("$pts", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
@@ -416,7 +416,7 @@ private fun Timer(progress: Float, seconds: Long) {
                 style = Stroke(w, cap = StrokeCap.Round),
             )
         }
-        Text("$seconds", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+        Text("$seconds", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 
@@ -448,7 +448,7 @@ private fun Equalizer(big: Boolean) {
 
 @Composable
 private fun SetupLabel(t: String) {
-    Text(t, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+    Text(t, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
 }
 
 @Composable
@@ -460,6 +460,6 @@ private fun Pick(label: String, on: Boolean, onClick: () -> Unit) {
             .bounceClick(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 9.dp),
     ) {
-        Text(label, color = if (on) Ink else Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+        Text(label, color = if (on) Ink else Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
     }
 }

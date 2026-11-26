@@ -138,7 +138,7 @@ fun ShazamPanel() {
                     PillButton("Réessayer") { go() }
                 }
                 is Recognizer.Status.Failed -> Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                    Text(st.message, color = Ko, fontSize = 14.sp, textAlign = TextAlign.Center, lineHeight = 20.sp)
+                    Text(st.message, color = Ko, fontSize = 13.sp, textAlign = TextAlign.Center, lineHeight = 20.sp)
                     Spacer(Modifier.height(Space.s))
                     PillButton("Réessayer") { go() }
                 }
@@ -175,7 +175,7 @@ fun ShazamPanel() {
         )
         if (showKey) {
             val shape = RoundedCornerShape(12.dp)
-            Box(Modifier.fillMaxWidth().height(46.dp).glass(shape, fill = 0.08f, edge = 0.14f).padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
+            Box(Modifier.fillMaxWidth().height(46.dp).glass(shape, fill = 0.08f, edge = 0.14f).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
                 if (token.isEmpty()) Text("Colle ta clé (dashboard.audd.io)", color = Txt3, fontSize = 15.sp)
                 BasicTextField(
                     value = token,
@@ -225,7 +225,7 @@ private fun FoundCard(f: Recognizer.Found) {
         Cover(model = f.tidal?.coverUrl, radius = 16.dp, modifier = Modifier.size(170.dp).shadow(24.dp, Rounded(16)))
         Spacer(Modifier.height(Space.m))
         Text(f.title, color = Txt, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        Text(listOf(f.artist, f.album).filter { it.isNotBlank() }.joinToString(" · "), color = Txt2, fontSize = 14.sp, textAlign = TextAlign.Center, maxLines = 2)
+        Text(listOf(f.artist, f.album).filter { it.isNotBlank() }.joinToString(" · "), color = Txt2, fontSize = 15.sp, textAlign = TextAlign.Center, maxLines = 2)
         Spacer(Modifier.height(Space.m))
         val r: TidalApi.Result? = f.tidal
         Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
@@ -249,11 +249,11 @@ private fun FoundAction(icon: ImageVector, label: String, filled: Boolean, onCli
         Modifier.height(44.dp)
             .then(if (filled) Modifier.clip(shape).background(Txt) else Modifier.glass(shape, fill = 0.12f, edge = 0.16f))
             .bounceClick(onClick = onClick)
-            .padding(horizontal = 14.dp),
+            .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(icon, contentDescription = null, tint = if (filled) Ink else Txt, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(6.dp))
-        Text(label, color = if (filled) Ink else Txt, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+        Text(label, color = if (filled) Ink else Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
     }
 }

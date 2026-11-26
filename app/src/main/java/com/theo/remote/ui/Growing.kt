@@ -149,12 +149,12 @@ fun GrowingCard() {
         // les pochettes de la semaine, qui se chevauchent
         Box(Modifier.width(112.dp).height(64.dp)) {
             cands.take(3).forEachIndexed { i, r ->
-                Cover(model = r.coverUrl, radius = 10.dp, modifier = Modifier.padding(start = (i * 24).dp).size(64.dp).shadow(10.dp, RoundedCornerShape(10.dp)))
+                Cover(model = r.coverUrl, radius = 10.dp, modifier = Modifier.padding(start = (i * 24).dp).size(64.dp).shadow(10.dp, RoundedCornerShape(12.dp)))
             }
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Sons à ajouter", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Text("Sons à ajouter", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
             Text("${cands.size} son${if (cands.size > 1) "s" else ""} proche${if (cands.size > 1) "s" else ""} de tes 5 étoiles à trier", color = Color.White.copy(alpha = 0.75f), fontSize = 13.sp)
         }
     }
@@ -174,9 +174,9 @@ fun GrowingPanel() {
             Spacer(Modifier.height(4.dp))
             Text(
                 "Chaque semaine, quelques sons proches de tes 5 étoiles. Garde ceux qui te plaisent : ils vont dans « ${Growing.PLAYLIST} » sur Tidal. Touche un son pour l'écouter.",
-                color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(12.dp))
         }
         if (cands.isEmpty()) item {
             EmptyState("Tout est trié", "Une nouvelle fournée arrive lundi prochain.")
@@ -187,7 +187,7 @@ fun GrowingPanel() {
                     .bounceClick(pressedScale = 0.98f, onLongClick = { TrackMenu.open(r) }) { TidalRemote.play(r) }.padding(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Cover(model = r.coverUrl, radius = 10.dp, modifier = Modifier.size(56.dp).shadow(8.dp, RoundedCornerShape(10.dp)))
+                Cover(model = r.coverUrl, radius = 10.dp, modifier = Modifier.size(56.dp).shadow(8.dp, RoundedCornerShape(12.dp)))
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(r.fullTitle, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)

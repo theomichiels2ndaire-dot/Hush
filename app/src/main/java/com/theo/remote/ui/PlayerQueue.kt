@@ -146,7 +146,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                         .padding(horizontal = 20.dp, vertical = 12.dp),
                 ) {
                     Box(Modifier.align(Alignment.CenterHorizontally).size(width = 40.dp, height = 5.dp).clip(PillShape).background(Color.White.copy(alpha = 0.25f)))
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(16.dp))
                     val qf by com.theo.remote.Features.flags.collectAsState()
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("File d'attente", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.4).sp, modifier = Modifier.weight(1f))
@@ -196,7 +196,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                             }
                         }
                     }
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(16.dp))
                     // toute la file défile d'un bloc (À suivre + la suite)
                     val scroll = androidx.compose.foundation.rememberScrollState()
                     DismissWhenAtTop(scroll)
@@ -230,7 +230,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                                 Column(
                                     Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                                         .bounceClick(pressedScale = 0.97f, onLongClick = { when (e) { is com.theo.remote.LocalMusic.Entry.T -> TrackMenu.open(e.r); else -> TrackMenu.open(TrackMenu.Target(t, a, null)) } }) { com.theo.remote.MixQueue.jumpTo(i) }
-                                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
                                 ) {
                                     Text(t, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     if (a.isNotBlank()) Text(a, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -245,7 +245,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                         }
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             ctxQueue.forEach { c ->
-                                Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 10.dp)) {
+                                Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp)) {
                                     Text(c.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     if (c.artist.isNotBlank()) Text(c.artist, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
@@ -254,7 +254,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                     } else if (s.queue.isEmpty()) {
                         Text(
                             "Plus rien de prévu après ce son : Hush enchaînera tout seul sur des sons similaires, la musique ne s'arrête jamais.",
-                            color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                            color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
                         )
                         Spacer(Modifier.height(20.dp))
                     } else {
@@ -267,7 +267,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(if (active) Color.White.copy(alpha = 0.08f) else Color.Transparent)
                                         .bounceClick(pressedScale = 0.97f, onLongClick = { TrackMenu.open(TrackMenu.Target(q.title, q.subtitle, null)) }) { TidalRemote.skipToQueueItem(q.id) }
-                                        .padding(horizontal = 10.dp, vertical = 10.dp),
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
                                 ) {
                                     Text(q.title, color = if (active) Ok else Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     if (q.subtitle.isNotBlank()) {
@@ -514,7 +514,7 @@ private fun SwipeAwayRow(onRemove: () -> Unit, modifier: Modifier = Modifier, co
         ) {
             Icon(
                 Icons.Rounded.DeleteOutline, contentDescription = null, tint = Txt,
-                modifier = Modifier.padding(horizontal = 18.dp).size(22.dp).graphicsLayer { scaleX = 0.7f + 0.3f * reveal; scaleY = 0.7f + 0.3f * reveal },
+                modifier = Modifier.padding(horizontal = 20.dp).size(22.dp).graphicsLayer { scaleX = 0.7f + 0.3f * reveal; scaleY = 0.7f + 0.3f * reveal },
             )
         }
         Box(
@@ -563,7 +563,7 @@ private fun NextUpCard(title: String, artist: String, cover: String?, onClick: (
         Column(Modifier.weight(1f)) {
             Text("À suivre", color = Color.White.copy(alpha = 0.72f), fontSize = 13.sp, fontWeight = FontWeight.Bold)
             Text(title, color = Color.White, fontSize = 20.sp, lineHeight = 24.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            if (artist.isNotBlank()) Text(artist, color = Color.White.copy(alpha = 0.72f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (artist.isNotBlank()) Text(artist, color = Color.White.copy(alpha = 0.72f), fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

@@ -178,14 +178,14 @@ fun SkipsPanel() {
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), state = state, contentPadding = PaddingValues(start = Space.gutter, end = Space.gutter, bottom = 80.dp), verticalArrangement = Arrangement.spacedBy(Space.s)) {
         item {
             PanelTitle("Sons souvent passés")
-            Text("Les sons que tu passes entre 1 et 30 secondes après le début.", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+            Text("Les sons que tu passes entre 1 et 30 secondes après le début.", color = Txt2, fontSize = 13.sp, lineHeight = 20.sp)
             Spacer(Modifier.height(Space.s))
-            if (list.isEmpty()) Text("Rien pour l'instant.", color = Txt3, fontSize = 14.sp)
+            if (list.isEmpty()) Text("Rien pour l'instant.", color = Txt3, fontSize = 13.sp)
         }
         items(list, key = { it.key }) { s ->
             Row(Modifier.fillMaxWidth().glass(Rounded(16), fill = 0.06f, edge = 0.10f).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(s.title, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(s.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text("${s.artist} · passé ${s.count}×", color = Txt2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Text(
@@ -319,7 +319,7 @@ fun SetlistsPanel() {
         if (o != null) {
             item {
                 PanelTitle(o.artist)
-                Text("${Setlists.prettyDate(o.date)} · ${o.venue}, ${o.city}", color = Txt2, fontSize = 14.sp)
+                Text("${Setlists.prettyDate(o.date)} · ${o.venue}, ${o.city}", color = Txt2, fontSize = 13.sp)
                 Spacer(Modifier.height(Space.m))
                 Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
                     PillButton("Revivre le concert") { TidalRemote.playSequence(o.songs.map { it to o.artist }) }
@@ -329,7 +329,7 @@ fun SetlistsPanel() {
             }
             items(o.songs.withIndex().toList(), key = { "s" + it.index }) { (i, song) ->
                 Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).bounceClick(pressedScale = 0.97f) {
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).bounceClick(pressedScale = 0.97f) {
                         TidalRemote.playSequence(o.songs.drop(i).map { it to o.artist })
                     }.padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -342,17 +342,17 @@ fun SetlistsPanel() {
             item {
                 PanelTitle("Setlists")
                 if (key.isBlank()) SetlistKeyCard()
-                else Text("Le dernier concert de chacun de tes artistes, avec les sons joués ce soir-là. Toucher pour voir et réécouter.", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+                else Text("Le dernier concert de chacun de tes artistes, avec les sons joués ce soir-là. Toucher pour voir et réécouter.", color = Txt2, fontSize = 13.sp, lineHeight = 20.sp)
                 Spacer(Modifier.height(Space.s))
                 if (key.isNotBlank() && shows == null) SkeletonList(4)
-                if (key.isNotBlank() && shows?.isEmpty() == true) Text("Pas de setlist trouvée pour tes artistes.", color = Txt3, fontSize = 14.sp)
+                if (key.isNotBlank() && shows?.isEmpty() == true) Text("Pas de setlist trouvée pour tes artistes.", color = Txt3, fontSize = 13.sp)
             }
             items(shows.orEmpty(), key = { it.id }) { sh ->
                 Row(
                     Modifier.fillMaxWidth().glass(Rounded(16), fill = 0.07f, edge = 0.12f).bounceClick(pressedScale = 0.97f) { Setlists.open.value = sh }.padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("🎤", fontSize = 24.sp)
+                    Text("🎤", fontSize = 26.sp)
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(sh.artist, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -372,16 +372,16 @@ fun SetlistKeyCard() {
     val key by Setlists.key.collectAsState()
     var text by remember { mutableStateOf(key) }
     Column(Modifier.fillMaxWidth().glass(Rounded(20), fill = 0.08f, edge = 0.14f).padding(Space.m), verticalArrangement = Arrangement.spacedBy(Space.s)) {
-        Text("Clé setlist.fm", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Clé setlist.fm", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
         Text(
             "Les setlists viennent de setlist.fm. Crée un compte gratuit sur setlist.fm, puis va sur setlist.fm/settings/api, demande une clé (usage perso) et colle-la ici.",
             color = Txt2, fontSize = 13.sp, lineHeight = 18.sp,
         )
         Box(Modifier.fillMaxWidth().glass(RoundedCornerShape(12.dp), fill = 0.10f, edge = 0.16f).padding(horizontal = 12.dp, vertical = 10.dp)) {
-            if (text.isEmpty()) Text("Colle ta clé ici", color = Txt3, fontSize = 14.sp)
+            if (text.isEmpty()) Text("Colle ta clé ici", color = Txt3, fontSize = 13.sp)
             androidx.compose.foundation.text.BasicTextField(
                 value = text, onValueChange = { text = it.trim().take(64) }, singleLine = true,
-                textStyle = androidx.compose.ui.text.TextStyle(color = Txt, fontSize = 14.sp), cursorBrush = androidx.compose.ui.graphics.SolidColor(Txt),
+                textStyle = androidx.compose.ui.text.TextStyle(color = Txt, fontSize = 13.sp), cursorBrush = androidx.compose.ui.graphics.SolidColor(Txt),
                 modifier = Modifier.fillMaxWidth(),
             )
         }

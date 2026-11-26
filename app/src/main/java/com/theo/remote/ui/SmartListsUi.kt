@@ -173,7 +173,7 @@ private fun SmartView(s: SmartLists.Smart) {
             Spacer(Modifier.height(Space.m))
             when {
                 items == null -> SkeletonList(6)
-                l.isEmpty() -> Text("Aucun son ne correspond pour l'instant. Assouplis les règles avec « Modifier ».", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+                l.isEmpty() -> Text("Aucun son ne correspond pour l'instant. Assouplis les règles avec « Modifier ».", color = Txt2, fontSize = 13.sp, lineHeight = 20.sp)
                 else -> Text("${l.size} son${if (l.size > 1) "s" else ""} · se met à jour tout seul", color = Txt3, fontSize = 12.sp)
             }
             Spacer(Modifier.height(Space.s))
@@ -232,10 +232,10 @@ private fun SmartEditor(start: SmartLists.Smart) {
     ) {
         PanelTitle(if (exists) "Modifier" else "Nouvelle playlist")
         val shape = Rounded(14)
-        Box(Modifier.fillMaxWidth().height(50.dp).glass(shape, fill = 0.10f, edge = 0.18f).padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
+        Box(Modifier.fillMaxWidth().height(50.dp).glass(shape, fill = 0.10f, edge = 0.18f).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
             BasicTextField(
                 value = name, onValueChange = { name = it.take(40) }, singleLine = true,
-                textStyle = TextStyle(color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold),
+                textStyle = TextStyle(color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold),
                 cursorBrush = SolidColor(Txt), modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -252,7 +252,7 @@ private fun SmartEditor(start: SmartLists.Smart) {
         ChipRow(listOf(7 to "7 jours", 30 to "1 mois", 90 to "3 mois", 365 to "1 an", 0 to "Toujours"), r.periodDays) { r = r.copy(periodDays = it) }
 
         RuleLabel("Artiste (facultatif)")
-        Box(Modifier.fillMaxWidth().height(46.dp).glass(shape, fill = 0.08f, edge = 0.14f).padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
+        Box(Modifier.fillMaxWidth().height(46.dp).glass(shape, fill = 0.08f, edge = 0.14f).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
             if (r.artist.isEmpty()) Text("Ex. : Jok'Air", color = Txt3, fontSize = 15.sp)
             BasicTextField(
                 value = r.artist, onValueChange = { r = r.copy(artist = it.take(40)) }, singleLine = true,
@@ -303,7 +303,7 @@ private fun RuleLabel(t: String) { Text(t, color = Txt, fontSize = 15.sp, fontWe
 @Composable
 private fun RuleSwitch(label: String, on: Boolean, onChange: (Boolean) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label, color = Txt, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        Text(label, color = Txt, fontSize = 13.sp, modifier = Modifier.weight(1f))
         Spacer(Modifier.width(Space.s))
         GlassSwitch(on, onChange)
     }

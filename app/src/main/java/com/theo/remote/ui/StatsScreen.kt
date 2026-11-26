@@ -281,7 +281,7 @@ private fun HeroTime(minutes: Long, prev: Long?, days: List<Pair<String, Long>>,
             .bounceClick(pressedScale = 0.98f, onClick = onClick).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Temps d'écoute", color = Color.White.copy(alpha = 0.75f), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text("Temps d'écoute", color = Color.White.copy(alpha = 0.75f), fontSize = 15.sp, fontWeight = FontWeight.Bold)
         Row(verticalAlignment = Alignment.Bottom) {
             Text(fmtMinutes(minutes), color = Color.White, fontSize = 56.sp, lineHeight = 58.sp, fontWeight = FontWeight.Black, letterSpacing = (-1.5).sp)
             Spacer(Modifier.width(10.dp))
@@ -289,7 +289,7 @@ private fun HeroTime(minutes: Long, prev: Long?, days: List<Pair<String, Long>>,
                 val pct = ((minutes - prev) * 100 / prev).toInt()
                 Text(
                     (if (pct >= 0) "+" else "") + "$pct % vs avant",
-                    color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold,
+                    color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.padding(bottom = 10.dp).clip(PillShape).background(if (pct >= 0) Color(0x5533D17A) else Color(0x55FF4D4D)).padding(horizontal = 8.dp, vertical = 3.dp),
                 )
             }
@@ -309,7 +309,7 @@ private fun HeroTime(minutes: Long, prev: Long?, days: List<Pair<String, Long>>,
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 days.forEachIndexed { i, (label, _) ->
                     Text(
-                        label.take(3), color = Color.White.copy(alpha = if (i == best) 1f else 0.6f), fontSize = 10.sp, fontWeight = FontWeight.Bold,
+                        label.take(3), color = Color.White.copy(alpha = if (i == best) 1f else 0.6f), fontSize = 11.sp, fontWeight = FontWeight.Bold,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f), maxLines = 1,
                     )
                 }
@@ -330,16 +330,16 @@ private fun TopArtistBars(list: List<Pair<String, Int>>, acc: CoverColors) {
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).bounceClick(pressedScale = 0.98f) { open(Detail.ArtistByName(a)) }.padding(vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("${i + 1}", color = if (i == 0) Txt else Txt2, fontSize = 18.sp, fontWeight = FontWeight.Black, modifier = Modifier.width(26.dp))
+                Text("${i + 1}", color = if (i == 0) Txt else Txt2, fontSize = 20.sp, fontWeight = FontWeight.Black, modifier = Modifier.width(26.dp))
                 Box(
                     Modifier.size(44.dp).tintShadow(10.dp, PillShape, acc.a).clip(PillShape)
                         .background(Brush.linearGradient(listOf(acc.a, androidx.compose.ui.graphics.lerp(acc.b, Color.Black, 0.4f)))),
                     contentAlignment = Alignment.Center,
-                ) { Text(a.take(1).uppercase(), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black) }
+                ) { Text(a.take(1).uppercase(), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black) }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(a, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Spacer(Modifier.height(5.dp))
+                    Text(a, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(4.dp))
                     Box(Modifier.fillMaxWidth().height(6.dp).clip(PillShape).background(Color.White.copy(alpha = 0.08f))) {
                         Box(Modifier.fillMaxWidth(c.toFloat() / max).height(6.dp).clip(PillShape).background(Brush.horizontalGradient(listOf(acc.b, acc.a))))
                     }
@@ -363,7 +363,7 @@ private fun SmallCard(label: String, value: String, sub: String, modifier: Modif
     ) {
         Text(label, color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(Space.s))
-        Text(value, color = Txt, fontSize = 32.sp, lineHeight = 36.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.5).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(value, color = Txt, fontSize = 34.sp, lineHeight = 36.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.5).sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(sub, color = Txt2, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
@@ -386,7 +386,7 @@ private fun CoverCard(label: String, title: String, sub: String, cover: Any?, ac
         Column(Modifier.weight(1f)) {
             Text(label, color = Color.White.copy(alpha = 0.75f), fontSize = 13.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(Space.xs))
-            Text(title, color = Color.White, fontSize = 24.sp, lineHeight = 28.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(title, color = Color.White, fontSize = 26.sp, lineHeight = 28.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(sub, color = Color.White.copy(alpha = 0.75f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
@@ -447,7 +447,7 @@ private fun Bars(data: List<Pair<String, Float>>, thin: Boolean = false, valueLa
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 if (!thin) {
                     val txt = if (v > 0) valueLabel(v) else ""
-                    if (txt.isNotBlank()) Text(txt, color = Txt2, fontSize = 10.sp, maxLines = 1)
+                    if (txt.isNotBlank()) Text(txt, color = Txt2, fontSize = 11.sp, maxLines = 1)
                 }
                 Canvas(Modifier.fillMaxWidth().height(110.dp)) {
                     val h = size.height * (v / max) * grow
@@ -512,7 +512,7 @@ private fun RecapCard(offset: Int, onClick: () -> Unit) {
     ) {
         Text("Ton récap", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         Column {
-            Text(name.replaceFirstChar { it.uppercase() }, color = Txt, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+            Text(name.replaceFirstChar { it.uppercase() }, color = Txt, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
             Text(if (offset == 0) "en cours" else "à revoir", color = Txt.copy(alpha = 0.75f), fontSize = 12.sp)
         }
     }
@@ -534,11 +534,11 @@ private fun LastFmCard() {
         verticalArrangement = Arrangement.spacedBy(Space.s),
     ) {
         Row(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).bounceClick(pressedScale = 0.98f) { expanded = !expanded },
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).bounceClick(pressedScale = 0.98f) { expanded = !expanded },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
-                Text("Historique Last.fm", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Historique Last.fm", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
                 Text(
                     when (val st = status) {
                         is LastFm.Status.Running -> "Import… page ${st.page}/${st.pages} · ${st.count} écoutes"
@@ -584,7 +584,7 @@ private fun LastFmCard() {
 @Composable
 private fun LfField(value: String, onChange: (String) -> Unit, hint: String) {
     val shape = RoundedCornerShape(12.dp)
-    Box(Modifier.fillMaxWidth().height(46.dp).glass(shape, fill = 0.08f, edge = 0.14f).padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
+    Box(Modifier.fillMaxWidth().height(46.dp).glass(shape, fill = 0.08f, edge = 0.14f).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
         if (value.isEmpty()) Text(hint, color = Txt3, fontSize = 15.sp)
         androidx.compose.foundation.text.BasicTextField(
             value = value,
@@ -614,12 +614,12 @@ private fun WallEntryCard(acc: CoverColors, onClick: () -> Unit) {
         // petit aperçu : les 4 dernières pochettes qui se chevauchent
         Box(Modifier.width(118.dp).height(56.dp)) {
             covers.forEachIndexed { i, c ->
-                Cover(model = c, radius = 10.dp, modifier = Modifier.padding(start = (i * 20).dp).size(56.dp).tintShadow(8.dp, RoundedCornerShape(10.dp), Color.Black))
+                Cover(model = c, radius = 10.dp, modifier = Modifier.padding(start = (i * 20).dp).size(56.dp).tintShadow(8.dp, RoundedCornerShape(12.dp), Color.Black))
             }
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Ton mur", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            Text("Ton mur", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.Black)
             Text("Tout ce que tu as écouté, en pochettes", color = Txt2, fontSize = 13.sp, maxLines = 2)
         }
     }

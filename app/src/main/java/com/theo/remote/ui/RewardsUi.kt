@@ -77,8 +77,8 @@ fun LevelCard() {
     ) {
         Row(verticalAlignment = Alignment.Bottom) {
             Column(Modifier.weight(1f)) {
-                Text("Niveau $lvl", color = Ok, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
-                Text(Rewards.title(lvl), color = Txt, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Niveau $lvl", color = Ok, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+                Text(Rewards.title(lvl), color = Txt, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
             }
             Text("${fmtXp(x.total)} XP", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
         }
@@ -121,7 +121,7 @@ fun RewardsPanel() {
         }
         Rewards.CATEGORIES.forEach { (cat, label) ->
             val items = Rewards.UNLOCKS.filter { it.cat == cat }
-            item(key = "h$cat") { Text(label, color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(top = Space.m)) }
+            item(key = "h$cat") { Text(label, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(top = Space.m)) }
             items(items, key = { it.id }) { u ->
                 val open = lvl >= u.level
                 val on = eq[cat] == u.id && open
@@ -194,11 +194,11 @@ fun LevelUpDialog() {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = Ok, modifier = Modifier.size(64.dp).scale(pop.value))
-            Text(if (from == 0) "Tu es niveau $to !" else "Niveau $to !", color = Txt, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
-            Text(Rewards.levelTitle(to), color = Ok, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+            Text(if (from == 0) "Tu es niveau $to !" else "Niveau $to !", color = Txt, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, textAlign = TextAlign.Center)
+            Text(Rewards.levelTitle(to), color = Ok, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
             if (from == 0) Text("Ton XP a été calculée depuis tout ton historique.", color = Txt2, fontSize = 13.sp, textAlign = TextAlign.Center)
             if (gained.isNotEmpty()) {
-                Text("Tu débloques :", color = Txt2, fontSize = 14.sp)
+                Text("Tu débloques :", color = Txt2, fontSize = 15.sp)
                 gained.forEach { Text("+ ${it.label}", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
             }
             Spacer(Modifier.height(4.dp))

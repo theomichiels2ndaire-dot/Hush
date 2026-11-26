@@ -548,7 +548,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.cardRows(l: List<Song
 @Composable
 private fun SmallChip(label: String, on: Boolean, onClick: () -> Unit) {
     Box(
-        Modifier.height(34.dp).clip(Rounded(17)).background(if (on) Color.White else Color.White.copy(alpha = 0.1f)).bounceClick(onClick = onClick).padding(horizontal = 14.dp),
+        Modifier.height(34.dp).clip(Rounded(17)).background(if (on) Color.White else Color.White.copy(alpha = 0.1f)).bounceClick(onClick = onClick).padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center,
     ) { Text(label, color = if (on) Color.Black else Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
 }
@@ -580,8 +580,8 @@ private fun ArtistBookRow(b: SongCards.ArtistBook, onClick: () -> Unit) {
                 TierDot(best, 11.dp)
             }
             Text("${b.cards.size} carte${if (b.cards.size > 1) "s" else ""} sur ${b.heard} son${if (b.heard > 1) "s" else ""} écouté${if (b.heard > 1) "s" else ""}", color = Txt2, fontSize = 13.sp)
-            Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(Color.White.copy(alpha = 0.12f))) {
-                Box(Modifier.fillMaxWidth(frac).fillMaxSize().clip(RoundedCornerShape(3.dp)).background(Brush.horizontalGradient(mat(best).bar)))
+            Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(4.dp)).background(Color.White.copy(alpha = 0.12f))) {
+                Box(Modifier.fillMaxWidth(frac).fillMaxSize().clip(RoundedCornerShape(4.dp)).background(Brush.horizontalGradient(mat(best).bar)))
             }
         }
     }
@@ -693,7 +693,7 @@ private fun CardViewer(c: SongCards.Card) {
             // en danger : dans combien de jours, et de quoi la relancer
             if (f.cardDanger && c.dangerDays != null) {
                 Row(
-                    Modifier.fillMaxWidth().clip(Rounded(16)).background(Color(0x33FF8A3D)).border(1.dp, Color(0x88FF8A3D), Rounded(16)).padding(horizontal = 14.dp, vertical = 10.dp),
+                    Modifier.fillMaxWidth().clip(Rounded(16)).background(Color(0x33FF8A3D)).border(1.dp, Color(0x88FF8A3D), Rounded(16)).padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Rounded.HourglassBottom, contentDescription = null, tint = Color(0xFFFF8A3D), modifier = Modifier.size(20.dp))

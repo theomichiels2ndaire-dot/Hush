@@ -108,7 +108,7 @@ fun TrackMenuSheet(backdrop: Backdrop? = null) {
                     .graphicsLayer { scaleX = pop.value; scaleY = pop.value }
                     .shadow(34.dp, Rounded(20), ambientColor = glow, spotColor = glow),
             )
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
             // verre liquide : une plaque de verre flottante (comme le menu ⋯ du lecteur) ; sinon la feuille habituelle
             Box(
                 if (liquid) Modifier.navigationBarsPadding().padding(10.dp).fillMaxWidth().heightIn(max = 470.dp).shadow(26.dp, shape).clip(shape)
@@ -131,7 +131,7 @@ fun TrackMenuSheet(backdrop: Backdrop? = null) {
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(x.title, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(x.artist, color = Txt2, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(x.artist, color = Txt2, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         FirstListenLine(x.title, x.artist)
                     }
                 }
@@ -204,6 +204,6 @@ private fun MenuItem(icon: ImageVector, label: String, tint: Color = Txt, onClic
     ) {
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
         Spacer(Modifier.width(14.dp))
-        Text(label, color = tint, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = tint, fontSize = 17.sp, fontWeight = FontWeight.Bold)
     }
 }

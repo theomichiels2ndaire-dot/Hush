@@ -82,7 +82,7 @@ fun FolderChips() {
                 Modifier.clip(BtnShape)
                     .then(if (on) Modifier.background(Txt) else Modifier.glass(BtnShape, fill = 0.08f, edge = 0.14f))
                     .bounceClick { PlaylistFolders.selected.value = o }
-                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 val n = if (o == null) map.size else map.values.count { it == o }
                 Text(if (o == null) "Tout" else "$o · $n", color = if (on) Ink else Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -106,14 +106,14 @@ fun FolderDialog() {
             Modifier.fillMaxWidth().clip(shape).background(Surface2).padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text("Ranger « ${pl.name} »", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text("Ranger « ${pl.name} »", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(4.dp))
             PlaylistFolders.folders().forEach { f ->
                 Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                         .background(if (f == current) Color.White.copy(alpha = 0.10f) else Color.Transparent)
                         .bounceClick(pressedScale = 0.98f) { PlaylistFolders.put(pl.id, f); done() }
-                        .padding(horizontal = 10.dp, vertical = 11.dp),
+                        .padding(horizontal = 12.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(f, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -123,7 +123,7 @@ fun FolderDialog() {
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(
-                    Modifier.weight(1f).height(44.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.07f)).padding(horizontal = 12.dp),
+                    Modifier.weight(1f).height(44.dp).clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.07f)).padding(horizontal = 12.dp),
                     contentAlignment = Alignment.CenterStart,
                 ) {
                     if (name.isEmpty()) Text("Nouveau dossier", color = Txt3, fontSize = 15.sp)
@@ -138,7 +138,7 @@ fun FolderDialog() {
             }
             if (current != null) {
                 Text(
-                    "Sortir du dossier", color = Ko, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                    "Sortir du dossier", color = Ko, fontSize = 15.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.clip(RoundedCornerShape(8.dp)).bounceClick { PlaylistFolders.put(pl.id, null); done() }.padding(vertical = 8.dp),
                 )
             }

@@ -208,7 +208,7 @@ fun NotesPanel() {
     ) {
         item {
             PanelTitle("Tes notes")
-            Text("Un petit mémo perso par son : une idée d'edit, un souvenir, un moment précis…", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+            Text("Un petit mémo perso par son : une idée d'edit, un souvenir, un moment précis…", color = Txt2, fontSize = 13.sp, lineHeight = 20.sp)
             Spacer(Modifier.height(Space.m))
         }
         editing?.let { (title, artist) ->
@@ -216,7 +216,7 @@ fun NotesPanel() {
                 var text by remember(title, artist) { mutableStateOf(TrackNotes.get(title, artist)?.text.orEmpty()) }
                 val shape = Rounded(20)
                 Column(Modifier.fillMaxWidth().glass(shape, fill = 0.10f, edge = 0.18f).padding(Space.m)) {
-                    Text(title, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(title, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(artist, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Spacer(Modifier.height(Space.s))
                     Box(Modifier.fillMaxWidth().heightIn(min = 90.dp)) {
@@ -246,7 +246,7 @@ fun NotesPanel() {
             }
         }
         if (all.isEmpty() && editing == null) item {
-            Text("Pas encore de note. Dans le lecteur : ⋯ → « Note sur ce son ».", color = Txt3, fontSize = 14.sp)
+            Text("Pas encore de note. Dans le lecteur : ⋯ → « Note sur ce son ».", color = Txt3, fontSize = 13.sp)
         }
         items(all, key = { it.key }) { n ->
             val shape = Rounded(18)
@@ -468,7 +468,7 @@ fun IdCardEntry() {
         Icon(Icons.Rounded.Badge, contentDescription = null, tint = Ok, modifier = Modifier.size(30.dp))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text("Profil d'écoute", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Profil d'écoute", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
             Text("À partager en story", color = Color.White.copy(alpha = 0.75f), fontSize = 13.sp)
         }
     }
@@ -492,7 +492,7 @@ fun IdCardPanel() {
         PanelTitle("Profil d'écoute")
         val i = id
         if (i == null) {
-            Text("Pas encore assez d'écoutes.", color = Txt2, fontSize = 14.sp)
+            Text("Pas encore assez d'écoutes.", color = Txt2, fontSize = 13.sp)
             return@Column
         }
         Spacer(Modifier.height(Space.s))
@@ -517,7 +517,7 @@ fun IdCardPanel() {
                     Text("Carte d'identité musicale", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                     Text("Hush", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold)
                 }
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(20.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Cover(model = i.cover, radius = 16.dp, modifier = Modifier.size(92.dp))
                     Spacer(Modifier.width(16.dp))
@@ -527,11 +527,11 @@ fun IdCardPanel() {
                             "Niv. $lvl · ${com.theo.remote.Rewards.title(lvl)}",
                             color = if (framed) Color(0xFFF3DDB0) else Color.White.copy(alpha = 0.6f), fontSize = 12.sp, fontWeight = FontWeight.Bold,
                         )
-                        Text(i.profile, color = Ok, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                        Text(i.profile, color = Ok, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
                         Text(i.profileSub, color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, lineHeight = 16.sp)
                     }
                 }
-                Spacer(Modifier.height(22.dp))
+                Spacer(Modifier.height(24.dp))
                 Text("Top artistes", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 i.top.forEachIndexed { n, (a, _) ->
@@ -540,7 +540,7 @@ fun IdCardPanel() {
                 Spacer(Modifier.height(16.dp))
                 i.topTrack?.let {
                     Text("Son fétiche", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Text("« ${it.title} »", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("« ${it.title} »", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(it.artist, color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 // récompense « Badges sur ta carte »

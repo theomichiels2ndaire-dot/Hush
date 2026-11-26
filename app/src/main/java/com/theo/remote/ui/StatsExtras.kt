@@ -82,7 +82,7 @@ private fun GoalCard(events: List<Ev>, goal: Int) {
                 drawArc(Color.White.copy(alpha = 0.10f), 0f, 360f, false, style = Stroke(w))
                 drawArc(accent, -90f, 360f * anim.value, false, style = Stroke(w, cap = StrokeCap.Round))
             }
-            Text("${(p * 100).toInt()} %", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            Text("${(p * 100).toInt()} %", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
         }
         Spacer(Modifier.width(Space.m))
         Column(Modifier.weight(1f)) {
@@ -131,8 +131,8 @@ private fun CompareMonthsCard(events: List<Ev>) {
         CompareRow("Artistes différents", "${now.artists}", "${prev.artists}", now.artists.toLong(), prev.artists.toLong())
         CompareRow("Nouveaux sons", "${now.newTracks}", "${prev.newTracks}", now.newTracks.toLong(), prev.newTracks.toLong())
         Row {
-            Text("Artiste n°1", color = Txt2, fontSize = 14.sp, modifier = Modifier.weight(1f))
-            Text(now.topArtist ?: "—", color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text("Artiste n°1", color = Txt2, fontSize = 15.sp, modifier = Modifier.weight(1f))
+            Text(now.topArtist ?: "—", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             Text("  ·  ${prev.topArtist ?: "—"}", color = Txt3, fontSize = 13.sp, maxLines = 1)
         }
         Text("Le mois en cours n'est pas fini : il rattrape au fil des jours.", color = Txt3, fontSize = 11.sp)
@@ -142,7 +142,7 @@ private fun CompareMonthsCard(events: List<Ev>) {
 @Composable
 private fun CompareRow(label: String, now: String, prev: String, a: Long, b: Long) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label, color = Txt2, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        Text(label, color = Txt2, fontSize = 15.sp, modifier = Modifier.weight(1f))
         Text(now, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
         val diff = if (b > 0) ((a - b) * 100 / b).toInt() else null
         Text(
@@ -194,7 +194,7 @@ private fun HeatmapCard(events: List<Ev>) {
         Text("Ton moment fort : le ${listOf("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche")[best.first]} vers ${best.second}h · 3 derniers mois", color = Txt2, fontSize = 13.sp)
         Row {
             Column(Modifier.padding(end = 6.dp)) {
-                days.forEach { Box(Modifier.height(18.dp), contentAlignment = Alignment.CenterStart) { Text(it, color = Txt3, fontSize = 10.sp) } }
+                days.forEach { Box(Modifier.height(18.dp), contentAlignment = Alignment.CenterStart) { Text(it, color = Txt3, fontSize = 11.sp) } }
             }
             Canvas(Modifier.weight(1f).height(18.dp * 7)) {
                 val cw = size.width / 24f
@@ -211,7 +211,7 @@ private fun HeatmapCard(events: List<Ev>) {
             }
         }
         Row(Modifier.fillMaxWidth().padding(start = 28.dp)) {
-            listOf("0h", "6h", "12h", "18h", "23h").forEach { Text(it, color = Txt3, fontSize = 10.sp, modifier = Modifier.weight(1f)) }
+            listOf("0h", "6h", "12h", "18h", "23h").forEach { Text(it, color = Txt3, fontSize = 11.sp, modifier = Modifier.weight(1f)) }
         }
     }
 }
@@ -264,9 +264,9 @@ private fun ProStatsCard(events: List<Ev>) {
         Row(Modifier.fillMaxWidth().height(110.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
             p.perDay.forEachIndexed { i, v ->
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("${v.toInt()}", color = Txt2, fontSize = 10.sp)
+                    Text("${v.toInt()}", color = Txt2, fontSize = 11.sp)
                     Box(Modifier.fillMaxWidth().height((70f * v / max).coerceAtLeast(2f).dp).clip(RoundedCornerShape(4.dp)).background(accent.copy(alpha = 0.35f + 0.65f * v / max)))
-                    Text(days[i], color = Txt3, fontSize = 10.sp)
+                    Text(days[i], color = Txt3, fontSize = 11.sp)
                 }
             }
         }
@@ -276,7 +276,7 @@ private fun ProStatsCard(events: List<Ev>) {
             p.months.forEach { (m, a) ->
                 Row {
                     Text(m, color = Txt3, fontSize = 13.sp, modifier = Modifier.width(56.dp))
-                    Text(a, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(a, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                 }
             }
         }

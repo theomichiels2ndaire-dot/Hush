@@ -112,7 +112,7 @@ fun LyricsScreen(s: TidalRemote.State, onClose: () -> Unit) {
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text(t?.title ?: "—", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(t?.artist ?: "", color = Txt.copy(alpha = 0.62f), fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(t?.artist ?: "", color = Txt.copy(alpha = 0.62f), fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 if (features.translate) {
                     Box(
@@ -172,7 +172,7 @@ fun LyricsScreen(s: TidalRemote.State, onClose: () -> Unit) {
             }
             val panel = Rounded(30)
             Box(
-                Modifier.align(Alignment.BottomCenter).padding(horizontal = 10.dp, vertical = 6.dp).fillMaxWidth()
+                Modifier.align(Alignment.BottomCenter).padding(horizontal = 12.dp, vertical = 6.dp).fillMaxWidth()
                     .shadow(18.dp, panel).clip(panel),
             ) {
                 if (liquid) {
@@ -274,10 +274,10 @@ private fun SyncedLyrics(lines: List<Lyrics.Line>, pos: Long, translated: List<S
                     .clip(RoundedCornerShape(8.dp))
                     .bounceClick(pressedScale = 0.96f, onLongClick = onSave?.let { f -> { if (line.text.isNotBlank()) f(line) } }) { TidalRemote.seekTo(line.timeMs) },
             ) {
-                Text(line.text.ifBlank { "♪" }, color = color, fontSize = 33.sp, lineHeight = 39.sp, fontWeight = FontWeight.Black)
+                Text(line.text.ifBlank { "♪" }, color = color, fontSize = 34.sp, lineHeight = 39.sp, fontWeight = FontWeight.Black)
                 translated?.getOrNull(i)?.takeIf { it.isNotBlank() }?.let { tl ->
                     Spacer(Modifier.height(4.dp))
-                    Text(tl, color = color.copy(alpha = color.alpha * 0.75f), fontSize = 18.sp, lineHeight = 23.sp, fontWeight = FontWeight.SemiBold)
+                    Text(tl, color = color.copy(alpha = color.alpha * 0.75f), fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -294,10 +294,10 @@ private fun PlainLyrics(text: String, translated: List<String>? = null) {
         Text("Paroles non synchronisées", color = Txt.copy(alpha = 0.5f), fontSize = 13.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(16.dp))
         if (translated == null) {
-            Text(text, color = Txt.copy(alpha = 0.85f), fontSize = 27.sp, lineHeight = 34.sp, fontWeight = FontWeight.Black)
+            Text(text, color = Txt.copy(alpha = 0.85f), fontSize = 26.sp, lineHeight = 34.sp, fontWeight = FontWeight.Black)
         } else {
             text.lines().forEachIndexed { i, l ->
-                Text(l, color = Txt.copy(alpha = 0.85f), fontSize = 27.sp, lineHeight = 34.sp, fontWeight = FontWeight.Black)
+                Text(l, color = Txt.copy(alpha = 0.85f), fontSize = 26.sp, lineHeight = 34.sp, fontWeight = FontWeight.Black)
                 translated.getOrNull(i)?.takeIf { it.isNotBlank() }?.let { Text(it, color = Txt.copy(alpha = 0.55f), fontSize = 17.sp, lineHeight = 22.sp, fontWeight = FontWeight.SemiBold) }
                 Spacer(Modifier.height(8.dp))
             }

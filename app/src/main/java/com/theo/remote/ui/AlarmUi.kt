@@ -85,7 +85,7 @@ fun AlarmRingScreen(onWake: () -> Unit, onStop: () -> Unit, onSnooze: () -> Unit
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(Modifier.height(40.dp))
-            Text(if (hour < 12) "Bonjour Theo" else "Debout Theo", color = Txt2, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            Text(if (hour < 12) "Bonjour Theo" else "Debout Theo", color = Txt2, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
             Text(
                 SimpleDateFormat("HH:mm", Locale.FRANCE).format(Date(now)),
                 color = Txt, fontSize = 96.sp, fontWeight = FontWeight.ExtraBold,
@@ -104,7 +104,7 @@ fun AlarmRingScreen(onWake: () -> Unit, onStop: () -> Unit, onSnooze: () -> Unit
                     AnimatedContent(t.title to t.artist, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "alarmTrack") { (title, artist) ->
                         Column {
                             Text(title, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Text(artist, color = Txt2, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(artist, color = Txt2, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }
@@ -120,11 +120,11 @@ fun AlarmRingScreen(onWake: () -> Unit, onStop: () -> Unit, onSnooze: () -> Unit
                 Box(
                     Modifier.weight(1f).height(58.dp).glass(PillShape, fill = 0.12f, edge = 0.16f).bounceClick(pressedScale = 0.95f, onClick = onSnooze),
                     contentAlignment = Alignment.Center,
-                ) { Text("Encore 9 min", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+                ) { Text("Encore 9 min", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold) }
                 Box(
                     Modifier.weight(1f).height(58.dp).glass(PillShape, fill = 0.12f, edge = 0.16f).bounceClick(pressedScale = 0.95f, onClick = onStop),
                     contentAlignment = Alignment.Center,
-                ) { Text("Arrêter", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
+                ) { Text("Arrêter", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold) }
             }
             Spacer(Modifier.height(12.dp))
         }
@@ -165,7 +165,7 @@ fun AlarmPanel() {
         val nextAt = Alarm.next(saved)
         Text(
             if (nextAt != null) "Prochain réveil ${untilText(nextAt)}" else "Réveil coupé",
-            color = if (nextAt != null) Ok else Txt2, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+            color = if (nextAt != null) Ok else Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold,
         )
 
         Box(Modifier.fillMaxWidth().blockDismiss(), contentAlignment = Alignment.Center) {
@@ -191,7 +191,7 @@ fun AlarmPanel() {
                         .then(if (on) Modifier.background(Txt) else Modifier.glass(PillShape, fill = 0.08f, edge = 0.14f))
                         .bounceClick { days = if (on) days - d else days + d },
                     contentAlignment = Alignment.Center,
-                ) { Text(l, color = if (on) Ink else Txt, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold) }
+                ) { Text(l, color = if (on) Ink else Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold) }
             }
         }
         Text(if (days.isEmpty()) "Aucun jour choisi : le réveil sonnera une seule fois." else "", color = Txt3, fontSize = 12.sp)
@@ -240,7 +240,7 @@ fun AlarmPanel() {
         }
         Text(
             "Tester maintenant",
-            color = Txt2, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+            color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
             modifier = Modifier.clip(RoundedCornerShape(8.dp)).bounceClick(pressedScale = 0.96f) {
                 Alarm.set(ctx, current(saved.enabled))
                 ctx.startActivity(Intent(ctx, AlarmActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -264,7 +264,7 @@ fun untilText(at: Long): String {
 
 @Composable
 private fun Label(t: String) {
-    Text(t, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+    Text(t, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
 }
 
 @Composable
@@ -274,7 +274,7 @@ private fun Choice(label: String, on: Boolean, onClick: () -> Unit) {
         Modifier.clip(shape)
             .then(if (on) Modifier.background(Txt) else Modifier.glass(shape, fill = 0.08f, edge = 0.14f))
             .bounceClick(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
+            .padding(horizontal = 16.dp, vertical = 9.dp),
     ) {
         Text(label, color = if (on) Ink else Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
     }

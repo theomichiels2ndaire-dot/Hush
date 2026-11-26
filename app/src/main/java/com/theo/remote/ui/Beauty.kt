@@ -191,9 +191,9 @@ fun EmptyState(title: String, sub: String, action: String? = null, onAction: (()
             Box(Modifier.size(34.dp).clip(PillShape).background(Brush.linearGradient(listOf(Ok, lerpColor(Ok, Color.Black, 0.4f)))))
             Box(Modifier.fillMaxSize().clip(PillShape).glare())
         }
-        androidx.compose.material3.Text(title, color = Txt, fontSize = 19.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold)
+        androidx.compose.material3.Text(title, color = Txt, fontSize = 20.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold)
         androidx.compose.material3.Text(
-            sub, color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+            sub, color = Txt2, fontSize = 15.sp, lineHeight = 20.sp,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(horizontal = 24.dp),
         )
         if (action != null && onAction != null) PillButton(action) { onAction() }
@@ -218,7 +218,7 @@ val Surface2 = Color(0xFF1C1C1C)
 
 /** Boutons : 10 dp d'arrondi en style Pochette (au lieu de pilules partout). */
 val BtnShape: androidx.compose.ui.graphics.Shape
-    get() = if (com.theo.remote.Features.flags.value.flatStyle) RoundedCornerShape(10.dp) else PillShape
+    get() = if (com.theo.remote.Features.flags.value.flatStyle) RoundedCornerShape(12.dp) else PillShape
 
 // ---------------------------------------------------------------- navigation
 

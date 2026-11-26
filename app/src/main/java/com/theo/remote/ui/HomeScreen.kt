@@ -200,7 +200,7 @@ fun HomeScreen(
                             Text(
                                 if (likedOnly) "Touche le cœur dans le lecteur pour ajouter un son ici."
                                 else "Les sons que tu écoutes dans Tidal apparaîtront ici.",
-                                color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                                color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
                                 modifier = Modifier.padding(horizontal = Space.gutter),
                             )
                         } else {
@@ -293,8 +293,8 @@ private fun NowPlayingCard(s: TidalRemote.State, onOpen: () -> Unit) {
                     label = "nowTitle",
                 ) { (title, artist) ->
                     Column {
-                        Text(title, color = Txt, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 23.sp)
-                        Text(artist, color = Txt.copy(alpha = 0.75f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(title, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 23.sp)
+                        Text(artist, color = Txt.copy(alpha = 0.75f), fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
                 Spacer(Modifier.height(Space.s))
@@ -395,12 +395,12 @@ private fun PlaylistTile(p: TidalApi.Playlist, onClick: () -> Unit) {
 private fun ToolChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
     val shape = BtnShape
     Row(
-        Modifier.glass(shape, fill = 0.10f, edge = 0.16f).bounceClick(pressedScale = 0.94f, onClick = onClick).padding(horizontal = 14.dp, vertical = 10.dp),
+        Modifier.glass(shape, fill = 0.10f, edge = 0.16f).bounceClick(pressedScale = 0.94f, onClick = onClick).padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(icon, contentDescription = null, tint = Txt, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(7.dp))
-        Text(label, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+        Text(label, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
     }
 }
 

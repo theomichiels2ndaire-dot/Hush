@@ -115,13 +115,13 @@ fun ReleaseTile(a: TidalApi.Album, onClick: () -> Unit) {
             if (fresh) {
                 Text(
                     "Nouveau",
-                    color = Ink, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold,
+                    color = Ink, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.align(Alignment.TopStart).padding(8.dp).clip(PillShape).background(Txt).padding(horizontal = 8.dp, vertical = 3.dp),
                 )
             }
         }
         Spacer(Modifier.height(Space.s))
-        Text(a.title, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(a.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(
             listOfNotNull(a.artist, releasedAgo(a.releaseDate).ifBlank { null }).joinToString(" · "),
             color = Txt2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -210,7 +210,7 @@ fun UpcomingTile(a: TidalApi.Album, onClick: () -> Unit) {
             )
         }
         Spacer(Modifier.height(Space.s))
-        Text(a.title, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(a.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(
             listOfNotNull(a.artist, runCatching { LocalDate.parse(a.releaseDate).format(java.time.format.DateTimeFormatter.ofPattern("d MMM", java.util.Locale.FRANCE)) }.getOrNull()).joinToString(" · "),
             color = Txt2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,

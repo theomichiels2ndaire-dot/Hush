@@ -219,7 +219,7 @@ object EdgePanel {
                 },
             contentAlignment = Alignment.CenterEnd,
         ) {
-            Box(Modifier.padding(end = 4.dp).width(5.dp).height(72.dp).clip(RoundedCornerShape(3.dp)).background(Color.White.copy(alpha = 0.55f)))
+            Box(Modifier.padding(end = 4.dp).width(5.dp).height(72.dp).clip(RoundedCornerShape(4.dp)).background(Color.White.copy(alpha = 0.55f)))
         }
     }
 
@@ -258,7 +258,7 @@ object EdgePanel {
                             Cover(bitmap = t?.art, radius = 8.dp, modifier = Modifier.size(58.dp))
                             Spacer(Modifier.width(12.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(t?.title ?: "Rien en cours", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(t?.title ?: "Rien en cours", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text(t?.artist.orEmpty(), color = Txt.copy(alpha = 0.72f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                         }
@@ -269,12 +269,12 @@ object EdgePanel {
                         }
                     }
                     // tes playlists les plus jouées
-                    Column(Modifier.padding(horizontal = 10.dp, vertical = 10.dp)) {
+                    Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
                         if (top.isNotEmpty()) Text("Tes playlists", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(start = 4.dp, bottom = 4.dp))
                         top.forEach { (id, name, cover) ->
                             val art = remember(covers, id, cover) { PlaylistCovers.art(id, cover) }
                             Row(
-                                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).bounceClick(pressedScale = 0.97f) {
+                                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).bounceClick(pressedScale = 0.97f) {
                                     TidalRemote.setShuffle(false); NowPlaylist.set(id); TidalRemote.playPlaylist(name, id); close()
                                 }.padding(4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -286,12 +286,12 @@ object EdgePanel {
                             }
                         }
                         Row(
-                            Modifier.fillMaxWidth().padding(top = 4.dp).clip(RoundedCornerShape(10.dp)).bounceClick(pressedScale = 0.97f) { openApp() }.padding(horizontal = 4.dp, vertical = 10.dp),
+                            Modifier.fillMaxWidth().padding(top = 4.dp).clip(RoundedCornerShape(12.dp)).bounceClick(pressedScale = 0.97f) { openApp() }.padding(horizontal = 4.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null, tint = Txt2, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(10.dp))
-                            Text("Ouvrir Hush", color = Txt2, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            Text("Ouvrir Hush", color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -302,7 +302,7 @@ object EdgePanel {
     @Composable
     private fun EdgeButton(icon: ImageVector, label: String, bg: Color, fg: Color, modifier: Modifier, onClick: () -> Unit) {
         Box(
-            modifier.height(46.dp).clip(RoundedCornerShape(10.dp)).background(bg).bounceClick { bumpAutoClose(); onClick() },
+            modifier.height(46.dp).clip(RoundedCornerShape(12.dp)).background(bg).bounceClick { bumpAutoClose(); onClick() },
             contentAlignment = Alignment.Center,
         ) { Icon(icon, contentDescription = label, tint = fg, modifier = Modifier.size(26.dp)) }
     }

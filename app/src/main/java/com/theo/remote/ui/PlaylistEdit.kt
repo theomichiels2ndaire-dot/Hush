@@ -250,12 +250,12 @@ fun PlaylistPicker() {
                 Spacer(Modifier.height(Space.xs))
                 when {
                     !loggedIn -> {
-                        Text("Connecte ton compte Tidal (onglet Biblio) pour gérer tes playlists.", color = Txt2, fontSize = 14.sp)
+                        Text("Connecte ton compte Tidal (onglet Biblio) pour gérer tes playlists.", color = Txt2, fontSize = 13.sp)
                     }
                     !canWrite -> {
                         Text(
                             "Hush doit avoir le droit de modifier tes playlists. Reconnecte ton compte une fois pour l'autoriser.",
-                            color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                            color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
                         )
                         PillButton("Reconnecter Tidal") { PlaylistEdit.close(); TidalAuth.logout(); PlaylistStore.clear(); TidalAuth.login(ctx) }
                     }
@@ -348,7 +348,7 @@ fun NewPlaylistRow(dashed: Boolean = false, onCreate: (String) -> Unit) {
     } else {
         LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Space.s)) {
-            Box(Modifier.weight(1f).height(48.dp).glass(shape, fill = 0.10f, edge = 0.18f).padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
+            Box(Modifier.weight(1f).height(48.dp).glass(shape, fill = 0.10f, edge = 0.18f).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
                 if (name.isEmpty()) Text("Nom de la playlist", color = Txt3, fontSize = 15.sp)
                 BasicTextField(
                     value = name,

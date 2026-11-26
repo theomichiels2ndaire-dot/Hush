@@ -238,7 +238,7 @@ fun EraPanel() {
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), state = list, contentPadding = PaddingValues(start = Space.gutter, end = Space.gutter, bottom = 80.dp)) {
         item {
             PanelTitle(e.label)
-            Text("Tes sons les plus écoutés à cette époque · ${e.plays} écoutes", color = Txt2, fontSize = 14.sp)
+            Text("Tes sons les plus écoutés à cette époque · ${e.plays} écoutes", color = Txt2, fontSize = 13.sp)
             Spacer(Modifier.height(Space.m))
             val l = top.orEmpty()
             Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
@@ -289,7 +289,7 @@ fun QuotesPanel() {
             Text(
                 if (quotes.isEmpty()) "Dans l'écran des paroles, fais un appui long sur une ligne pour la garder ici."
                 else "${quotes.size} ligne${if (quotes.size > 1) "s" else ""} gardée${if (quotes.size > 1) "s" else ""} · toucher pour réécouter ce passage",
-                color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
             )
             Spacer(Modifier.height(Space.s))
         }
@@ -305,7 +305,7 @@ fun QuotesPanel() {
                     .padding(Space.m),
             ) {
                 Column(Modifier.padding(end = 28.dp)) {
-                    Text("« ${q.text} »", color = Txt, fontSize = 19.sp, fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic, lineHeight = 25.sp)
+                    Text("« ${q.text} »", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.Bold, fontStyle = FontStyle.Italic, lineHeight = 25.sp)
                     Spacer(Modifier.height(8.dp))
                     Text("${q.title} · ${q.artist}", color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }

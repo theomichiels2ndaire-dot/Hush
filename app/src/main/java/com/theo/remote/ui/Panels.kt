@@ -183,11 +183,11 @@ private fun PartyScreen() {
         PanelTitle("Mode soirée")
         Text(
             "Tes potes scannent le QR code avec l'appareil photo, cherchent un son et l'ajoutent à ta file. Pas besoin d'appli.",
-            color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+            color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
         )
 
         st.error?.let {
-            Text(it, color = Ko, fontSize = 14.sp, lineHeight = 20.sp)
+            Text(it, color = Ko, fontSize = 13.sp, lineHeight = 20.sp)
             PillButton("Réessayer") { PartyServer.start(ctx) }
         }
 
@@ -347,7 +347,7 @@ private fun SettingsScreen() {
         if (devices.isEmpty()) {
             Text(
                 "Branche ton casque ou connecte ta voiture : ils apparaîtront ici. Tu pourras choisir lesquels relancent la musique, ouvrent le mode voiture, et leur volume et leurs basses.",
-                color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
             )
         }
         devices.forEach { d ->
@@ -359,7 +359,7 @@ private fun SettingsScreen() {
                     )
                     Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(d.name, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(d.name, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(d.kind, color = Txt2, fontSize = 12.sp)
                     }
                     Text(
@@ -368,7 +368,7 @@ private fun SettingsScreen() {
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Relancer la musique", color = Txt, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                    Text("Relancer la musique", color = Txt, fontSize = 13.sp, modifier = Modifier.weight(1f))
                     GlassSwitch(d.resume) { AutoResume.update(d.copy(resume = it)) }
                 }
                 if (d.resume) {
@@ -389,7 +389,7 @@ private fun SettingsScreen() {
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("C'est ma voiture (ouvre le mode voiture)", color = Txt, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                    Text("C'est ma voiture (ouvre le mode voiture)", color = Txt, fontSize = 13.sp, modifier = Modifier.weight(1f))
                     GlassSwitch(d.car) { AutoResume.update(d.copy(car = it)) }
                 }
                 val pf by com.theo.remote.Features.flags.collectAsState()

@@ -165,8 +165,8 @@ fun DiscoverPanel() {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         PanelTitle("Découverte")
-        Text("À droite : dans « ${DiscoverDeck.PLAYLIST} ». À gauche : pas pour moi.", color = Txt2, fontSize = 14.sp, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(18.dp))
+        Text("À droite : dans « ${DiscoverDeck.PLAYLIST} ». À gauche : pas pour moi.", color = Txt2, fontSize = 13.sp, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(20.dp))
         Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
             when {
                 top != null -> {
@@ -195,7 +195,7 @@ private fun key(k: Any, content: @Composable () -> Unit) = androidx.compose.runt
 @Composable
 private fun RoundAction(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, bg: Color, fg: Color, onClick: () -> Unit) {
     Box(
-        Modifier.size(68.dp).clip(RoundedCornerShape(10.dp)).background(bg).bounceClick(onClick = onClick),
+        Modifier.size(68.dp).clip(RoundedCornerShape(12.dp)).background(bg).bounceClick(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { Icon(icon, contentDescription = label, tint = fg, modifier = Modifier.size(32.dp)) }
 }
@@ -209,7 +209,7 @@ private fun DeckCard(r: TidalApi.Result, modifier: Modifier = Modifier, overlay:
             Cover(model = TidalApi.bigPicture(r.coverUrl), radius = 12.dp, modifier = Modifier.fillMaxWidth().aspectRatio(1f))
             overlay()
         }
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(16.dp))
         Text(r.fullTitle, color = Txt, fontSize = 22.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 26.sp)
         Text(r.artistLine, color = Txt.copy(alpha = 0.75f), fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         r.album?.let { Text(it, color = Txt.copy(alpha = 0.55f), fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
@@ -247,10 +247,10 @@ private fun SwipeCard(r: TidalApi.Result) {
     ) {
         // le verdict apparaît pendant qu'on glisse
         if (abs(p) > 0.15f) Box(
-            Modifier.padding(14.dp).clip(RoundedCornerShape(10.dp)).background(if (p > 0) Txt else Color.Black.copy(alpha = 0.7f))
-                .graphicsLayer { alpha = abs(p) }.padding(horizontal = 14.dp, vertical = 8.dp),
+            Modifier.padding(14.dp).clip(RoundedCornerShape(12.dp)).background(if (p > 0) Txt else Color.Black.copy(alpha = 0.7f))
+                .graphicsLayer { alpha = abs(p) }.padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            Text(if (p > 0) "Je garde" else "Pas pour moi", color = if (p > 0) Ink else Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            Text(if (p > 0) "Je garde" else "Pas pour moi", color = if (p > 0) Ink else Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
         }
     }
 }

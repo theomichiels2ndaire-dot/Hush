@@ -94,7 +94,7 @@ fun TransitionsPanel() {
                 Text(
                     if (r.withPairs) "${r.title} · choisis la transition entre deux sons et coupe le début ou la fin de chacun."
                     else "${r.items.firstOrNull()?.title.orEmpty()} · fais-le démarrer plus tard ou finir plus tôt, à chaque écoute.",
-                    color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                    color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
                 )
                 if (r.withPairs && r.items.size > 1) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -129,7 +129,7 @@ private fun CueRow(item: TransitionEdit.Item, cue: Transitions.Cue?) {
         mutableStateOf((cue?.startMs ?: 0L).toFloat()..(cue?.endMs ?: item.durationMs).toFloat().coerceAtMost(dur))
     }
     val shape = Rounded(18)
-    Column(Modifier.fillMaxWidth().glass(shape, fill = 0.06f, edge = 0.10f).padding(horizontal = 14.dp, vertical = 10.dp)) {
+    Column(Modifier.fillMaxWidth().glass(shape, fill = 0.06f, edge = 0.10f).padding(horizontal = 16.dp, vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Cover(model = item.cover, radius = 6.dp, modifier = Modifier.size(42.dp))
             Spacer(Modifier.width(10.dp))
@@ -191,7 +191,7 @@ private fun PairChip(explicit: Transitions.Kind?, s: Transitions.Settings, onCha
                 .clip(PillShape)
                 .then(if (explicit != null) Modifier.background(Txt) else Modifier.glass(PillShape, fill = 0.08f, edge = 0.14f))
                 .bounceClick(pressedScale = 0.94f) { haptic(); onChange(order[(order.indexOf(current) + 1) % order.size]) }
-                .padding(horizontal = 14.dp, vertical = 7.dp),
+                .padding(horizontal = 16.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Rounded.ArrowDownward, contentDescription = null, tint = if (explicit != null) Ink else Txt2, modifier = Modifier.size(15.dp))
@@ -236,7 +236,7 @@ fun TransitionSettingsCard() {
                 SmallPill(k.label, s.defaultKind == k) { Transitions.setSettings(s.copy(defaultKind = k, fadeAll = true)) }
             }
         }
-        Text("Durée du fondu : ${s.fadeSec} s", color = Txt, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text("Durée du fondu : ${s.fadeSec} s", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         Slider(
             value = s.fadeSec.toFloat(),
             onValueChange = { Transitions.setSettings(s.copy(fadeSec = it.toInt().coerceIn(1, 12))) },

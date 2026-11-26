@@ -77,11 +77,11 @@ fun OneSongPanel() {
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), state = list, contentPadding = PaddingValues(start = Space.gutter, end = Space.gutter, bottom = 80.dp), verticalArrangement = Arrangement.spacedBy(Space.xs)) {
         item {
             PanelTitle("Un son par artiste")
-            Text("Ton son préféré de chacun de tes artistes, du plus écouté au moins écouté. Ton best of perso.", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+            Text("Ton son préféré de chacun de tes artistes, du plus écouté au moins écouté. Ton best of perso.", color = Txt2, fontSize = 13.sp, lineHeight = 20.sp)
             Spacer(Modifier.height(Space.m))
             val l = items.orEmpty()
             if (items == null) SkeletonList(6)
-            else if (l.isEmpty()) Text("Pas encore assez d'écoutes.", color = Txt3, fontSize = 14.sp)
+            else if (l.isEmpty()) Text("Pas encore assez d'écoutes.", color = Txt3, fontSize = 13.sp)
             else {
                 Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
                     PillButton("Lire") { SmartLists.play(l, shuffled = false) }

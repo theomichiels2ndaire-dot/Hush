@@ -136,9 +136,9 @@ fun WhatsNewDialog() {
             Modifier.fillMaxWidth().clip(Rounded(28)).background(Color(0xFF14151F)).glass(Rounded(28), fill = 0.04f, edge = 0.14f).padding(22.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Text("Quoi de neuf", color = Txt, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Dans cette version de Hush :", color = Txt2, fontSize = 14.sp)
-            WhatsNew.items.forEach { Text(it, color = Txt, fontSize = 14.sp, lineHeight = 19.sp) }
+            Text("Quoi de neuf", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Dans cette version de Hush :", color = Txt2, fontSize = 15.sp)
+            WhatsNew.items.forEach { Text(it, color = Txt, fontSize = 15.sp, lineHeight = 19.sp) }
             Spacer(Modifier.height(4.dp))
             PillButton("C'est parti") { close() }
         }
@@ -155,13 +155,13 @@ fun StatsExcludeCard() {
     val f by Features.flags.collectAsState()
     val items by StatsExclude.items.collectAsState()
     Column(Modifier.fillMaxWidth().glass(Rounded(22), fill = 0.07f, edge = 0.12f).padding(Space.m), verticalArrangement = Arrangement.spacedBy(Space.s)) {
-        Text("Ce qui ne compte pas dans tes stats", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Ce qui ne compte pas dans tes stats", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
         if (f.statsExclude) {
             if (items.isEmpty()) Text("Appui long sur un son → « Ne pas compter dans mes stats ».", color = Txt3, fontSize = 13.sp, lineHeight = 17.sp)
             items.forEach { i ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(i.title, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(i.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(i.artist, color = Txt2, fontSize = 12.sp, maxLines = 1)
                     }
                     Text(
@@ -216,10 +216,10 @@ fun AlbumsPanel() {
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), state = list, contentPadding = panelList(), verticalArrangement = Arrangement.spacedBy(Space.s)) {
         item {
             PanelTitle("Tes albums")
-            Text("Tes albums les plus écoutés, et combien de leurs sons tu connais. Toucher pour lancer l'album.", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+            Text("Tes albums les plus écoutés, et combien de leurs sons tu connais. Toucher pour lancer l'album.", color = Txt2, fontSize = 13.sp, lineHeight = 20.sp)
             Spacer(Modifier.height(Space.s))
             if (albums == null) SkeletonList(6)
-            else if (albums.orEmpty().isEmpty()) Text("Pas encore assez d'écoutes.", color = Txt3, fontSize = 14.sp)
+            else if (albums.orEmpty().isEmpty()) Text("Pas encore assez d'écoutes.", color = Txt3, fontSize = 13.sp)
         }
         itemsIndexed(albums.orEmpty(), key = { _, a -> a.album + a.artist }) { i, a -> AlbumRow(i + 1, a, completion = i < 12) }
     }
@@ -335,13 +335,13 @@ fun CreditsPanel() {
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), state = list, contentPadding = panelList(), verticalArrangement = Arrangement.spacedBy(Space.s)) {
         item {
             PanelTitle("Crédits")
-            Text(title, color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text(artist, color = Txt2, fontSize = 14.sp)
+            Text(title, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(artist, color = Txt2, fontSize = 15.sp)
             Spacer(Modifier.height(Space.m))
             val i = info
             when {
                 !loaded -> SkeletonLines(4)
-                i == null || (i.roles.isEmpty() && i.year == null) -> Text("Pas de crédits trouvés pour ce son (source : MusicBrainz, base libre).", color = Txt3, fontSize = 14.sp, lineHeight = 20.sp)
+                i == null || (i.roles.isEmpty() && i.year == null) -> Text("Pas de crédits trouvés pour ce son (source : MusicBrainz, base libre).", color = Txt3, fontSize = 13.sp, lineHeight = 20.sp)
                 else -> Column(Modifier.fillMaxWidth().glass(Rounded(20), fill = 0.07f, edge = 0.12f).padding(Space.m), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     i.year?.let { CreditLine("Sortie", it) }
                     i.album?.let { CreditLine("Album", it) }
@@ -489,23 +489,23 @@ fun ConcertsPanel() {
             } else {
                 Text(
                     if (loading) "Je cherche les dates de tes artistes…" else "Les dates de tes artistes les plus écoutés et de ceux que tu suis. Toucher pour les billets.",
-                    color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                    color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
                 )
                 Spacer(Modifier.height(Space.s))
                 Text(
                     if (loading) "…" else "Actualiser", color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.clip(RoundedCornerShape(8.dp)).bounceClick(pressedScale = 0.95f) { moreScope.launch { Concerts.refresh() } }.padding(vertical = 4.dp),
                 )
-                if (!loading && events.isEmpty()) Text("Aucune date trouvée en France pour l'instant.", color = Txt3, fontSize = 14.sp)
+                if (!loading && events.isEmpty()) Text("Aucune date trouvée en France pour l'instant.", color = Txt3, fontSize = 15.sp)
                 if (Features.flags.value.setlists) Text(
                     "Voir les setlists des derniers concerts ›", color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.clip(RoundedCornerShape(8.dp)).bounceClick(pressedScale = 0.95f) { Panels.show(Panels.Kind.Setlists) }.padding(vertical = 4.dp),
                 )
             }
         }
-        if (near.isNotEmpty()) item { Text("Près de chez toi · Île-de-France", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(top = Space.m)) }
+        if (near.isNotEmpty()) item { Text("Près de chez toi · Île-de-France", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(top = Space.m)) }
         items(near, key = { "n" + it.id }) { e -> ConcertRow(e) { runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(e.url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } } }
-        if (far.isNotEmpty()) item { Text("Ailleurs en France", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(top = Space.m)) }
+        if (far.isNotEmpty()) item { Text("Ailleurs en France", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(top = Space.m)) }
         items(far, key = { "f" + it.id }) { e -> ConcertRow(e) { runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(e.url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } } }
     }
 }
@@ -538,16 +538,16 @@ fun ConcertsKeyCard() {
     val key by Concerts.key.collectAsState()
     var text by remember { mutableStateOf(key) }
     Column(Modifier.fillMaxWidth().glass(Rounded(20), fill = 0.08f, edge = 0.14f).padding(Space.m), verticalArrangement = Arrangement.spacedBy(Space.s)) {
-        Text("Clé Ticketmaster", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Clé Ticketmaster", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
         Text(
             "Les dates viennent de Ticketmaster. Crée un compte gratuit sur developer.ticketmaster.com, puis copie ta « Consumer Key » ici.",
             color = Txt2, fontSize = 13.sp, lineHeight = 18.sp,
         )
         Box(Modifier.fillMaxWidth().glass(RoundedCornerShape(12.dp), fill = 0.10f, edge = 0.16f).padding(horizontal = 12.dp, vertical = 10.dp)) {
-            if (text.isEmpty()) Text("Colle ta clé ici", color = Txt3, fontSize = 14.sp)
+            if (text.isEmpty()) Text("Colle ta clé ici", color = Txt3, fontSize = 13.sp)
             BasicTextField(
                 value = text, onValueChange = { text = it.trim().take(64) }, singleLine = true,
-                textStyle = TextStyle(color = Txt, fontSize = 14.sp), cursorBrush = SolidColor(Txt), modifier = Modifier.fillMaxWidth(),
+                textStyle = TextStyle(color = Txt, fontSize = 13.sp), cursorBrush = SolidColor(Txt), modifier = Modifier.fillMaxWidth(),
             )
         }
         PillButton("Enregistrer") { Concerts.setKey(text); Follow.schedule(ctx); moreScope.launch { Concerts.refresh() }; TidalRemote.showToast("Clé enregistrée") }
@@ -641,11 +641,11 @@ fun ChartsAgoCard() {
             .bounceClick(pressedScale = 0.97f) { TidalRemote.playTitle(x.title, x.artist) }.padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("", fontSize = 28.sp)
+        Text("", fontSize = 30.sp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text("Il y a 5 ans · n°1 en France", color = Txt3, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
-            Text(x.title, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(x.title, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("${x.artist} · cette semaine-là en ${x.year}", color = Txt2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Box(Modifier.size(40.dp).clip(PillShape).background(Txt), contentAlignment = Alignment.Center) {
@@ -668,7 +668,7 @@ fun AmbientPanel() {
     LazyColumn(Modifier.fillMaxSize().statusBarsPadding(), state = list, contentPadding = panelList(), verticalArrangement = Arrangement.spacedBy(Space.m)) {
         item {
             PanelTitle("Sons d'ambiance")
-            Text("Un fond sonore doux, joué par-dessus ta musique (ou tout seul). Il s'arrête avec le minuteur de sommeil.", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+            Text("Un fond sonore doux, joué par-dessus ta musique (ou tout seul). Il s'arrête avec le minuteur de sommeil.", color = Txt2, fontSize = 13.sp, lineHeight = 20.sp)
         }
         item {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.s), verticalArrangement = Arrangement.spacedBy(Space.s)) {

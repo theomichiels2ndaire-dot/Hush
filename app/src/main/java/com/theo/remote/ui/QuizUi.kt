@@ -201,8 +201,8 @@ fun LyricsQuizPanel() {
 @Composable
 private fun QuizSetup(ctx: Context) {
     val best = remember { ctx.getSharedPreferences("hush", Context.MODE_PRIVATE).getInt("lyricsQuizBest", 0) }
-    Text("Hush affiche des paroles de tes sons préférés. Trouve la ligne qui suit, ou le titre du son. 15 secondes par question, plus tu vas vite, plus tu marques.", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
-    if (best > 0) Text("Ton record : $best points", color = Ok, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+    Text("Hush affiche des paroles de tes sons préférés. Trouve la ligne qui suit, ou le titre du son. 15 secondes par question, plus tu vas vite, plus tu marques.", color = Txt2, fontSize = 15.sp, lineHeight = 20.sp)
+    if (best > 0) Text("Ton record : $best points", color = Ok, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     Row(horizontalArrangement = Arrangement.spacedBy(Space.s)) {
         PillButton("10 questions") { LyricsQuiz.start(10) }
         PillButton("5 questions", filled = false) { LyricsQuiz.start(5) }
@@ -215,8 +215,8 @@ private fun QuizAsk(q: LyricsQuiz.Question, picked: Int?) {
     LaunchedEffect(q.index) { while (true) { now = SystemClock.elapsedRealtime(); delay(100) } }
     val left = q.remaining(now)
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text("Question ${q.index + 1} / ${q.total}", color = Txt2, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-        Text("${left / 1000 + 1} s", color = if (left < 5000) Ko else Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Question ${q.index + 1} / ${q.total}", color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        Text("${left / 1000 + 1} s", color = if (left < 5000) Ko else Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
     }
     Box(Modifier.fillMaxWidth().height(6.dp).clip(PillShape).background(Color.White.copy(alpha = 0.10f))) {
         Box(Modifier.fillMaxWidth(left.toFloat() / LyricsQuiz.ROUND_MS).height(6.dp).clip(PillShape).background(Txt))
@@ -276,7 +276,7 @@ private fun QuizDone(ctx: Context, d: LyricsQuiz.Phase.Done) {
         Text("Partie terminée", color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         Text("${d.score} points", color = Txt, fontSize = 46.sp, fontWeight = FontWeight.ExtraBold)
         Text("${d.good} bonne${if (d.good > 1) "s" else ""} réponse${if (d.good > 1) "s" else ""} sur ${d.total}", color = Txt2, fontSize = 15.sp)
-        if (d.score > oldBest && oldBest > 0) Text("Nouveau record !", color = Ok, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+        if (d.score > oldBest && oldBest > 0) Text("Nouveau record !", color = Ok, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
         Spacer(Modifier.height(Space.s))
         PillButton("Rejouer") { LyricsQuiz.start(d.total.coerceAtLeast(5)) }
         PillButton("Terminer", filled = false) { LyricsQuiz.stop() }

@@ -213,8 +213,8 @@ fun CleanupHost() {
             Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(10.dp).fillMaxWidth().heightIn(max = 640.dp),
         ) {
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Nettoyer « ${cand.name} »", color = Txt, fontSize = 24.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text("Tu passes souvent ces sons au bout de quelques secondes. Ceux qui sont cochés seront retirés.", color = Txt2, fontSize = 14.sp, lineHeight = 19.sp)
+                Text("Nettoyer « ${cand.name} »", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text("Tu passes souvent ces sons au bout de quelques secondes. Ceux qui sont cochés seront retirés.", color = Txt2, fontSize = 15.sp, lineHeight = 19.sp)
                 Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     cand.songs.forEachIndexed { i, s ->
                         val on = checked.getOrElse(i) { true }
@@ -265,7 +265,7 @@ fun CleanupHost() {
 fun CleanupNowCard() {
     val ctx = LocalContext.current
     Column(Modifier.fillMaxWidth().clip(Rounded(20)).background(Color.White.copy(alpha = 0.06f)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("Nettoyer mes playlists", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text("Nettoyer mes playlists", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold)
         Text("Les sons que tu passes toujours, playlist par playlist.", color = Txt2, fontSize = 13.sp)
         PillButton("Voir maintenant") {
             PlaylistCleanup.init(ctx)

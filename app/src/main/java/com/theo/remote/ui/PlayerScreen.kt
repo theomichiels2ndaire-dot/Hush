@@ -194,7 +194,7 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
             Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = "Réduire le lecteur", tint = Txt.copy(alpha = 0.6f), modifier = Modifier.size(36.dp))
         }
 
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(16.dp))
         // à l'ouverture, la pochette part de la place du mini-lecteur (en bas à gauche, en petit) et vient se poser
         val fly = remember { androidx.compose.animation.core.Animatable(0f) }
         LaunchedEffect(Unit) { fly.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = 230f)) }
@@ -259,7 +259,7 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
                     // toucher le titre : la page de l'album (ou de l'artiste si l'album est inconnu)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        title ?: "—", color = Txt, fontSize = 24.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        title ?: "—", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp)).bounceClick(pressedScale = 0.97f, onLongClick = { t?.let { TrackMenu.open(TrackMenu.Target(it.title, it.artist, it.art, album = it.album)) } }) {
                             val ar = t?.artist.orEmpty()
                             val al = t?.album.orEmpty()
@@ -272,7 +272,7 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
                     // le rang de la carte de ce son : toucher pour la voir
                     PlayerCardGem(title.orEmpty(), t?.artist.orEmpty())
                     }
-                    Spacer(Modifier.height(3.dp))
+                    Spacer(Modifier.height(4.dp))
                     // artiste → sa page ; album → sa page
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         val artist = t?.artist.orEmpty()
@@ -372,9 +372,9 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
         }
 
         // commandes
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(16.dp))
         Row(
-            Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -384,11 +384,11 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
         }
 
         // volume
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(16.dp))
         VolumeBar()
 
         // paroles + file
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(20.dp))
         val rowBd = LocalPlayerGlass.current
         val capsule = PillShape
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides handDir) {
@@ -429,7 +429,7 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
     volHud?.let { v ->
         Box(Modifier.fillMaxSize().systemBarsPadding().padding(top = 14.dp), contentAlignment = Alignment.TopCenter) {
             Row(
-                Modifier.width(220.dp).clip(PillShape).background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = 14.dp, vertical = 10.dp),
+                Modifier.width(220.dp).clip(PillShape).background(Color.Black.copy(alpha = 0.55f)).padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.AutoMirrored.Rounded.VolumeUp, contentDescription = null, tint = Txt, modifier = Modifier.size(20.dp))
@@ -530,7 +530,7 @@ fun LyricsPill(active: Boolean, onClick: () -> Unit) {
     ) {
         Icon(Icons.Rounded.ChatBubbleOutline, contentDescription = null, tint = if (active) Ink else Txt, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(8.dp))
-        Text("Paroles", color = if (active) Ink else Txt, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Paroles", color = if (active) Ink else Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
     }
 }
 
@@ -932,7 +932,7 @@ private fun SwipeableCover(s: TidalRemote.State, onTap: () -> Unit = {}) {
                     .graphicsLayer { alpha = seekAlpha.value; val k = 0.85f + 0.15f * seekAlpha.value; scaleX = k; scaleY = k }
                     .clip(PillShape).background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = 16.dp, vertical = 10.dp),
             ) {
-                Text(if (seekFlash > 0) "+10 s" else "−10 s", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                Text(if (seekFlash > 0) "+10 s" else "−10 s", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
             }
         }
         // gros cœur du double-tap
@@ -955,7 +955,7 @@ fun ToggleChip(label: String, on: Boolean, onClick: () -> Unit) {
     val bg by animateColorAsState(if (on) Ok.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.08f), tween(220), label = "chipBg")
     val dot by animateColorAsState(if (on) Ok else Txt3, tween(220), label = "chipDot")
     Row(
-        Modifier.clip(shape).background(bg).bounceClick(onClick = onClick).padding(horizontal = 14.dp, vertical = 11.dp),
+        Modifier.clip(shape).background(bg).bounceClick(onClick = onClick).padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(8.dp).clip(PillShape).background(dot))
@@ -1027,7 +1027,7 @@ internal fun QualityBadge(title: String?, artist: String?) {
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
                         .background(Color.White.copy(alpha = 0.12f))
-                        .padding(horizontal = 7.dp, vertical = 2.dp),
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
                 )
             }
         }
@@ -1073,8 +1073,8 @@ private fun BigCover(s: TidalRemote.State, onClose: () -> Unit) {
             Cover(bitmap = art, radius = 22.dp, modifier = Modifier.fillMaxWidth().padding(18.dp).aspectRatio(1f).shadow(40.dp, Rounded(22)))
         }
         Column(Modifier.align(Alignment.BottomCenter).systemBarsPadding().padding(bottom = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(t?.title.orEmpty(), color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(t?.artist.orEmpty(), color = Txt2, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(t?.title.orEmpty(), color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(t?.artist.orEmpty(), color = Txt2, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -1204,7 +1204,7 @@ fun PlayerGlassOverlays(glass: Backdrop) {
                 LiquidGlass(glass, shape, cornerRadius = 30.dp, modifier = Modifier.matchParentSize(), blur = 6.dp, depth = 18.dp, refraction = 12.dp, chroma = 0.28f, spec = 1.1f)
                 Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.22f)))
                 Column(
-                    Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
+                    Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {

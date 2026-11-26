@@ -148,11 +148,11 @@ fun WhereIsItDialog() {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text("Où est ce son ?", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Text(target.title, color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(target.title, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(target.artist, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val r = result
             when {
-                error -> Text("Impossible de lire tes playlists (connexion à Tidal ?)", color = Ko, fontSize = 14.sp)
+                error -> Text("Impossible de lire tes playlists (connexion à Tidal ?)", color = Ko, fontSize = 13.sp)
                 r == null -> {
                     Text(if (total > 0) "Je regarde dans tes playlists… $done/$total" else "Je regarde dans tes playlists…", color = Txt, fontSize = 15.sp)
                     Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(Color.White.copy(alpha = 0.10f))) {
@@ -169,7 +169,7 @@ fun WhereIsItDialog() {
                     Column(Modifier.heightIn(max = 340.dp).verticalScroll(rememberScrollState())) { r.forEach { p ->
                         val art = rememberPlaylistArt(p)
                         Row(
-                            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).bounceClick(pressedScale = 0.97f) { close(); NavEvents.openPlaylist(p) }.padding(vertical = 4.dp),
+                            Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).bounceClick(pressedScale = 0.97f) { close(); NavEvents.openPlaylist(p) }.padding(vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             if (art != null) Cover(model = art, radius = 6.dp, modifier = Modifier.size(44.dp))

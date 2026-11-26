@@ -187,9 +187,9 @@ fun LocalPanel() {
                     val nT = entries.count { it is LocalMusic.Entry.T }
                     Text(
                         "${entries.size} son${if (entries.size > 1) "s" else ""}" + if (nT > 0) " · dont $nT de Tidal" else " · playlist Hush",
-                        color = Txt2, fontSize = 14.sp,
+                        color = Txt2, fontSize = 13.sp,
                     )
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                         LocalPill(Icons.Rounded.PlayArrow, "Lire", true, Modifier.weight(1f)) { com.theo.remote.MixQueue.play(ctx, entries, 0) }
                         LocalPill(Icons.Rounded.Shuffle, "Aléatoire", false, Modifier.weight(1f)) {
@@ -197,14 +197,14 @@ fun LocalPanel() {
                         }
                         GlassCircle(Icons.AutoMirrored.Rounded.ArrowBack, "Retour") { openId = null }
                     }
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         TextAction("+ Ajouter des sons") { addingTo = open.id }
                         TextAction("Supprimer la playlist", Ko) { LocalMusic.deletePlaylist(open.id); openId = null }
                     }
                     Text("Pour y mettre un son Tidal : ⋯ sur le son → Ajouter à une playlist → section Hush.", color = Txt3, fontSize = 12.sp, lineHeight = 16.sp)
-                    Spacer(Modifier.height(10.dp))
-                    if (entries.isEmpty()) Text("Playlist vide : ajoute des sons.", color = Txt2, fontSize = 14.sp)
+                    Spacer(Modifier.height(12.dp))
+                    if (entries.isEmpty()) Text("Playlist vide : ajoute des sons.", color = Txt2, fontSize = 13.sp)
                 }
                 itemsIndexed(entries, key = { _, e -> "p" + e.key }) { i, e ->
                     val remove: @Composable () -> Unit = {
@@ -221,16 +221,16 @@ fun LocalPanel() {
                 item(key = "h") {
                     PanelTitle("Fichiers locaux")
                     Text("Les sons de ton téléphone, lus par Hush. Tidal se met en pause pendant ce temps.", color = Txt2, fontSize = 13.sp, lineHeight = 18.sp)
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         LocalPill(Icons.Rounded.UploadFile, "Ajouter des sons", true, Modifier.weight(1f)) { pickFiles.launch(arrayOf("audio/*")) }
                         LocalPill(Icons.Rounded.CreateNewFolder, "Un dossier", false, Modifier.weight(1f)) { pickFolder.launch(null) }
                     }
                     if (importing) {
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(12.dp))
                         Text("Import en cours…", color = Txt2, fontSize = 13.sp)
                     }
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("Sons (${tracks.size})", "Playlists (${pls.size})").forEachIndexed { i, label ->
                             val on = tab == i
@@ -238,10 +238,10 @@ fun LocalPanel() {
                             Box(
                                 Modifier.clip(shape).then(if (on) Modifier.background(Txt) else Modifier.glass(shape, fill = 0.08f, edge = 0.14f))
                                     .bounceClick { tab = i }.padding(horizontal = 16.dp, vertical = 9.dp),
-                            ) { Text(label, color = if (on) Ink else Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
+                            ) { Text(label, color = if (on) Ink else Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
                         }
                     }
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
                 }
                 if (tab == 0) {
                     val shown = if (filter.isBlank()) tracks else tracks.filter {
@@ -261,11 +261,11 @@ fun LocalPanel() {
                             }
                             val plays = stats.values.sumOf { it.plays }
                             if (plays > 0) {
-                                Spacer(Modifier.height(10.dp))
+                                Spacer(Modifier.height(12.dp))
                                 val mins = stats.values.sumOf { it.ms } / 60_000
                                 val top = stats.maxByOrNull { it.value.plays }?.let { LocalMusic.byId(it.key) }
                                 Column(Modifier.fillMaxWidth().glass(Rounded(16), fill = 0.06f, edge = 0.10f).padding(12.dp)) {
-                                    Text("Tes écoutes locales", color = Txt, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                                    Text("Tes écoutes locales", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
                                     Text("$plays écoute${if (plays > 1) "s" else ""} · $mins min" + (top?.let { " · n°1 : ${it.title}" } ?: ""), color = Txt2, fontSize = 13.sp, maxLines = 2)
                                 }
                             }
@@ -291,7 +291,7 @@ fun LocalPanel() {
                     item(key = "new") {
                         NewPlaylistRow { name -> LocalMusic.createPlaylist(name) }
                         Spacer(Modifier.height(6.dp))
-                        if (pls.isEmpty()) Text("Crée une playlist puis ajoute-y tes sons.", color = Txt2, fontSize = 14.sp)
+                        if (pls.isEmpty()) Text("Crée une playlist puis ajoute-y tes sons.", color = Txt2, fontSize = 13.sp)
                     }
                     items(pls, key = { it.id }) { p ->
                         val first = LocalMusic.tracksOf(p).firstOrNull { it.art != null }
@@ -317,10 +317,10 @@ fun LocalPanel() {
             val shape = Rounded(22)
             Row(
                 Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(Space.gutter).fillMaxWidth()
-                    .clip(shape).background(Color(0xFF1B1B24)).glass(shape, fill = 0.06f, edge = 0.16f).padding(horizontal = 14.dp, vertical = 10.dp),
+                    .clip(shape).background(Color(0xFF1B1B24)).glass(shape, fill = 0.06f, edge = 0.16f).padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("${selected.size} sélectionné${if (selected.size > 1) "s" else ""}", color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text("${selected.size} sélectionné${if (selected.size > 1) "s" else ""}", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 if (selected.size == 1) {
                     GlassCircle(Icons.Rounded.Edit, "Modifier les infos") { editing = LocalMusic.byId(selected.first()); selected = emptySet() }
                     Spacer(Modifier.width(8.dp))
@@ -448,7 +448,7 @@ private fun LocalTrackPicker(playlistId: String, onClose: () -> Unit) {
             }
         }
         Spacer(Modifier.height(Space.s))
-        if (tracks.isEmpty()) Text("Ajoute d'abord des sons dans l'onglet Sons.", color = Txt2, fontSize = 14.sp)
+        if (tracks.isEmpty()) Text("Ajoute d'abord des sons dans l'onglet Sons.", color = Txt2, fontSize = 13.sp)
         else LocalSearch(filter) { filter = it }
         Spacer(Modifier.height(Space.xs))
         LazyColumn(Modifier.heightIn(max = 420.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -483,7 +483,7 @@ fun PanelMiniPlayer(modifier: Modifier = Modifier) {
         val cover = rememberCoverColors(tr.art)
         val shape = Rounded(16)
         Box(
-            Modifier.navigationBarsPadding().padding(horizontal = 10.dp, vertical = 10.dp).fillMaxWidth().height(64.dp)
+            Modifier.navigationBarsPadding().padding(horizontal = 12.dp, vertical = 10.dp).fillMaxWidth().height(64.dp)
                 .clip(shape)
                 .background(flatOr(listOf(cover.a.copy(alpha = 0.85f), cover.b.copy(alpha = 0.9f)), flat = androidx.compose.ui.graphics.lerp(cover.a, Color.Black, 0.32f)))
                 .background(Color.Black.copy(alpha = 0.30f))
@@ -494,7 +494,7 @@ fun PanelMiniPlayer(modifier: Modifier = Modifier) {
                 Cover(bitmap = tr.art, radius = 8.dp, modifier = Modifier.size(48.dp))
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(tr.title, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(tr.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(tr.artist, color = Txt2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 MiniBtn(Icons.Rounded.SkipPrevious, "Précédent", 24) { TidalRemote.previous() }
@@ -602,7 +602,7 @@ private fun EditInfoSheet(t: LocalMusic.Track, onClose: () -> Unit) {
 @Composable
 private fun LocalField(value: String, hint: String, onChange: (String) -> Unit) {
     val shape = Rounded(14)
-    Box(Modifier.fillMaxWidth().height(48.dp).glass(shape, fill = 0.10f, edge = 0.18f).padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
+    Box(Modifier.fillMaxWidth().height(48.dp).glass(shape, fill = 0.10f, edge = 0.18f).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
         if (value.isEmpty()) Text(hint, color = Txt3, fontSize = 15.sp)
         androidx.compose.foundation.text.BasicTextField(
             value = value, onValueChange = { onChange(it.take(120)) }, singleLine = true,
@@ -647,7 +647,7 @@ private fun LocalRow(
             .padding(horizontal = 6.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(48.dp).clip(RoundedCornerShape(10.dp))) {
+        Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))) {
             LocalCover(t, 48)
             if (playing) PlayingOverlay(TidalRemote.state.collectAsState().value.isPlaying, Modifier.matchParentSize())
         }
@@ -681,9 +681,9 @@ private fun LocalCover(t: LocalMusic.Track?, size: Int) {
         val art = t?.art
         if (art != null) Cover(model = File(art), radius = 10.dp, modifier = Modifier.size(size.dp))
         else Box(
-            Modifier.size(size.dp).clip(RoundedCornerShape(10.dp))
+            Modifier.size(size.dp).clip(RoundedCornerShape(12.dp))
                 .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0xFF3B3F55), Color(0xFF1C1E2A))))
-                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(10.dp)),
+                .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(12.dp)),
         )
         if (art == null) Icon(Icons.Rounded.MusicNote, contentDescription = null, tint = Txt2, modifier = Modifier.size((size / 2).dp))
     }
@@ -713,14 +713,14 @@ private fun LocalPill(icon: ImageVector, label: String, filled: Boolean, modifie
     ) {
         Icon(icon, contentDescription = null, tint = if (filled) Ink else Txt, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(6.dp))
-        Text(label, color = if (filled) Ink else Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+        Text(label, color = if (filled) Ink else Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
     }
 }
 
 @Composable
 private fun TextAction(label: String, color: Color = Txt, onClick: () -> Unit) {
     Text(
-        label, color = color, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+        label, color = color, fontSize = 15.sp, fontWeight = FontWeight.Bold,
         modifier = Modifier.clip(RoundedCornerShape(8.dp)).bounceClick(pressedScale = 0.96f, onClick = onClick).padding(vertical = 6.dp),
     )
 }
@@ -728,11 +728,11 @@ private fun TextAction(label: String, color: Color = Txt, onClick: () -> Unit) {
 @Composable
 private fun LocalSearch(value: String, onChange: (String) -> Unit) {
     val shape = Rounded(14)
-    Box(Modifier.fillMaxWidth().height(44.dp).glass(shape, fill = 0.08f, edge = 0.14f).padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
-        if (value.isEmpty()) Text("Chercher un son ou un artiste", color = Txt3, fontSize = 14.sp)
+    Box(Modifier.fillMaxWidth().height(44.dp).glass(shape, fill = 0.08f, edge = 0.14f).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
+        if (value.isEmpty()) Text("Chercher un son ou un artiste", color = Txt3, fontSize = 13.sp)
         androidx.compose.foundation.text.BasicTextField(
             value = value, onValueChange = onChange, singleLine = true,
-            textStyle = androidx.compose.ui.text.TextStyle(color = Txt, fontSize = 14.sp, fontWeight = FontWeight.SemiBold),
+            textStyle = androidx.compose.ui.text.TextStyle(color = Txt, fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
             cursorBrush = androidx.compose.ui.graphics.SolidColor(Txt),
             modifier = Modifier.fillMaxWidth(),
         )

@@ -206,7 +206,7 @@ fun SearchScreen(s: TidalRemote.State) {
                 lastLyrics = emptyList()
                 searched = false
             })
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
             if (searched && (results.isNotEmpty() || localHits.isNotEmpty())) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf("Tout", "Sons", "Local").forEachIndexed { i, label ->
@@ -215,11 +215,11 @@ fun SearchScreen(s: TidalRemote.State) {
                         val shape = BtnShape
                         Box(
                             Modifier.clip(shape).then(if (on) Modifier.background(Txt) else Modifier.glass(shape, fill = 0.08f, edge = 0.16f))
-                                .bounceClick { filterKind = i }.padding(horizontal = 14.dp, vertical = 8.dp),
+                                .bounceClick { filterKind = i }.padding(horizontal = 16.dp, vertical = 8.dp),
                         ) { Text(label + if (i == 2 && localHits.isNotEmpty()) " (${localHits.size})" else "", color = if (on) Ink else Txt, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold) }
                     }
                 }
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
             }
         }
 
@@ -246,7 +246,7 @@ fun SearchScreen(s: TidalRemote.State) {
                             RecentCover(r, playing = isCurrent(s, r), modifier = Modifier.animateItem()) { playFromSearch(r) }
                         }
                     }
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
                 }
             } else if (pastSearches.isNotEmpty()) {
                 // pas encore de son lancé depuis la recherche : on garde tes derniers mots tapés
@@ -263,7 +263,7 @@ fun SearchScreen(s: TidalRemote.State) {
                             ) {
                                 Icon(Icons.Rounded.HistoryIcon, contentDescription = null, tint = Txt2, modifier = Modifier.size(16.dp))
                                 Spacer(Modifier.width(6.dp))
-                                Text(q, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                                Text(q, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                                 Box(
                                     Modifier.size(28.dp).clip(PillShape).bounceClick(pressedScale = 0.8f) { History.removeSearch(q) },
                                     contentAlignment = Alignment.Center,
@@ -324,12 +324,12 @@ fun SearchScreen(s: TidalRemote.State) {
                     SearchLabel("Meilleur résultat")
                     if (artistFirst && topArtist != null) BestArtistCard(topArtist)
                     else if (best != null) BestTrackCard(best, playing = isCurrent(s, best)) { playFromSearch(best) }
-                    Spacer(Modifier.height(18.dp))
+                    Spacer(Modifier.height(20.dp))
                     val more = if (artistFirst) artists.drop(1) else artists
                     if (more.isNotEmpty()) {
                         SearchLabel("Artistes")
                         ArtistCards(more)
-                        Spacer(Modifier.height(18.dp))
+                        Spacer(Modifier.height(20.dp))
                     }
                 }
                 if (results.isNotEmpty()) SearchLabel("Titres")
@@ -345,7 +345,7 @@ fun SearchScreen(s: TidalRemote.State) {
 
 @Composable
 private fun SearchLabel(text: String) {
-    Text(text, color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
+    Text(text, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(top = 4.dp, bottom = 8.dp))
 }
 
 /** « mets du Jok'Air » → ("Jok'Air", lancer direct) ; « Jok'Air » → ("Jok'Air", juste chercher). */
@@ -376,12 +376,12 @@ private fun SearchField(value: String, onChange: (String) -> Unit, onSearch: () 
         Icon(Icons.Rounded.Search, contentDescription = null, tint = Txt, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(10.dp))
         Box(Modifier.weight(1f)) {
-            if (value.isEmpty()) Text("Titres, artistes, paroles…", color = Color(0xFF8B93A3), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            if (value.isEmpty()) Text("Titres, artistes, paroles…", color = Color(0xFF8B93A3), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
             BasicTextField(
                 value = value,
                 onValueChange = onChange,
                 singleLine = true,
-                textStyle = TextStyle(color = Txt, fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+                textStyle = TextStyle(color = Txt, fontSize = 17.sp, fontWeight = FontWeight.SemiBold),
                 cursorBrush = SolidColor(Txt),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { onSearch() }),
@@ -451,7 +451,7 @@ fun TrackRow(r: TidalApi.Result, playing: Boolean, modifier: Modifier = Modifier
             .padding(horizontal = 6.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(50.dp).shadow(8.dp, RoundedCornerShape(10.dp)).clip(RoundedCornerShape(10.dp))) {
+        Box(Modifier.size(50.dp).shadow(8.dp, RoundedCornerShape(12.dp)).clip(RoundedCornerShape(12.dp))) {
             Cover(model = r.coverUrl, radius = 10.dp, modifier = Modifier.fillMaxSize())
             if (playing) PlayingOverlay(true, Modifier.fillMaxSize())
         }
@@ -465,8 +465,8 @@ fun TrackRow(r: TidalApi.Result, playing: Boolean, modifier: Modifier = Modifier
             Spacer(Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (r.explicit) {
-                    Box(Modifier.clip(RoundedCornerShape(3.dp)).background(Txt2).padding(horizontal = 4.dp)) {
-                        Text("E", color = Ink, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+                    Box(Modifier.clip(RoundedCornerShape(4.dp)).background(Txt2).padding(horizontal = 4.dp)) {
+                        Text("E", color = Ink, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
                     }
                     Spacer(Modifier.width(6.dp))
                 }
@@ -514,7 +514,7 @@ fun SwipeToQueue(r: TidalApi.Result, modifier: Modifier = Modifier, enabled: Boo
                     tint = if (armed) Ink else Txt, modifier = Modifier.size(22.dp),
                 )
                 Spacer(Modifier.width(6.dp))
-                Text("À suivre", color = if (armed) Ink else Txt, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                Text("À suivre", color = if (armed) Ink else Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
         Box(
@@ -583,7 +583,7 @@ private fun LyricHit(m: com.theo.remote.Lyrics.Match, modifier: Modifier = Modif
             .padding(vertical = 3.dp)
             .glass(shape, fill = 0.06f, edge = 0.10f)
             .bounceClick(pressedScale = 0.97f, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text("« ${m.line} »", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 20.sp)
         Spacer(Modifier.height(6.dp))
@@ -616,7 +616,7 @@ private fun BestTrackCard(r: TidalApi.Result, playing: Boolean, onClick: () -> U
             Spacer(Modifier.height(16.dp))
             Text(r.fullTitle, color = Txt, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 30.sp, modifier = Modifier.padding(end = 64.dp))
             Spacer(Modifier.height(4.dp))
-            Text("Titre · ${r.artistLine}", color = Color.White.copy(alpha = 0.72f), fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(end = 64.dp))
+            Text("Titre · ${r.artistLine}", color = Color.White.copy(alpha = 0.72f), fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(end = 64.dp))
         }
         Row(Modifier.align(Alignment.BottomEnd), verticalAlignment = Alignment.CenterVertically) {
             AddToQueueButton(r)
@@ -645,7 +645,7 @@ private fun BestArtistCard(a: TidalApi.Artist) {
             Spacer(Modifier.height(16.dp))
             Text(a.name, color = Txt, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2, overflow = TextOverflow.Ellipsis, lineHeight = 30.sp, modifier = Modifier.padding(end = 64.dp))
             Spacer(Modifier.height(4.dp))
-            Text("Artiste", color = Color.White.copy(alpha = 0.72f), fontSize = 14.sp)
+            Text("Artiste", color = Color.White.copy(alpha = 0.72f), fontSize = 15.sp)
         }
         Box(
             Modifier.align(Alignment.BottomEnd).size(52.dp).shadow(10.dp, PillShape).clip(PillShape).background(Color.White)
@@ -668,8 +668,8 @@ private fun ArtistCards(list: List<TidalApi.Artist>) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Cover(model = a.pictureUrl, radius = 50.dp, modifier = Modifier.size(100.dp).shadow(14.dp, Rounded(50)))
-                Spacer(Modifier.height(10.dp))
-                Text(a.name, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(12.dp))
+                Text(a.name, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text("Artiste", color = Txt2, fontSize = 12.sp)
             }
         }
@@ -689,7 +689,7 @@ private fun RecentCover(r: TidalApi.Result, playing: Boolean, modifier: Modifier
             if (playing) PlayingOverlay(true, Modifier.fillMaxSize())
         }
         Spacer(Modifier.height(8.dp))
-        Text(r.fullTitle, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(r.fullTitle, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(r.artistLine, color = Txt2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

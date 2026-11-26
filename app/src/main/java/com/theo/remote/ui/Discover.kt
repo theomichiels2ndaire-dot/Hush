@@ -200,7 +200,7 @@ fun HiddenGemCard() {
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(x.fullTitle, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(x.fullTitle, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(x.artistLine, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(4.dp))
                 Text("Proche de ${x.because}", color = Txt3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -331,13 +331,13 @@ fun FeatsPanel() {
     ) {
         item {
             PanelTitle("Featurings")
-            Text("Qui a collaboré avec qui parmi les artistes que tu écoutes. Touche un artiste pour voir ses feats.", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+            Text("Qui a collaboré avec qui parmi les artistes que tu écoutes. Touche un artiste pour voir ses feats.", color = Txt2, fontSize = 13.sp, lineHeight = 20.sp)
             Spacer(Modifier.height(Space.m))
             if (feats == null) SkeletonList(4)
-            else if (nodes.size < 2) Text("Pas encore assez de feats dans ton historique.", color = Txt3, fontSize = 14.sp)
+            else if (nodes.size < 2) Text("Pas encore assez de feats dans ton historique.", color = Txt3, fontSize = 13.sp)
             else FeatMap(nodes, edges, selected) { selected = if (selected == it) null else it }
             Spacer(Modifier.height(Space.m))
-            if (selected != null) Text("Les feats de $selected", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+            if (selected != null) Text("Les feats de $selected", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
         }
         items(shown, key = { it.a + "×" + it.b }) { f ->
             val shape = Rounded(16)
@@ -400,7 +400,7 @@ private fun FeatMap(nodes: List<String>, edges: List<Feat>, selected: String?, o
                         modifier = Modifier.clip(shape)
                             .then(if (on) Modifier.background(accent) else Modifier.background(Color(0xFF1C1C26)).glass(shape, fill = 0.06f, edge = 0.18f))
                             .bounceClick(pressedScale = 0.9f) { onTap(name) }
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
                     )
                 }
             },
@@ -520,11 +520,11 @@ fun WordsPanel() {
     ) {
         item {
             PanelTitle("Tes mots")
-            Text("Les mots qui reviennent le plus dans les paroles de tes 40 sons les plus écoutés (3 derniers mois).", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+            Text("Les mots qui reviennent le plus dans les paroles de tes 40 sons les plus écoutés (3 derniers mois).", color = Txt2, fontSize = 13.sp, lineHeight = 20.sp)
             Spacer(Modifier.height(Space.s))
             val p = progress
             if (p != null) {
-                Text("Lecture des paroles… ${p.first} / ${p.second}", color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text("Lecture des paroles… ${p.first} / ${p.second}", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
                 Box(Modifier.fillMaxWidth().height(6.dp).clip(PillShape).background(Color.White.copy(alpha = 0.10f))) {
                     Box(Modifier.fillMaxWidth(p.first.toFloat() / p.second.coerceAtLeast(1)).height(6.dp).clip(PillShape).background(Txt))
@@ -559,19 +559,19 @@ fun WordsPanel() {
             selected?.let { w ->
                 Spacer(Modifier.height(Space.s))
                 Column(Modifier.fillMaxWidth().glass(Rounded(16), fill = 0.08f, edge = 0.14f).padding(Space.m)) {
-                    Text("« ${w.w} »", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                    Text("« ${w.w} »", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
                     Text("Surtout dans :", color = Txt2, fontSize = 12.sp)
                     w.songs.forEach { Text(it, color = Txt, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) }
                 }
             }
             Spacer(Modifier.height(Space.m))
-            Text("Top 15", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Top 15", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
         }
         items(words.take(15), key = { "w-" + it.w }) { w ->
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("${words.indexOf(w) + 1}", color = Txt3, fontSize = 13.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(28.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(w.w, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(w.w, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
                     Text(w.songs.firstOrNull().orEmpty(), color = Txt2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
@@ -601,7 +601,7 @@ fun StatsEntry(emoji: String, title: String, sub: String, kind: Panels.Kind) {
         Icon(ic, contentDescription = null, tint = Ok, modifier = Modifier.size(26.dp))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            Text(title, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
             Text(sub, color = Txt2, fontSize = 13.sp)
         }
     }

@@ -265,16 +265,16 @@ fun InstantPlaylistHost() {
             Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Box(Modifier.align(Alignment.CenterHorizontally).size(width = 40.dp, height = 5.dp).clip(PillShape).background(Color.White.copy(alpha = 0.25f)))
                 Text("Playlist instantanée", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black)
-                Text("Dis ce que tu veux écouter, Hush la fait avec tes favoris.", color = Txt2, fontSize = 14.sp)
+                Text("Dis ce que tu veux écouter, Hush la fait avec tes favoris.", color = Txt2, fontSize = 15.sp)
                 Row(
                     Modifier.fillMaxWidth().height(52.dp).clip(Rounded(26)).background(Color.White.copy(alpha = 0.1f)).padding(start = 18.dp, end = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(Modifier.weight(1f)) {
-                        if (text.isEmpty()) Text("rap FR calme pour la nuit", color = Txt3, fontSize = 16.sp)
+                        if (text.isEmpty()) Text("rap FR calme pour la nuit", color = Txt3, fontSize = 17.sp)
                         BasicTextField(
                             text, { text = it }, singleLine = true,
-                            textStyle = TextStyle(color = Txt, fontSize = 16.sp, fontWeight = FontWeight.SemiBold),
+                            textStyle = TextStyle(color = Txt, fontSize = 17.sp, fontWeight = FontWeight.SemiBold),
                             cursorBrush = SolidColor(Txt),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                             keyboardActions = KeyboardActions(onGo = { run(text) }),
@@ -295,7 +295,7 @@ fun InstantPlaylistHost() {
                 }
                 busy?.let {
                     Spacer(Modifier.height(4.dp))
-                    Text(it, color = Txt2, fontSize = 14.sp)
+                    Text(it, color = Txt2, fontSize = 13.sp)
                     SkeletonList(3)
                 }
                 built?.let { b ->
@@ -306,7 +306,7 @@ fun InstantPlaylistHost() {
                     if (b.tracks.isEmpty()) {
                         Text("Aucun de tes favoris ne colle. Essaie avec d'autres mots.", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     } else {
-                        Text("${b.tracks.size} son${if (b.tracks.size > 1) "s" else ""}", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.Black)
+                        Text("${b.tracks.size} son${if (b.tracks.size > 1) "s" else ""}", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.Black)
                         LazyColumn(Modifier.weight(1f, fill = false).heightIn(max = 300.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             items(b.tracks.distinctBy { it.id }, key = { it.id }) { r ->
                                 Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {

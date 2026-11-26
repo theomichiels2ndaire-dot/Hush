@@ -123,17 +123,17 @@ fun PlaylistDoctorSheet(p: TidalApi.Playlist, onClose: () -> Unit, onCleaned: ()
             Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp),
         ) {
             Box(Modifier.align(Alignment.CenterHorizontally).size(width = 40.dp, height = 5.dp).clip(PillShape).background(Color.White.copy(alpha = 0.25f)))
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
             Text("Docteur de playlist", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black)
-            Text(p.name, color = Txt2, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Spacer(Modifier.height(14.dp))
+            Text(p.name, color = Txt2, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(16.dp))
             val d = diag
             when {
-                error != null -> Text(error!!, color = Ko, fontSize = 14.sp)
-                d == null -> { Text("Examen de la playlist…", color = Txt2, fontSize = 14.sp); Spacer(Modifier.height(10.dp)); SkeletonList(4) }
+                error != null -> Text(error!!, color = Ko, fontSize = 13.sp)
+                d == null -> { Text("Examen de la playlist…", color = Txt2, fontSize = 15.sp); Spacer(Modifier.height(12.dp)); SkeletonList(4) }
                 d.duplicates.isEmpty() && d.unavailable.isEmpty() && d.skipped.isEmpty() -> {
                     Text("Rien à signaler", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                    Text("Pas de doublon, rien d'indisponible, et aucun son que tu passes à chaque fois sur ${d.total} sons.", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+                    Text("Pas de doublon, rien d'indisponible, et aucun son que tu passes à chaque fois sur ${d.total} sons.", color = Txt2, fontSize = 15.sp, lineHeight = 20.sp)
                     Spacer(Modifier.height(16.dp))
                     PillButton("Fermer") { onClose() }
                 }
@@ -175,7 +175,7 @@ private fun DoctorSection(title: String, sub: String, items: List<Pair<TidalApi.
     if (items.isEmpty()) return
     Spacer(Modifier.height(8.dp))
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(title, color = Txt, fontSize = 18.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
+        Text(title, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.Black, modifier = Modifier.weight(1f))
         Text("${items.size}", color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
     Text(sub, color = Txt2, fontSize = 13.sp)

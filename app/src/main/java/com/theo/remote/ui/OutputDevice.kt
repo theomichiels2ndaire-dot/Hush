@@ -126,7 +126,7 @@ fun DeviceButton() {
         }
     }
     androidx.compose.foundation.layout.Box(
-        Modifier.size(30.dp).clip(RoundedCornerShape(9.dp)).background(Color.White.copy(alpha = 0.10f))
+        Modifier.size(30.dp).clip(RoundedCornerShape(8.dp)).background(Color.White.copy(alpha = 0.10f))
             .bounceClick(pressedScale = 0.88f) { openOutputSwitcher(ctx) },
         contentAlignment = Alignment.Center,
     ) {

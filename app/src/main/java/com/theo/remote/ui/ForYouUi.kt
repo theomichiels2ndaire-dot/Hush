@@ -99,7 +99,7 @@ fun ForYouRow() {
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Ce soir".let { if (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) < 17) "Aujourd'hui" else it },
-            color = Txt, fontSize = 21.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = Space.gutter))
+            color = Txt, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = Space.gutter))
         LazyRow(contentPadding = PaddingValues(start = Space.gutter, end = Space.gutter, bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             items(cards, key = { it.key }) { c -> BigCard(c) }
         }

@@ -72,7 +72,7 @@ fun PlaylistCoverDialog() {
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text("Pochette", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-            Text(name, color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(name, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("Visible seulement dans Hush", color = Txt3, fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
             CoverOption(Icons.Rounded.Image, "Choisir une photo") {
                 pendingId = id; close()
@@ -87,12 +87,12 @@ fun PlaylistCoverDialog() {
 @Composable
 private fun CoverOption(icon: ImageVector, label: String, onClick: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).bounceClick(pressedScale = 0.97f, onClick = onClick).padding(vertical = 12.dp, horizontal = 4.dp),
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).bounceClick(pressedScale = 0.97f, onClick = onClick).padding(vertical = 12.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(icon, contentDescription = null, tint = Txt, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(14.dp))
-        Text(label, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold)
     }
 }
 

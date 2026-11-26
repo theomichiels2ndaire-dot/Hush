@@ -87,7 +87,7 @@ private fun Pick(label: String, on: Boolean, onClick: () -> Unit) {
         Modifier.clip(shape)
             .then(if (on) Modifier.background(Txt) else Modifier.glass(shape, fill = 0.08f, edge = 0.14f))
             .bounceClick(pressedScale = 0.93f, onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
+            .padding(horizontal = 16.dp, vertical = 9.dp),
     ) { Text(label, color = if (on) Ink else Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1) }
 }
 
@@ -151,7 +151,7 @@ fun TripPanel() {
     ) {
         item {
             PanelTitle("Pour mon trajet")
-            Text("Dis combien de temps dure ton trajet : Hush te fait une file qui dure pile ce temps.", color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+            Text("Dis combien de temps dure ton trajet : Hush te fait une file qui dure pile ce temps.", color = Txt2, fontSize = 15.sp, lineHeight = 20.sp)
             Spacer(Modifier.height(Space.m))
             Text("Durée : $minutes min", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
             Spacer(Modifier.height(Space.s))
@@ -175,12 +175,12 @@ fun TripPanel() {
             Spacer(Modifier.height(Space.m))
             trip?.let { l ->
                 if (l.isEmpty()) {
-                    Text("Pas assez de sons avec une durée connue. Écoute encore un peu avec Hush ouvert.", color = Txt3, fontSize = 14.sp)
+                    Text("Pas assez de sons avec une durée connue. Écoute encore un peu avec Hush ouvert.", color = Txt3, fontSize = 13.sp)
                 } else {
                     val total = l.sumOf { it.durMs }
                     val arrive = SimpleDateFormat("HH:mm", Locale.FRANCE).format(Date(System.currentTimeMillis() + total))
                     Column(Modifier.fillMaxWidth().glass(Rounded(20), fill = 0.08f, edge = 0.14f).padding(Space.m)) {
-                        Text("${l.size} sons · ${total / 60_000} min ${"%02d".format((total / 1000) % 60)} s", color = Txt, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                        Text("${l.size} sons · ${total / 60_000} min ${"%02d".format((total / 1000) % 60)} s", color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
                         Text("Si tu lances maintenant : fin de la musique vers $arrive", color = Txt2, fontSize = 13.sp)
                         Spacer(Modifier.height(Space.s))
                         PillButton("C'est parti") { TidalRemote.playExact(l.map { it.title to it.artist }); Panels.close() }
@@ -255,7 +255,7 @@ fun SoundPanel() {
                     com.theo.remote.AudioFx.Status.Global -> "Branché sur la sortie du téléphone. Si tu n'entends aucune différence, relance un son dans Tidal pour qu'il donne accès à son audio."
                     com.theo.remote.AudioFx.Status.Blocked -> "Ton téléphone refuse les effets sur le son de Tidal pour l'instant. Relance un son dans Tidal puis réessaie."
                 },
-                color = if (status == com.theo.remote.AudioFx.Status.Blocked) Ko else Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                color = if (status == com.theo.remote.AudioFx.Status.Blocked) Ko else Txt2, fontSize = 13.sp, lineHeight = 20.sp,
             )
         }
         if (f.bass) item {

@@ -188,7 +188,7 @@ fun DiagnosticPanel() {
                 Text(c.title, color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = if (open) 3 else 1, overflow = TextOverflow.Ellipsis)
                 if (open) {
                     Spacer(Modifier.height(6.dp))
-                    Text(c.text.take(2500), color = Txt2, fontSize = 10.sp, fontFamily = FontFamily.Monospace, lineHeight = 13.sp)
+                    Text(c.text.take(2500), color = Txt2, fontSize = 11.sp, fontFamily = FontFamily.Monospace, lineHeight = 13.sp)
                 }
             }
         }
@@ -200,7 +200,7 @@ private fun CheckRow(c: Check) {
     val ctx = LocalContext.current
     val color = when (c.lvl) { Lvl.Ok -> Ok; Lvl.Warn -> Warn; Lvl.Info -> Txt3 }
     Row(
-        Modifier.fillMaxWidth().glass(Rounded(16), fill = 0.06f, edge = 0.10f).padding(horizontal = 14.dp, vertical = 12.dp),
+        Modifier.fillMaxWidth().glass(Rounded(16), fill = 0.06f, edge = 0.10f).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.size(10.dp).clip(PillShape).background(color))
@@ -264,16 +264,16 @@ private fun WhatHappened() {
                     l, color = if (range == h) Ink else Txt2, fontSize = 12.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 6.dp).clip(BtnShape)
                         .then(if (range == h) Modifier.background(Txt) else Modifier)
-                        .bounceClick { range = h }.padding(horizontal = 10.dp, vertical = 5.dp),
+                        .bounceClick { range = h }.padding(horizontal = 12.dp, vertical = 5.dp),
                 )
             }
         }
-        if (groups.isEmpty()) Text("Rien à signaler.", color = Txt2, fontSize = 14.sp)
+        if (groups.isEmpty()) Text("Rien à signaler.", color = Txt2, fontSize = 13.sp)
         groups.forEach { (k, list) ->
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).bounceClick(pressedScale = 0.98f) { open = if (open == k) null else k }) {
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).bounceClick(pressedScale = 0.98f) { open = if (open == k) null else k }) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("${list.size}", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.width(38.dp))
-                    Text(k.label, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Text(k.label, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 }
                 if (open == k) {
                     Text(k.explain, color = Txt2, fontSize = 13.sp, lineHeight = 18.sp, modifier = Modifier.padding(start = 38.dp, top = 2.dp))

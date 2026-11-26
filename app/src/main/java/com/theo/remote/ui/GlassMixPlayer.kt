@@ -141,16 +141,16 @@ internal fun GlassMixPlayer(s: TidalRemote.State, onClose: () -> Unit, onLyrics:
 
         // barre du haut
         Row(
-            Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 18.dp, vertical = 10.dp),
+            Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 20.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Drop(44.dp, "Réduire le lecteur", onClick = onClose) {
                 Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = null, tint = Txt, modifier = Modifier.size(24.dp))
             }
-            Column(Modifier.weight(1f).padding(horizontal = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("EN LECTURE", color = Txt.copy(alpha = 0.7f), fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
+            Column(Modifier.weight(1f).padding(horizontal = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("EN LECTURE", color = Txt.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
                 val album = t?.album.orEmpty()
-                if (album.isNotBlank()) Text(album, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (album.isNotBlank()) Text(album, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Box {
                 var menu by remember { mutableStateOf(false) }
@@ -198,7 +198,7 @@ internal fun GlassMixPlayer(s: TidalRemote.State, onClose: () -> Unit, onLyrics:
                     Column(Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                t?.title ?: "—", color = Txt, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.6).sp,
+                                t?.title ?: "—", color = Txt, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold, letterSpacing = (-0.6).sp,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp)).bounceClick(pressedScale = 0.97f, onLongClick = { t?.let { TrackMenu.open(TrackMenu.Target(it.title, it.artist, it.art, album = it.album)) } }) {
                                     val ar = t?.artist.orEmpty(); val al = t?.album.orEmpty()
@@ -213,7 +213,7 @@ internal fun GlassMixPlayer(s: TidalRemote.State, onClose: () -> Unit, onLyrics:
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             val artist = t?.artist.orEmpty()
                             Text(
-                                artist, color = Txt.copy(alpha = 0.72f), fontSize = 16.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                artist, color = Txt.copy(alpha = 0.72f), fontSize = 17.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp)).bounceClick(pressedScale = 0.96f) {
                                     if (artist.isNotBlank()) openDetail(Detail.ArtistByName(artist.split(",", "&").first().trim()))
                                 },
@@ -243,7 +243,7 @@ internal fun GlassMixPlayer(s: TidalRemote.State, onClose: () -> Unit, onLyrics:
                 }
 
                 // commandes en gouttes
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                     Drop(62.dp, "Précédent", onClick = { TidalRemote.previous() }) {
                         Icon(Icons.Rounded.SkipPrevious, contentDescription = null, tint = Txt, modifier = Modifier.size(32.dp))
@@ -263,7 +263,7 @@ internal fun GlassMixPlayer(s: TidalRemote.State, onClose: () -> Unit, onLyrics:
                     Modifier.fillMaxWidth().height(50.dp).clip(groove)
                         .background(Color.Black.copy(alpha = 0.22f))
                         .border(1.dp, Color.White.copy(alpha = 0.07f), groove)
-                        .padding(horizontal = 5.dp),
+                        .padding(horizontal = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -422,7 +422,7 @@ private fun MixLyrics(s: TidalRemote.State, onOpen: () -> Unit) {
     val i = lines.indexOfLast { it.timeMs <= pos + 250 }.coerceAtLeast(0)
     val current = lines[i].text
     val next = lines.getOrNull(i + 1)?.text.orEmpty()
-    Spacer(Modifier.height(14.dp))
+    Spacer(Modifier.height(16.dp))
     Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).bounceClick(pressedScale = 0.98f, onClick = onOpen)) {
         AnimatedContent(
             targetState = current to next,
@@ -433,8 +433,8 @@ private fun MixLyrics(s: TidalRemote.State, onOpen: () -> Unit) {
             label = "mixLyrics",
         ) { (a, b) ->
             Column {
-                Text(a, color = Txt, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                if (b.isNotBlank()) Text(b, color = Txt.copy(alpha = 0.42f), fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(a, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (b.isNotBlank()) Text(b, color = Txt.copy(alpha = 0.42f), fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
     }

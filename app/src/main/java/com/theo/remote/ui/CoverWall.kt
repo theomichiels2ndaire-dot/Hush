@@ -95,9 +95,9 @@ fun CoverWallPanel() {
                         list.isEmpty() -> "Rien d'écouté sur cette période"
                         else -> "${list.size} son${if (list.size > 1) "s" else ""} · ${list.sumOf { it.plays }} écoute${if (list.sumOf { it.plays } > 1) "s" else ""}"
                     },
-                    color = Txt2, fontSize = 14.sp,
+                    color = Txt2, fontSize = 13.sp,
                 )
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(16.dp))
                 // sélecteur de période
                 Row(Modifier.fillMaxWidth().glass(PillShape, fill = 0.08f).padding(4.dp)) {
                     WallPeriod.entries.forEach { p ->

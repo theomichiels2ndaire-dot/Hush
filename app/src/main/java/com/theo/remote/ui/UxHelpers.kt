@@ -255,7 +255,7 @@ fun buildReport(ctx: Context): String {
 fun ReportCard() {
     val ctx = LocalContext.current
     Column(Modifier.fillMaxWidth().clip(Rounded(20)).background(Color.White.copy(alpha = 0.06f)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Signaler un problème", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text("Signaler un problème", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold)
         Text("Prépare un rapport avec la version, l'état de Hush et les derniers événements. Colle-le à Claude ou envoie-le.", color = Txt2, fontSize = 13.sp, lineHeight = 18.sp)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PillButton("Copier") {

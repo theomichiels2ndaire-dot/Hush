@@ -128,7 +128,7 @@ fun CarModeScreen(s: TidalRemote.State) {
                     CarTopBar()
                     Spacer(Modifier.weight(1f))
                     CarInfo(s, haptic)
-                    Spacer(Modifier.height(18.dp))
+                    Spacer(Modifier.height(20.dp))
                     CarProgress(s)
                     Spacer(Modifier.weight(1f))
                     CarControls(s, haptic, compact = true)
@@ -144,11 +144,11 @@ fun CarModeScreen(s: TidalRemote.State) {
                     CarCover(s, colors, Modifier.fillMaxHeight())
                 }
                 CarInfo(s, haptic)
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(20.dp))
                 CarProgress(s)
                 Spacer(Modifier.height(20.dp))
                 CarControls(s, haptic, compact = false)
-                Spacer(Modifier.height(22.dp))
+                Spacer(Modifier.height(24.dp))
                 CarPill(Icons.Rounded.Radio, "Sons similaires", Modifier.fillMaxWidth()) { haptic(); TidalRemote.playSimilar() }
                 Spacer(Modifier.height(6.dp))
             }
@@ -226,7 +226,7 @@ private fun CarInfo(s: TidalRemote.State, haptic: () -> Unit) {
             modifier = Modifier.weight(1f),
         ) { (title, artist) ->
             Column {
-                Text(title, color = Txt, fontSize = 32.sp, lineHeight = 36.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(title, color = Txt, fontSize = 34.sp, lineHeight = 36.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Spacer(Modifier.height(2.dp))
                 Text(artist, color = Color.White.copy(alpha = 0.66f), fontSize = 22.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -307,7 +307,7 @@ private fun CarPill(icon: ImageVector, label: String, modifier: Modifier, onClic
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(icon, contentDescription = null, tint = Txt, modifier = Modifier.size(28.dp))
                 Spacer(Modifier.width(10.dp))
-                Text(label, color = Txt, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(label, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

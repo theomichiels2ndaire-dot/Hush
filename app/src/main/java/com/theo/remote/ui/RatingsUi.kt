@@ -159,10 +159,10 @@ fun RateDialog() {
             }
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 StarPicker(stars, Txt) { stars = it }
-                Text(if (stars == 0f) "Touche une étoile" else starsLabel(stars), color = if (stars == 0f) Txt3 else Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(if (stars == 0f) "Touche une étoile" else starsLabel(stars), color = if (stars == 0f) Txt3 else Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
             Box(
-                Modifier.fillMaxWidth().heightIn(min = 80.dp).clip(RoundedCornerShape(10.dp)).background(Color.White.copy(alpha = 0.06f)).padding(12.dp),
+                Modifier.fillMaxWidth().heightIn(min = 80.dp).clip(RoundedCornerShape(12.dp)).background(Color.White.copy(alpha = 0.06f)).padding(12.dp),
             ) {
                 if (text.isEmpty()) Text("Ton avis en une phrase (facultatif)", color = Txt3, fontSize = 15.sp)
                 BasicTextField(
@@ -201,15 +201,15 @@ fun AlbumRatingCard(title: String, artist: String, cover: String?, accent: Color
     ) {
         if (e == null) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Noter l'album", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
+                Text("Noter l'album", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
                 Stars(0f, 18.dp, accent)
             }
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Ta note", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
+                Text("Ta note", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f))
                 Stars(e.stars, 18.dp, accent)
             }
-            if (e.review.isNotBlank()) Text(e.review, color = Txt2, fontSize = 14.sp, lineHeight = 20.sp)
+            if (e.review.isNotBlank()) Text(e.review, color = Txt2, fontSize = 13.sp, lineHeight = 20.sp)
         }
     }
 }
@@ -230,7 +230,7 @@ fun RatingsLibRow() {
         Icon(Icons.Rounded.Star, contentDescription = null, tint = Txt, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text("Mes notes", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Mes notes", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
             Text(
                 if (items.isEmpty()) "Note tes albums et tes sons sur 5"
                 else "$albums album${if (albums > 1) "s" else ""} · $tracks son${if (tracks > 1) "s" else ""}",
@@ -281,7 +281,7 @@ fun RatingsPanel() {
         }
         items(list, key = { it.key }) { e ->
             Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                     .bounceClick(pressedScale = 0.98f, onLongClick = { Ratings.edit(e.kind, e.title, e.artist, e.cover) }) {
                         if (e.kind == Ratings.Kind.Album) { Panels.closeAll(); open(Detail.AlbumByName(e.title, e.artist)) }
                         else TidalRemote.playTitle(e.title, e.artist)
@@ -292,14 +292,14 @@ fun RatingsPanel() {
                 Cover(model = e.cover, radius = 6.dp, modifier = Modifier.size(if (e.kind == Ratings.Kind.Album) 64.dp else 52.dp))
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(e.title, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(e.title, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Text(e.artist, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Stars(e.stars, 14.dp)
                         Spacer(Modifier.width(8.dp))
                         Text(fmt.format(Date(e.at)), color = Txt3, fontSize = 12.sp)
                     }
-                    if (e.review.isNotBlank()) Text(e.review, color = Txt2, fontSize = 14.sp, lineHeight = 19.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                    if (e.review.isNotBlank()) Text(e.review, color = Txt2, fontSize = 13.sp, lineHeight = 19.sp, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
@@ -313,7 +313,7 @@ fun RatingsPanel() {
 private fun Chip(label: String, on: Boolean, onClick: () -> Unit) {
     Text(
         label, color = if (on) Ink else Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-        modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(if (on) Txt else Color.White.copy(alpha = 0.08f))
+        modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(if (on) Txt else Color.White.copy(alpha = 0.08f))
             .bounceClick(onClick = onClick).padding(horizontal = 12.dp, vertical = 8.dp),
     )
 }

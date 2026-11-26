@@ -98,7 +98,7 @@ fun OfflineBanner() {
             Row(
                 Modifier.fillMaxWidth().clip(shape).glass(shape, fill = 0.16f, edge = 0.2f)
                     .bounceClick(pressedScale = 0.98f) { if (f.localFiles) Panels.show(Panels.Kind.Local) }
-                    .padding(horizontal = 14.dp, vertical = 9.dp),
+                    .padding(horizontal = 16.dp, vertical = 9.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Rounded.CloudOff, contentDescription = null, tint = Txt, modifier = Modifier.size(18.dp))
@@ -223,7 +223,7 @@ fun FoldSection(title: String, content: @Composable () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                Modifier.size(34.dp).clip(RoundedCornerShape(10.dp))
+                Modifier.size(34.dp).clip(RoundedCornerShape(12.dp))
                     .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(tint, androidx.compose.ui.graphics.lerp(tint, androidx.compose.ui.graphics.Color.Black, 0.25f)))),
                 contentAlignment = Alignment.Center,
             ) { Icon(icon, contentDescription = null, tint = androidx.compose.ui.graphics.Color.White, modifier = Modifier.size(20.dp)) }
