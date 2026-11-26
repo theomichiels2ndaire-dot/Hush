@@ -475,6 +475,7 @@ object MixQueue {
 
     fun play(context: Context, entries: List<LocalMusic.Entry>, start: Int = 0, original: List<LocalMusic.Entry>? = null) {
         ctx = context.applicationContext
+        TidalRemote.startingPlaylist()
         all = entries
         this.original = original
         cursor = start.coerceIn(0, (entries.size - 1).coerceAtLeast(0))

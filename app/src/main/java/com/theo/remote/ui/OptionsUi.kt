@@ -93,7 +93,7 @@ private fun SettingsCard(content: @Composable () -> Unit) {
         if (n > 0 || fold.shown.value) {
             Text(
                 if (fold.shown.value) "Moins d'options" else "$n option${if (n > 1) "s" else ""} de plus",
-                color = Txt2, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold,
                 modifier = Modifier.clip(RoundedCornerShape(8.dp)).bounceClick { fold.shown.value = !fold.shown.value }.padding(vertical = 4.dp),
             )
         }
@@ -124,7 +124,7 @@ fun UpdateCard() {
     SettingsCard {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Hush ${com.theo.remote.BuildConfig.VERSION_NAME}", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Hush ${com.theo.remote.BuildConfig.VERSION_NAME}", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold)
                 Text(
                     when {
                         dl != null -> "Téléchargement… ${((dl ?: 0f) * 100).toInt()} %"
@@ -170,7 +170,8 @@ fun DisplayCard() {
         OptionRow("Vérification au démarrage", "Au premier lancement, un écran vérifie Tidal, l'accès aux notifs et la batterie", f.setupCheck) { Features.set(f.copy(setupCheck = it)) }
         OptionRow("Mises à jour", "Hush te propose d'installer la nouvelle version dès qu'elle sort (vérifié à l'ouverture)", f.autoUpdate) { Features.set(f.copy(autoUpdate = it)); if (it) kotlinx.coroutines.MainScope().launch { com.theo.remote.Updater.check(force = true) } }
         OptionRow("Bouton Annuler", "5 s pour revenir en arrière après avoir retiré un son, vidé la file ou changé l'ordre", f.undoBar) { Features.set(f.copy(undoBar = it)) }
-        OptionRow("Lancer la bonne playlist", "Lance tes playlists par leur lien exact, pas par leur nom (évite qu'une autre playlist du même nom démarre)", f.exactLaunch) { Features.set(f.copy(exactLaunch = it)) }
+        OptionRow("Lancer le bon son", "Lance tes playlists et tes sons par leur lien exact, pas par une recherche (évite qu'un autre son ou une autre playlist démarre)", f.exactLaunch) { Features.set(f.copy(exactLaunch = it)) }
+        OptionRow("Playlist sans intrus", "Quand tu lances une playlist, la file « À suivre » est vidée (annulable), pour que rien d'autre ne s'y glisse", f.freshQueue) { Features.set(f.copy(freshQueue = it)) }
         OptionRow("Nettoyage mensuel", "Une fois par mois, Hush te propose de retirer les sons que tu passes toujours dans une playlist", f.playlistCleanup) { Features.set(f.copy(playlistCleanup = it)) }
         OptionRow("Pas de doublons dans les playlists", "Un son déjà dans une playlist n'y est pas ajouté une 2e fois", f.noDuplicates) { Features.set(f.copy(noDuplicates = it)) }
         OptionRow("Alerte sons coupés", "Une petite notif quand un son passe au suivant avant la fin, avec qui l'a passé", f.earlyCutAlert) { Features.set(f.copy(earlyCutAlert = it)) }
@@ -213,7 +214,7 @@ fun DisplayCard() {
                     Modifier.clip(shape)
                         .then(if (on) Modifier.background(Txt) else Modifier.glass(shape, fill = 0.08f, edge = 0.14f))
                         .bounceClick { Features.set(f.copy(season = v)) }
-                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                 ) { Text(l, color = if (on) Ink else Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1) }
             }
         }
@@ -228,7 +229,7 @@ fun DisplayCard() {
                     Modifier.clip(shape)
                         .then(if (on) Modifier.background(Txt) else Modifier.glass(shape, fill = 0.08f, edge = 0.14f))
                         .bounceClick { Features.set(f.copy(textScale = v)) }
-                        .padding(horizontal = 11.dp, vertical = 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                 ) { Text(l, color = if (on) Ink else Txt, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1) }
             }
         }
@@ -357,7 +358,7 @@ fun StatsOptionsCard() {
                     Modifier.clip(shape)
                         .then(if (on) Modifier.background(Txt) else Modifier.glass(shape, fill = 0.08f, edge = 0.14f))
                         .bounceClick { Features.set(f.copy(goalMin = m)) }
-                        .padding(horizontal = 11.dp, vertical = 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                 ) { Text(l, color = if (on) Ink else Txt, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1) }
             }
         }
@@ -405,12 +406,12 @@ private val SECTIONS = mapOf(
 fun HomeSectionsCard() {
     val f by Features.flags.collectAsState()
     SettingsCard {
-        Text("Sections de l'accueil", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Sections de l'accueil", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
         Text("Les flèches changent l'ordre, l'interrupteur affiche ou masque.", color = Txt3, fontSize = 12.sp)
         val order = f.homeOrder
         order.forEachIndexed { i, id ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(SECTIONS[id] ?: id, color = if (id in f.hidden) Txt3 else Txt, fontSize = 14.sp, modifier = Modifier.weight(1f))
+                Text(SECTIONS[id] ?: id, color = if (id in f.hidden) Txt3 else Txt, fontSize = 13.sp, modifier = Modifier.weight(1f))
                 ArrowBtn("↑", i > 0) { Features.set(f.copy(homeOrder = order.toMutableList().apply { add(i - 1, removeAt(i)) })) }
                 ArrowBtn("↓", i < order.size - 1) { Features.set(f.copy(homeOrder = order.toMutableList().apply { add(i + 1, removeAt(i)) })) }
                 Spacer(Modifier.width(6.dp))
@@ -429,7 +430,7 @@ private fun ArrowBtn(label: String, enabled: Boolean, onClick: () -> Unit) {
     Box(
         Modifier.size(32.dp).clip(PillShape).bounceClick(enabled = enabled, pressedScale = 0.85f, onClick = onClick),
         contentAlignment = Alignment.Center,
-    ) { Text(label, color = if (enabled) Txt else Txt3.copy(alpha = 0.4f), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold) }
+    ) { Text(label, color = if (enabled) Txt else Txt3.copy(alpha = 0.4f), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold) }
 }
 
 /** Paroles et recherche. */
@@ -498,14 +499,14 @@ fun WidgetsNotifCard() {
 fun BlockedCard() {
     val items by com.theo.remote.Blocked.items.collectAsState()
     SettingsCard {
-        Text("Sons masqués", color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Sons masqués", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
         if (items.isEmpty()) {
             Text("Appui long sur un son → « Pas pour moi » : il n'apparaîtra plus dans le Mix du jour, les humeurs, le blind test ni l'accueil.", color = Txt2, fontSize = 13.sp, lineHeight = 18.sp)
         }
         items.forEach { b ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(b.title, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text(b.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1)
                     Text(b.artist, color = Txt2, fontSize = 12.sp, maxLines = 1)
                 }
                 Text(
@@ -599,7 +600,7 @@ fun FollowCard() {
             if (artists.isEmpty()) Text("Tu ne suis encore personne.", color = Txt2, fontSize = 13.sp)
             artists.forEach { a ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(a, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.weight(1f))
+                    Text(a, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.weight(1f))
                     Text(
                         "Ne plus suivre", color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.clip(RoundedCornerShape(8.dp)).bounceClick(pressedScale = 0.95f) { com.theo.remote.Follow.toggle(ctx, a) }.padding(6.dp),
@@ -685,7 +686,8 @@ object SettingsIndex {
         Flag("Vérification au démarrage", "Écran qui vérifie que tout est prêt au premier lancement", "Affichage", { it.setupCheck }, { f, v -> f.copy(setupCheck = v) }),
         Flag("Mises à jour", "Proposer la nouvelle version de Hush dès qu'elle sort", "Affichage", { it.autoUpdate }, { f, v -> f.copy(autoUpdate = v) }),
         Flag("Bouton Annuler", "Revenir en arrière après avoir retiré un son ou vidé la file", "Affichage", { it.undoBar }, { f, v -> f.copy(undoBar = v) }),
-        Flag("Lancer la bonne playlist", "Lancer tes playlists par leur lien exact plutôt que par leur nom", "Playlists", { it.exactLaunch }, { f, v -> f.copy(exactLaunch = v) }),
+        Flag("Lancer le bon son", "Lancer tes playlists et tes sons par leur lien exact plutôt que par une recherche", "Playlists", { it.exactLaunch }, { f, v -> f.copy(exactLaunch = v) }),
+        Flag("Playlist sans intrus", "Vider la file « À suivre » quand tu lances une playlist", "Playlists", { it.freshQueue }, { f, v -> f.copy(freshQueue = v) }),
         Flag("Nettoyage mensuel", "Retirer les sons que tu passes toujours dans une playlist", "Playlists", { it.playlistCleanup }, { f, v -> f.copy(playlistCleanup = v) }),
         Flag("Pas de doublons dans les playlists", "Ne jamais ajouter deux fois le même son à une playlist", "Playlists", { it.noDuplicates }, { f, v -> f.copy(noDuplicates = v) }),
         Flag("Alerte sons coupés", "Notif quand un son est coupé avant la fin", "Lecture", { it.earlyCutAlert }, { f, v -> f.copy(earlyCutAlert = v) }),
@@ -763,7 +765,7 @@ fun SettingsSearchResults(query: String, onOpenSection: (String) -> Unit) {
     val f by Features.flags.collectAsState()
     val results = remember(query) { SettingsIndex.search(query) }
     if (results.isEmpty()) {
-        Text("Aucun réglage pour « $query ».", color = Txt2, fontSize = 14.sp)
+        Text("Aucun réglage pour « $query ».", color = Txt2, fontSize = 13.sp)
         return
     }
     SettingsCard {
@@ -774,7 +776,7 @@ fun SettingsSearchResults(query: String, onOpenSection: (String) -> Unit) {
                     Text(item.section, color = Txt3, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 is SettingsIndex.Link -> Row(
-                    Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).bounceClick(pressedScale = 0.97f) { onOpenSection(item.section) },
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).bounceClick(pressedScale = 0.97f) { onOpenSection(item.section) },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
@@ -794,7 +796,7 @@ fun SettingsSearchResults(query: String, onOpenSection: (String) -> Unit) {
 fun SettingsSearchField(query: String, onChange: (String) -> Unit) {
     val shape = Rounded(16)
     Row(
-        Modifier.fillMaxWidth().glass(shape, fill = 0.09f, edge = 0.16f).padding(horizontal = 14.dp, vertical = 12.dp),
+        Modifier.fillMaxWidth().glass(shape, fill = 0.09f, edge = 0.16f).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Rounded.Search, contentDescription = null, tint = Txt2, modifier = Modifier.size(20.dp))

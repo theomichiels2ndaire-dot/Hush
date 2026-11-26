@@ -139,6 +139,8 @@ object TidalRemote {
         val sentAt: Long = SystemClock.elapsedRealtime(),
         val query: String = "",
         val tries: Int = 0,
+        /** Lancé par le lien exact du son. */
+        val viaLink: Boolean = false,
         /** Artiste attendu : un son du même titre par un autre artiste n'est pas le bon. */
         val artist: String = "",
     )
@@ -335,6 +337,24 @@ object TidalRemote {
         MixQueue.clear()
     }
 
+    /**
+     * Une nouvelle playlist démarre : les vieux sons de « À suivre » (ajoutés il y a longtemps, réveil…)
+     * passaient avant elle et donnaient l'impression que la playlist lançait n'importe quoi.
+     */
+    fun startingPlaylist() {
+        cancelLaunch()
+        if (!Features.flags.value.freshQueue) return
+        val up = _upNext.value
+        if (up.isEmpty()) return
+        _upNext.value = emptyList(); saveUpNext()
+        offerUndo("File « À suivre » vidée (${up.size})", "freshQueue") { _upNext.value = up; saveUpNext() }
+    }
+
+    /** On oublie le dernier son demandé : sinon la vérif « bonne version » relançait l'ancien son par-dessus. */
+    private fun cancelLaunch() {
+        if (_state.value.launch?.status == LaunchStatus.Pending) _state.update { it.copy(launch = null) }
+    }
+
     private fun captureContext() {
         if (_context.value.isNotEmpty()) return
         val st = _state.value
@@ -510,7 +530,7 @@ object TidalRemote {
         // sur le vrai son → coupé en plein milieu). On attend la vraie fin : Tidal s'arrête ou enchaîne,
         // et on rattrape aussitôt. Exception : Tidal vient lui-même de donner une position proche de la fin.
         val ending = (st.isPlaying && remaining in 0..1200 && t.durationMs - st.positionMs < 15_000) ||
-            (!st.isPlaying && ((pos > 0 && remaining < 1500) || (nearEndKey == key && now - nearEndAt < 8000)))
+            (!st.isPlaying && t.durationMs - st.positionMs < 5000 && ((pos > 0 && remaining < 1500) || (nearEndKey == key && now - nearEndAt < 8000)))
         if (ending && now - lastFireAt > 2500) {
             upNextFiredFor = key
             lastFireAt = now
@@ -657,7 +677,9 @@ object TidalRemote {
             return
         }
         // arrêté juste après la fin d'un son (même si Tidal a remis le 1er son de la file à l'écran)
-        if (nearEndKey != null && now - nearEndAt < 8000 && autoMixDoneFor != nearEndKey) {
+        // …mais pas si tu as juste mis pause avant la fin (l'horloge de Hush peut être un peu en avance)
+        val reallyEnded = key != nearEndKey || t.durationMs - st.positionMs < 5000
+        if (nearEndKey != null && now - nearEndAt < 8000 && autoMixDoneFor != nearEndKey && reallyEnded) {
             autoMixDoneFor = nearEndKey
             nearEndKey = null
             playSimilar()
@@ -841,7 +863,8 @@ object TidalRemote {
                 _state.update {
                     it.copy(launch = launch.copy(status = if (ok) LaunchStatus.Ok else LaunchStatus.OtherVersion, actual = track.title))
                 }
-                if (ok && launch.tries > 0) { log("Bonne version retrouvée : ${launch.expected}"); Diag.add(Diag.Kind.Fixed, launch.expected) }
+                if (ok && launch.viaLink) { linkIgnored = 0; if (trackLinkMode != 1) trackLinkMode = 1 }
+                else if (ok && launch.tries > 0) { log("Bonne version retrouvée : ${launch.expected}"); Diag.add(Diag.Kind.Fixed, launch.expected) }
             }
         }
 
@@ -951,20 +974,42 @@ object TidalRemote {
      */
     fun playPlaylist(name: String, id: String? = null) {
         clearContext()
+        startingPlaylist()
         val c = tidal() ?: return log("Pas de session Tidal active — lance un son dans Tidal d'abord")
         if (id != null && Features.flags.value.exactLaunch) {
             val beforeTrack = _state.value.track?.title
             val beforeQueue = c.queueTitle?.toString()
+            val beforeIds = _state.value.queue.map { it.id }
+            val sent = SystemClock.elapsedRealtime()
+            playlistSentAt = sent
             c.transportControls.playFromUri(Uri.parse("https://tidal.com/browse/playlist/$id"), Bundle())
             log("Playlist lancée (lien exact) : $name")
-            main.postDelayed({
-                val moved = _state.value.track?.title != beforeTrack || tidal()?.queueTitle?.toString() != beforeQueue
-                if (!moved) { log("Lien ignoré par Tidal → recherche par nom"); tidal()?.let { searchPlaylist(it, name) } }
-            }, 2500)
+            // Tidal peut mettre plusieurs secondes à charger une grosse playlist : avant, au bout de 2,5 s,
+            // Hush lançait EN PLUS une recherche par nom… qui pouvait démarrer une autre playlist du même nom.
+            val watch = object : Runnable {
+                override fun run() {
+                    if (playlistSentAt != sent) return // une autre lecture a été lancée entre-temps
+                    val st = _state.value
+                    val state = tidal()?.playbackState?.state
+                    val moved = st.track?.title != beforeTrack || tidal()?.queueTitle?.toString() != beforeQueue ||
+                        st.queue.map { it.id } != beforeIds
+                    val loading = state == PlaybackState.STATE_BUFFERING || state == PlaybackState.STATE_CONNECTING
+                    val waited = SystemClock.elapsedRealtime() - sent
+                    when {
+                        moved -> return
+                        loading && waited < 12_000 -> main.postDelayed(this, 400)
+                        waited < 6000 -> main.postDelayed(this, 400)
+                        else -> { log("Lien ignoré par Tidal → recherche par nom"); tidal()?.let { searchPlaylist(it, name) } }
+                    }
+                }
+            }
+            main.postDelayed(watch, 600)
         } else searchPlaylist(c, name)
         appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putString("lastPlaylistName", name)?.apply()
         reapplyShuffleSoon()
     }
+
+    private var playlistSentAt = 0L
 
     private fun searchPlaylist(c: MediaController, name: String) {
         val extras = Bundle().apply {
@@ -1137,6 +1182,7 @@ object TidalRemote {
     /** Lance les sons d'un artiste (recherche « artiste » côté Tidal). */
     fun playArtist(name: String) {
         clearContext()
+        cancelLaunch(); playlistSentAt = 0L
         val c = tidal() ?: return log("Pas de session Tidal active — lance un son dans Tidal d'abord")
         val extras = Bundle().apply {
             putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/artist")
@@ -1150,6 +1196,7 @@ object TidalRemote {
     /** Lance un album (recherche « album » côté Tidal). */
     fun playAlbum(title: String, artist: String) {
         clearContext()
+        cancelLaunch(); playlistSentAt = 0L
         val c = tidal() ?: return log("Pas de session Tidal active — lance un son dans Tidal d'abord")
         val extras = Bundle().apply {
             putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/album")
@@ -1163,6 +1210,7 @@ object TidalRemote {
 
     fun skipToQueueItem(id: Long) {
         clearContext()
+        cancelLaunch()
         controls?.skipToQueueItem(id)
     }
 
@@ -1173,10 +1221,32 @@ object TidalRemote {
             main.postDelayed({ if (tidalCtl != null) launch(id, expected, query, artist) }, 2500)
             return log("Tidal se réveille…")
         }
-        val launch = Launch(trackId = id, expected = expected, status = LaunchStatus.Pending, query = query, artist = artist)
+        playlistSentAt = 0L
+        // avec l'identifiant Tidal du son : on le lance par son lien exact (pas de recherche qui tombe sur un autre son)
+        val exact = id.isNotEmpty() && id.all { it.isDigit() } && Features.flags.value.exactLaunch && trackLinkMode != 0
+        val launch = Launch(trackId = id, expected = expected, status = LaunchStatus.Pending, query = query, artist = artist,
+            tries = if (exact) 1 else 0, viaLink = exact)
         _state.update { it.copy(launch = launch) }
-        c.transportControls.playFromSearch(query, Bundle())
-        log("Lancé : $expected")
+        if (exact) {
+            c.transportControls.playFromUri(Uri.parse("https://tidal.com/browse/track/$id"), Bundle())
+            log("Lancé (lien exact) : $expected")
+            // Tidal n'a pas bougé : il ignore les liens de sons → recherche classique
+            main.postDelayed({
+                val l = _state.value.launch
+                if (l != null && l.sentAt == launch.sentAt && l.status == LaunchStatus.Pending) {
+                    val cur = _state.value.track?.title
+                    if (cur != null && matches(cur, expected)) return@postDelayed
+                    linkIgnored++
+                    if (linkIgnored >= 2 && trackLinkMode == -1) { trackLinkMode = 0; log("Tidal ignore les liens de sons : recherche classique") }
+                    val again = l.copy(tries = 0, viaLink = false, sentAt = SystemClock.elapsedRealtime())
+                    _state.update { it.copy(launch = again) }
+                    tidal()?.transportControls?.playFromSearch(query, Bundle())
+                }
+            }, 2200)
+        } else {
+            c.transportControls.playFromSearch(query, Bundle())
+            log("Lancé : $expected")
+        }
         reapplyShuffleSoon()
 
         // Si le titre en cours était déjà celui-là, ou si rien ne bouge, on le dit au bout de 6 s
@@ -1190,6 +1260,12 @@ object TidalRemote {
             }
         }, 6000)
     }
+
+    /** -1 pas encore su, 1 Tidal accepte les liens de sons, 0 il les ignore. */
+    private var trackLinkMode: Int
+        get() = appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.getInt("trackLink", -1) ?: -1
+        set(v) { appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putInt("trackLink", v)?.apply() }
+    private var linkIgnored = 0
 
     /** Nouvel essai pour lancer la bonne version : d'abord le lien exact du son, puis une recherche plus précise. */
     private fun retryLaunch(prev: Launch) {
