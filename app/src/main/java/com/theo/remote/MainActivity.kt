@@ -23,31 +23,18 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         CrashLog.install(this)
         History.init(this)
-        LastFm.init(this)
         AutoResume.init(this)
+        Recognizer.init(this) // partage TikTok : le jeton de reconnaissance doit être prêt tout de suite
         Alarm.init(this)
-        Recognizer.init(this)
-        Gestures.init(this)
         Features.init(this)
         Blocked.init(this)
         LastPlay.init(this)
         com.theo.remote.ui.SmartLists.init(this)
-        Follow.init(this)
-        LyricQuotes.init(this)
-        com.theo.remote.ui.TrackNotes.init(this)
-        com.theo.remote.ui.HiddenGem.init(this)
-        com.theo.remote.ui.LyricWords.init(this)
         AudioFx.init(this)
-        StatsExclude.init(this)
         SkipTracker.init(this)
         PlaylistResume.init(this)
-        TimeCapsule.init(this)
-        com.theo.remote.ui.RatePrompt.init(this)
         Ratings.init(this)
         PlaylistCovers.init(this)
-        PlaylistPlays.init(this)
-        Diag.init(this)
-        Rewards.init(this)
         LocalMusic.init(this)
         com.theo.remote.ui.Net.init(this)
         com.theo.remote.ui.SettingsFold.init(this)
@@ -68,9 +55,28 @@ class MainActivity : ComponentActivity() {
         }
         HushService.start(this)
         if (savedInstanceState == null) wakeTidal()
-        // récompense « Son de démarrage »
-        if (savedInstanceState == null && Features.flags.value.rewards && Rewards.isOn("sound:shh")) StartSound.play()
-        // le reste attend que l'écran soit affiché : démarrage plus rapide
+        // le reste attend que le premier écran soit dessiné : ouverture plus rapide
+        // (stats, souvenirs, cartes, diagnostic… se remplissent une fraction de seconde après)
+        val firstLaunch = savedInstanceState == null
+        val later = Runnable {
+            LastFm.init(this)
+            Gestures.init(this)
+            Follow.init(this)
+            LyricQuotes.init(this)
+            com.theo.remote.ui.TrackNotes.init(this)
+            com.theo.remote.ui.HiddenGem.init(this)
+            com.theo.remote.ui.LyricWords.init(this)
+            StatsExclude.init(this)
+            TimeCapsule.init(this)
+            com.theo.remote.ui.RatePrompt.init(this)
+            PlaylistPlays.init(this)
+            Diag.init(this)
+            Rewards.init(this)
+            // récompense « Son de démarrage »
+            if (firstLaunch && Features.flags.value.rewards && Rewards.isOn("sound:shh")) StartSound.play()
+        }
+        val mainHandler = android.os.Handler(mainLooper)
+        window.decorView.post { mainHandler.post(later) }
         window.decorView.post {
             com.theo.remote.ui.Setlists.init(this)
             com.theo.remote.ui.Concerts.init(this)
