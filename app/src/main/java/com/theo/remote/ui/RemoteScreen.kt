@@ -139,6 +139,15 @@ fun RemoteApp() {
         CoverTint.color.value = if (s.track?.art != null) androidx.compose.ui.graphics.lerp(colors.b, Color.White, 0.35f) else Color.Unspecified
     }
 
+    // tout est fermé, sur l'Accueil : il faut faire retour deux fois pour quitter (jamais par erreur)
+    val backCtx = androidx.compose.ui.platform.LocalContext.current
+    var exitArmedAt by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+    val safeExit = com.theo.remote.Features.flags.collectAsState().value.safeBack
+    BackHandler(enabled = safeExit && sheet == Sheet.None && tab == Tab.Home && openPlaylist == null && details.isEmpty()) {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - exitArmedAt < 2000) { exitArmedAt = 0L; (backCtx as? android.app.Activity)?.moveTaskToBack(true) }
+        else { exitArmedAt = now; TidalRemote.showToast("Refais retour pour quitter Hush") }
+    }
     BackHandler(enabled = sheet != Sheet.None) {
         sheet = if (sheet == Sheet.Lyrics) Sheet.Player else Sheet.None
     }
@@ -558,7 +567,18 @@ private fun MiniPlayer(s: TidalRemote.State, backdrop: Backdrop, onOpen: () -> U
             Row(
                 Modifier.weight(1f).clipToBounds().graphicsLayer {
                     translationX = slide.value
-                    alpha = 1f - (kotlin.math.abs(slide.value) / miniW.toFloat()).coerceIn(0f, 0.7f)
+                },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+            // le son d'à côté arrive sous ton doigt pendant que tu glisses
+            val slideDir by remember { androidx.compose.runtime.derivedStateOf { kotlin.math.sign(slide.value) } }
+            val peek = remember(slideDir, t.title, s.queue, s.activeQueueId) {
+                if (slideDir == 0f) null else TidalRemote.peekAdjacent(next = slideDir < 0)
+            }
+            Box(Modifier.weight(1f)) {
+            Row(
+                Modifier.fillMaxWidth().graphicsLayer {
+                    alpha = 1f - (kotlin.math.abs(slide.value) / miniW.toFloat()).coerceIn(0f, if (peek != null) 0.85f else 0.7f)
                 },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -582,7 +602,25 @@ private fun MiniPlayer(s: TidalRemote.State, backdrop: Backdrop, onOpen: () -> U
                     modifier = if (s.launch?.status == TidalRemote.LaunchStatus.OtherVersion) Modifier.bounceClick { TidalRemote.retryVersion() } else Modifier,
                 )
             }
+            
             }
+            if (peek != null) Row(
+                Modifier.fillMaxWidth().graphicsLayer {
+                    val w = size.width + 8.dp.toPx()
+                    translationX = if (slide.value < 0) w else -w
+                    alpha = (kotlin.math.abs(slide.value) / miniW.toFloat() * 2.2f).coerceIn(0f, 1f)
+                },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Cover(model = peek.cover, radius = 8.dp, modifier = Modifier.size(48.dp))
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(peek.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(peek.artist, color = Txt2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            }
+}
             Box(
                 Modifier.size(48.dp).clip(PillShape).bounceClick(pressedScale = 0.8f) { miniHaptic(); TidalRemote.playPause() },
                 contentAlignment = Alignment.Center,
