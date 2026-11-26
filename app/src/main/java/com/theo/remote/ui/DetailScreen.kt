@@ -96,7 +96,7 @@ fun ArtistScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
             }
             page = TidalApi.artistPage(artist)
         } catch (e: Exception) {
-            error = e.message ?: "Erreur réseau"
+            error = netError(e)
         }
     }
     val name = page?.artist?.name ?: (d as? Detail.ArtistByName)?.name ?: (d as? Detail.ArtistRef)?.artist?.name.orEmpty()
@@ -433,7 +433,7 @@ fun AlbumScreen(d: Detail, s: TidalRemote.State, onBack: () -> Unit) {
             }
             page = TidalApi.albumPage(album)
         } catch (e: Exception) {
-            error = e.message ?: "Erreur réseau"
+            error = netError(e)
         }
     }
     val a = page?.album ?: (d as? Detail.AlbumRef)?.album

@@ -63,6 +63,9 @@ import kotlinx.coroutines.flow.StateFlow
 // ---------------------------------------------------------------- réseau
 
 /** En ligne ou pas (pour prévenir au lieu d'afficher des écrans vides). */
+/** Message d'erreur réseau : sans connexion, on le dit simplement au lieu d'une erreur technique. */
+fun netError(e: Throwable): String = if (!Net.online.value) OFFLINE_MSG else e.message ?: "Erreur réseau"
+
 object Net {
     private val _online = MutableStateFlow(true)
     val online: StateFlow<Boolean> = _online

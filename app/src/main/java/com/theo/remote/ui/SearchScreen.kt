@@ -185,7 +185,7 @@ fun SearchScreen(s: TidalRemote.State) {
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                error = e.message ?: "Erreur réseau"
+                error = netError(e)
                 results = emptyList()
                 artists = emptyList()
             }
@@ -307,7 +307,7 @@ fun SearchScreen(s: TidalRemote.State) {
                                 Spacer(Modifier.width(6.dp))
                                 Text(q, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                                 Box(
-                                    Modifier.size(28.dp).clip(PillShape).bounceClick(pressedScale = 0.8f) { History.removeSearch(q) },
+                                    Modifier.size(36.dp).clip(PillShape).bounceClick(pressedScale = 0.8f) { History.removeSearch(q) },
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(Icons.Rounded.Close, contentDescription = "Retirer « $q »", tint = Txt2, modifier = Modifier.size(14.dp))
@@ -487,7 +487,7 @@ private fun SearchField(value: String, onChange: (String) -> Unit, onSearch: () 
         }
         if (value.isEmpty() && onMic != null) {
             Box(
-                Modifier.size(36.dp).clip(PillShape).bounceClick(pressedScale = 0.85f, onClick = onMic),
+                Modifier.size(44.dp).clip(PillShape).bounceClick(pressedScale = 0.85f, onClick = onMic),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(Icons.Rounded.Mic, contentDescription = "Recherche vocale", tint = Txt, modifier = Modifier.size(22.dp))

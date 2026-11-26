@@ -83,7 +83,7 @@ object DiscoverDeck {
         scope.launch {
             runCatching { build() }
                 .onSuccess { new -> cards.value = cards.value + new.filter { n -> cards.value.none { it.id == n.id } } }
-                .onFailure { error.value = it.message ?: "Erreur réseau" }
+                .onFailure { error.value = netError(it) }
             if (cards.value.isEmpty() && error.value == null) error.value = "Rien de nouveau à te proposer pour l'instant"
             loading.value = false
         }

@@ -108,7 +108,7 @@ fun PlaylistDoctorSheet(p: TidalApi.Playlist, onClose: () -> Unit, onCleaned: ()
             (d.duplicates + d.unavailable + d.skipped.map { it.first }).forEach { r -> r.itemId?.let { picked[it] = true } }
             diag = d
         } catch (e: Exception) {
-            error = e.message ?: "Erreur réseau"
+            error = netError(e)
         }
     }
 

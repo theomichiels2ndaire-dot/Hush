@@ -122,6 +122,8 @@ private var cachedPlaylists: List<TidalApi.Playlist>?
 internal val cachedTracks = HashMap<String, List<TidalApi.Result>>()
 
 /** Copie des playlists sur le téléphone : elles s'affichent tout de suite, puis se mettent à jour. */
+internal const val OFFLINE_MSG = "Pas de connexion. Ça s'affichera dès que tu seras reconnecté."
+
 internal object PlaylistDisk {
     private fun file(ctx: android.content.Context, id: String) = java.io.File(ctx.cacheDir, "pl_" + id.replace(Regex("[^A-Za-z0-9_-]"), "_") + ".json")
     suspend fun get(ctx: android.content.Context, id: String): List<TidalApi.Result> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -200,7 +202,12 @@ fun LibraryScreen(s: TidalRemote.State, onOpen: (TidalApi.Playlist) -> Unit) {
             cachedTracks.clear()
             cachedNext.clear()
         } catch (e: Exception) {
-            error = e.message ?: "Erreur réseau"
+            // hors connexion : on garde tes playlists telles que la dernière fois, sans message d'erreur
+            error = when {
+                !Net.online.value && playlists != null -> null
+                !Net.online.value -> OFFLINE_MSG
+                else -> e.message ?: "Erreur réseau"
+            }
         }
         loading = false
     }
@@ -282,9 +289,10 @@ fun LibraryScreen(s: TidalRemote.State, onOpen: (TidalApi.Playlist) -> Unit) {
             loading && playlists == null -> item { SkeletonList(5) }
             error != null -> item {
                 Column {
-                    Text(error!!, color = Ko, fontSize = 13.sp, lineHeight = 18.sp)
+                    Text(error!!, color = if (error == OFFLINE_MSG) Txt2 else Ko, fontSize = 13.sp, lineHeight = 18.sp)
                     Spacer(Modifier.height(12.dp))
-                    PillButton("Se reconnecter", filled = false) { TidalAuth.logout(); TidalAuth.login(ctx) }
+                    if (error == OFFLINE_MSG) PillButton("Réessayer", filled = false) { reload++ }
+                    else PillButton("Se reconnecter", filled = false) { TidalAuth.logout(); TidalAuth.login(ctx) }
                 }
             }
             playlists?.isEmpty() == true -> item { EmptyState("Aucune playlist", "Crée ta première playlist juste en dessous.") }
@@ -469,6 +477,10 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
     var started by remember(p.id) { mutableStateOf(cachedTracks.containsKey(p.id)) }
     var loading by remember(p.id) { mutableStateOf(false) }
     var error by remember(p.id) { mutableStateOf<String?>(null) }
+    /** Affichée depuis la copie gardée sur le téléphone (pas de réseau). */
+    var offlineCopy by remember(p.id) { mutableStateOf(false) }
+    val online by Net.online.collectAsState()
+
     var name by remember(p.id) { mutableStateOf(p.name) }
     var editing by remember(p.id) { mutableStateOf(false) }
     var confirmDelete by remember(p.id) { mutableStateOf(false) }
@@ -501,14 +513,21 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                 cachedTracks[p.id] = tracks
                 cachedNext[p.id] = next
                 if (next == null || tracks.size <= 100) PlaylistDisk.put(pctx, p.id, tracks)
+                offlineCopy = false
             } catch (e: Exception) {
-                error = e.message ?: "Erreur réseau"
+                // pas de réseau : on affiche la dernière version gardée sur le téléphone
+                val saved = if (!started) PlaylistFull.known(pctx, PlaylistFull.key(p.id, isFav)) ?: PlaylistDisk.get(pctx, p.id).ifEmpty { null } else null
+                if (saved != null) {
+                    tracks = saved; next = null; started = true; offlineCopy = true
+                } else error = if (!Net.online.value) OFFLINE_MSG else netError(e)
             }
             loading = false
         }
     }
 
     LaunchedEffect(p.id) { if (!started) loadMore() }
+    // le réseau revient : on recharge la vraie version
+    LaunchedEffect(online) { if (online && offlineCopy) { tracks = emptyList(); started = false; next = null; error = null; loadMore() } }
     // on charge toute la playlist en fond, pour que l'aléatoire tire dans tous les sons sans attendre
     LaunchedEffect(p.id) {
         kotlinx.coroutines.delay(500)
@@ -614,7 +633,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
     val nearEnd by remember {
         derivedStateOf {
             val last = list.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            last >= list.layoutInfo.totalItemsCount - 6
+            last >= list.layoutInfo.totalItemsCount - 20
         }
     }
     LaunchedEffect(nearEnd, started, next, loading) {
@@ -944,9 +963,10 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
         }
 
         item(key = "footer") {
+            if (offlineCopy) Text("Hors connexion · version gardée sur ton téléphone", color = Txt2, fontSize = 12.sp, modifier = Modifier.padding(top = 8.dp))
             when {
                 error != null -> Column(Modifier.padding(top = 8.dp)) {
-                    Text(error!!, color = Ko, fontSize = 13.sp)
+                    Text(error!!, color = if (error == OFFLINE_MSG) Txt2 else Ko, fontSize = 13.sp)
                     Spacer(Modifier.height(12.dp))
                     PillButton("Réessayer", filled = false) { loadMore() }
                 }

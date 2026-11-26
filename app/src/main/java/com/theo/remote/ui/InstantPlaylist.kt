@@ -252,7 +252,7 @@ fun InstantPlaylistHost() {
             busy = "…"
             val r = runCatching { InstantPlaylist.build(ctx, q) { p -> busy = p } }
             busy = null
-            r.onSuccess { built = it }.onFailure { TidalRemote.showToast(it.message ?: "Erreur réseau") }
+            r.onSuccess { built = it }.onFailure { TidalRemote.showToast(netError(it)) }
         }
     }
     val ideas = listOf("rap FR calme pour la nuit", "sport énervé", "R&B pour la route", "sons tristes", "soirée afro", "rap US énergique")
