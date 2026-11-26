@@ -556,12 +556,18 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                 val key = PlaylistFull.key(p.id, isFav)
                 val known = PlaylistFull.known(pctx, key)
                 // jamais vue en entier : on attend la liste complète (sinon le 1er son sortirait toujours du début)
-                // pas encore en mémoire : plutôt que d'attendre tout le chargement, Tidal mélange lui-même
-                // la playlist entière tout de suite ; la liste complète se charge en fond pour la prochaine fois
-                if (known == null && !isFav && locals.isEmpty()) {
+                // pas encore en mémoire : le mélange de Hush démarre tout de suite avec ce qui est déjà chargé,
+                // puis toute la playlist est mélangée dans la suite dès qu'elle arrive (pochettes dans la file, artistes espacés)
+                if (known == null && loaded.isNotEmpty()) {
+                    val first = loaded.distinctBy { it.id }.map { T(it) } + locals.map { L(it) }
+                    TidalRemote.setShuffle(false)
                     NowPlaylist.set(p.id)
-                    TidalRemote.playPlaylistShuffled(p.name, p.id)
-                    PlaylistFull.fetch(pctx, key) { page(it) }
+                    com.theo.remote.MixQueue.play(pctx, mix(first), 0, original = first)
+                    TidalRemote.markShuffle(true)
+                    val full = PlaylistFull.fetch(pctx, key) { page(it) } ?: return@launch
+                    val ids = loaded.map { it.id }.toHashSet()
+                    val added = full.filter { it.id !in ids }
+                    if (added.isNotEmpty() && NowPlaylist.id.value == p.id) com.theo.remote.MixQueue.extend(added.map { T(it) }, true)
                     return@launch
                 }
                 val all = known ?: run {
