@@ -149,6 +149,9 @@ internal object PlaylistFull {
 
     fun key(id: String, fav: Boolean) = if (fav) "full_favorites" else "full_$id"
 
+    /** La playlist complète si elle est déjà en mémoire (sans rien charger). */
+    fun inMemory(id: String): List<TidalApi.Result>? = mem[key(id, false)] ?: mem[key(id, true)]
+
     /** Ce qu'on connaît déjà en entier (mémoire, sinon téléphone), sans réseau. */
     suspend fun known(ctx: android.content.Context, key: String): List<TidalApi.Result>? =
         mem[key] ?: PlaylistDisk.get(ctx, key).ifEmpty { null }?.also { mem[key] = it }

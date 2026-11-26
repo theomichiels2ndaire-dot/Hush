@@ -126,7 +126,7 @@ object TidalRemote {
         PlaybackState.STATE_REWINDING,
     )
 
-    data class QueueEntry(val id: Long, val title: String, val subtitle: String)
+    data class QueueEntry(val id: Long, val title: String, val subtitle: String, val icon: String? = null)
 
     enum class LaunchStatus { Pending, Ok, OtherVersion, NoChange }
 
@@ -917,6 +917,7 @@ object TidalRemote {
                         id = q.queueId,
                         title = q.description.title?.toString() ?: "—",
                         subtitle = q.description.subtitle?.toString() ?: "",
+                        icon = q.description.iconUri?.toString(),
                     )
                 },
                 activeQueueId = pb?.activeQueueItemId ?: -1,

@@ -157,13 +157,27 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                         ) { Text(if (qf.queueCovers) "Liste" else "Pochettes", color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
                     }
                     Spacer(Modifier.height(12.dp))
+                    // pochettes des sons de la file Tidal : donnée par Tidal, sinon retrouvée dans la playlist en cours ou ton historique
+                    val nowPl by NowPlaylist.id.collectAsState()
+                    val heard by com.theo.remote.History.entries.collectAsState()
+                    val coverOf = remember(nowPl, heard) {
+                        val m = HashMap<String, String>()
+                        heard.forEach { e -> e.coverUrl?.let { m[com.theo.remote.QueueLogic.norm(e.title)] = it } }
+                        nowPl?.let { PlaylistFull.inMemory(it) }?.forEach { r -> r.coverUrl?.let { c -> m[com.theo.remote.QueueLogic.norm(r.title)] = c; m[com.theo.remote.QueueLogic.norm(r.fullTitle)] = c } }
+                        m
+                    }
+                    fun tidalCover(q: com.theo.remote.TidalRemote.QueueEntry): String? = q.icon ?: coverOf[com.theo.remote.QueueLogic.norm(q.title)]
+                    // la file Tidal à partir du son d'après celui en cours
+                    val activeIdx = s.queue.indexOfFirst { it.id == s.activeQueueId }
+                    val tidalAhead = s.queue.drop(activeIdx + 1)
+                    val nextFromTidal = upNext.isEmpty() && mixUp.isEmpty() && ctxQueue.isEmpty()
                     // le prochain son, mis en avant en grand
                     val nextUp: Triple<String, String, String?>? = upNext.firstOrNull()?.let { Triple(it.fullTitle, it.artistLine, it.coverUrl) }
                         ?: when (val e = mixUp.firstOrNull()) {
                             is com.theo.remote.LocalMusic.Entry.T -> Triple(e.r.fullTitle, e.r.artistLine, e.r.coverUrl)
                             is com.theo.remote.LocalMusic.Entry.L -> Triple(e.t.title, e.t.artist, null)
                             null -> ctxQueue.firstOrNull()?.let { Triple(it.title, it.artist, null) }
-                                ?: s.queue.indexOfFirst { it.id == s.activeQueueId }.takeIf { it >= 0 }?.let { s.queue.getOrNull(it + 1) }?.let { Triple(it.title, it.subtitle, null) }
+                                ?: tidalAhead.firstOrNull()?.let { Triple(it.title, it.subtitle, tidalCover(it)) }
                         }
                     if (nextUp != null) {
                         NextUpCard(nextUp.first, nextUp.second, nextUp.third) { TidalRemote.next() }
@@ -202,20 +216,19 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                     DismissWhenAtTop(scroll)
                     Column(Modifier.weight(1f, fill = false).verticalScroll(scroll)) {
                     if (upNext.isNotEmpty()) {
-                        QueueHeader("À suivre", "Ta file", upNext.size,
-                            if (qf.queueCovers) "Maintiens une pochette pour la déplacer" else "Maintiens ≡ pour déplacer, glisse sur le côté pour retirer")
+                        QueueHeader("À suivre", upNext.size)
                         Spacer(Modifier.height(if (qf.queueCovers) 10.dp else 4.dp))
                         if (qf.queueCovers) CoverQueueGrid(upNext) else ReorderableUpNext(upNext)
                         Spacer(Modifier.height(12.dp))
-                        if (mixUp.isNotEmpty()) QueueHeader("Puis la suite de la playlist", "Hush", mixUp.size)
-                        else if (ctxQueue.isNotEmpty()) QueueHeader("Puis la suite de ta lecture", "Hush", ctxQueue.size)
-                        else QueueHeader("Puis dans Tidal", "Tidal", null)
+                        if (mixUp.isNotEmpty()) QueueHeader("Puis la playlist", mixUp.size)
+                        else if (ctxQueue.isNotEmpty()) QueueHeader("Puis ta lecture", ctxQueue.size)
+                        else if (tidalAhead.isNotEmpty()) QueueHeader("Puis", tidalAhead.size)
                         Spacer(Modifier.height(4.dp))
                     }
                     if (mixUp.isNotEmpty()) {
                         // playlist lancée par Hush : on montre la vraie suite de la playlist (pas la file interne de Tidal)
                         if (upNext.isEmpty()) {
-                            QueueHeader("Suite de la playlist" + if (s.shuffle) " · aléatoire" else "", "Hush", mixUp.size)
+                            QueueHeader("Ensuite" + if (s.shuffle) " · aléatoire" else "", mixUp.size)
                             Spacer(Modifier.height(4.dp))
                         }
                         if (qf.queueCovers) CoverStaticGrid(mixUp.map { e ->
@@ -243,7 +256,7 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                     } else if (ctxQueue.isNotEmpty()) {
                         // ce que tu écoutais avant que la file passe devant : Hush le reprend ensuite
                         if (upNext.isEmpty()) {
-                            QueueHeader("Suite de ta lecture", "Hush", ctxQueue.size)
+                            QueueHeader("Ensuite", ctxQueue.size)
                             Spacer(Modifier.height(4.dp))
                         }
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -261,27 +274,28 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                         )
                         Spacer(Modifier.height(20.dp))
                     } else {
-                        // la file de Tidal à partir du son en cours (les sons déjà passés n'encombrent plus)
-                        val from = s.queue.indexOfFirst { it.id == s.activeQueueId }.coerceAtLeast(0)
-                        val ahead = s.queue.drop(from)
-                        if (upNext.isEmpty()) {
-                            QueueHeader("Ensuite dans Tidal", "Tidal", (ahead.size - 1).coerceAtLeast(0))
-                            Spacer(Modifier.height(4.dp))
+                        // le premier est déjà en grand au-dessus : la liste commence au suivant
+                        val rest = if (nextFromTidal) tidalAhead.drop(1) else tidalAhead
+                        if (upNext.isEmpty() && rest.isNotEmpty()) {
+                            QueueHeader("Ensuite", rest.size)
+                            Spacer(Modifier.height(if (qf.queueCovers) 10.dp else 4.dp))
                         }
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            ahead.forEach { q ->
-                                val active = q.id == s.activeQueueId
-                                Column(
+                        if (qf.queueCovers) CoverStaticGrid(rest.map { Triple(it.title, it.subtitle, tidalCover(it)) }) { i -> rest.getOrNull(i)?.let { TidalRemote.skipToQueueItem(it.id) } }
+                        else Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            rest.forEach { q ->
+                                Row(
                                     Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(if (active) Color.White.copy(alpha = 0.08f) else Color.Transparent)
-                                        .bounceClick(pressedScale = 0.97f, onLongClick = { TrackMenu.open(TrackMenu.Target(q.title, q.subtitle, null)) }) { TidalRemote.skipToQueueItem(q.id) }
-                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                        .bounceClick(pressedScale = 0.97f, onLongClick = { TrackMenu.open(TrackMenu.Target(q.title, q.subtitle, tidalCover(q))) }) { TidalRemote.skipToQueueItem(q.id) }
+                                        .padding(horizontal = 4.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    Text(q.title, color = if (active) Ok else Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    if (q.subtitle.isNotBlank()) {
-                                        Text(q.subtitle, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    Cover(model = tidalCover(q), radius = 8.dp, modifier = Modifier.size(44.dp))
+                                    Spacer(Modifier.width(10.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(q.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        if (q.subtitle.isNotBlank()) Text(q.subtitle, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                     }
                                 }
                             }
@@ -512,24 +526,13 @@ private fun ReorderableUpNext(list: List<com.theo.remote.TidalApi.Result>) {
     }
 }
 
-/** Titre d'une partie de la file, avec d'où viennent les sons (ta file Hush ou Tidal) et combien il y en a. */
+/** Titre discret d'une partie de la file, avec le nombre de sons. */
 @Composable
-private fun QueueHeader(title: String, source: String, count: Int?, hint: String? = null) {
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-            Spacer(Modifier.width(8.dp))
-            val tidal = source == "Tidal"
-            Box(
-                Modifier.clip(PillShape).background(if (tidal) Color.White.copy(alpha = 0.10f) else Ok.copy(alpha = 0.18f)).padding(horizontal = 8.dp, vertical = 2.dp),
-            ) { Text(source, color = if (tidal) Txt2 else Ok, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
-            if (count != null && count > 0) {
-                Spacer(Modifier.width(8.dp))
-                Text("$count son${if (count > 1) "s" else ""}", color = Txt2, fontSize = 12.sp)
-            }
-        }
-        if (hint != null) Text(hint, color = Txt3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-    }
+private fun QueueHeader(title: String, count: Int?) {
+    Text(
+        title + if (count != null && count > 0) " · $count" else "",
+        color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+    )
 }
 
 /** Ligne qu'on fait glisser sur le côté pour la retirer (fond rouge + corbeille). */
