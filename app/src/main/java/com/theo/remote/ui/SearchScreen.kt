@@ -69,6 +69,11 @@ private var lastResults: List<TidalApi.Result> = emptyList()
 private var lastArtists: List<TidalApi.Artist> = emptyList()
 private var lastLyrics: List<com.theo.remote.Lyrics.Match> = emptyList()
 
+/** Dernières recherches gardées en mémoire : revenir en arrière (effacer une lettre) est instantané. */
+private val searchCache = object : LinkedHashMap<String, TidalApi.SearchAll>(32, 0.75f, true) {
+    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, TidalApi.SearchAll>?) = size > 30
+}
+
 /** Oublie la dernière recherche : en revenant sur l'onglet, on retombe sur l'historique. */
 internal fun resetSearch() { lastResults = emptyList(); lastArtists = emptyList(); lastLyrics = emptyList() }
 
@@ -101,6 +106,21 @@ fun SearchScreen(s: TidalRemote.State) {
         else localAll.filter { it.title.contains(q, true) || it.artist.contains(q, true) || it.album.contains(q, true) }.take(20)
     }
     val nowLocal by com.theo.remote.LocalPlayer.now.collectAsState()
+    val smart = com.theo.remote.Features.flags.collectAsState().value.smartSearch
+    val heard by History.entries.collectAsState()
+    // tes sons déjà écoutés : affichés dès la première lettre, sans attendre Internet (fautes tolérées)
+    val instant = remember(query, heard, smart) {
+        val q = query.trim()
+        if (!smart || q.isEmpty()) emptyList()
+        else heard.asSequence()
+            .map { it to com.theo.remote.Fuzzy.score(q, it.title + " " + it.artist) }
+            .filter { it.second > 0 }
+            .sortedWith(compareByDescending<Pair<History.Entry, Int>> { it.second }.thenByDescending { it.first.plays.size })
+            .take(4).map { it.first }.toList()
+    }
+    /** « drak » → on a cherché « drake » à la place (et on le dit). */
+    var correctedFrom by remember { mutableStateOf<String?>(null) }
+    var correctedTo by remember { mutableStateOf<String?>(null) }
 
     var searchJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     var lastRun by remember { mutableStateOf("") }
@@ -129,10 +149,32 @@ fun SearchScreen(s: TidalRemote.State) {
             }
         }
         searchJob?.cancel()
+        correctedFrom = null; correctedTo = null
+        searchCache[q.lowercase()]?.let { hit ->
+            results = hit.tracks; artists = hit.artists
+            lastResults = results; lastArtists = artists
+            searched = true; loading = false
+            if (autoPlay) { results.firstOrNull()?.let { playFromSearch(it) }; autoPlay = false }
+            return
+        }
         searchJob = scope.launch {
             try {
-                val all = TidalApi.searchAll(q)
+                var all = TidalApi.searchAll(q)
                 if (query.trim() != q) { loading = false; return@launch } // tu as continué à taper : résultat périmé
+                // faute de frappe sur un nom que tu écoutes (« drak ») : on cherche le bon nom
+                if (smart) {
+                    val vocab = heard.asSequence().flatMap { sequenceOf(it.artist, it.title) }.take(4000).toList()
+                    val fixed = com.theo.remote.Fuzzy.correct(q, vocab)
+                    val exactArtist = all.artists.any { com.theo.remote.Fuzzy.norm(it.name) == com.theo.remote.Fuzzy.norm(q) }
+                    if (fixed != null && !exactArtist) {
+                        val better = runCatching { TidalApi.searchAll(fixed) }.getOrNull()
+                        if (query.trim() != q) { loading = false; return@launch }
+                        if (better != null && (better.tracks.isNotEmpty() || better.artists.isNotEmpty())) {
+                            all = better; correctedFrom = q; correctedTo = fixed
+                        }
+                    }
+                }
+                searchCache[q.lowercase()] = all
                 results = all.tracks
                 artists = all.artists
                 lastResults = results
@@ -157,7 +199,7 @@ fun SearchScreen(s: TidalRemote.State) {
     LaunchedEffect(query, liveOn) {
         if (!liveOn) return@LaunchedEffect
         if (query.trim().length < 2) return@LaunchedEffect
-        kotlinx.coroutines.delay(220)
+        kotlinx.coroutines.delay(150)
         run(live = true)
     }
 
@@ -224,7 +266,7 @@ fun SearchScreen(s: TidalRemote.State) {
         }
 
         // historique : visible tant qu'aucune recherche n'est affichée
-        val showHistory = !loading && results.isEmpty() && !searched && error == null
+        val showHistory = !loading && results.isEmpty() && !searched && error == null && instant.isEmpty()
         if (showHistory && (pastSearches.isNotEmpty() || pastTracks.isNotEmpty())) {
             item(key = "histHeader") {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -278,8 +320,39 @@ fun SearchScreen(s: TidalRemote.State) {
             }
         }
 
+        // déjà écoutés : tout de suite, avant même la réponse de Tidal
+        if (instant.isNotEmpty() && filterKind != 2) {
+            item(key = "instantHead") { SearchLabel("Déjà écoutés") }
+            items(instant, key = { "in-" + it.key }) { e -> HeardRow(e, Modifier.animateItem()) }
+            item(key = "instantGap") { Spacer(Modifier.height(12.dp)) }
+        }
+        // recherche corrigée
+        if (correctedTo != null && !loading) item(key = "corrected") {
+            val from = correctedFrom
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 8.dp)) {
+                Text("Résultats pour « $correctedTo »", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                if (from != null) {
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Chercher « $from »", color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).bounceClick(pressedScale = 0.95f) {
+                            correctedTo = null; correctedFrom = null
+                            searchJob?.cancel()
+                            loading = true
+                            searchJob = scope.launch {
+                                runCatching { TidalApi.searchAll(from) }.onSuccess { r ->
+                                    results = r.tracks; artists = r.artists; lastResults = results; lastArtists = artists
+                                }
+                                loading = false
+                            }
+                        }.padding(horizontal = 4.dp, vertical = 4.dp),
+                    )
+                }
+            }
+        }
         when {
-            loading -> item { SkeletonList(7) }
+            loading && instant.isEmpty() -> item { SkeletonList(7) }
+            loading -> item { SkeletonList(3) }
             error != null -> item { Text(error!!, color = Ko, fontSize = 13.sp, lineHeight = 18.sp) }
             searched && results.isEmpty() && artists.isEmpty() && lyricHits.isEmpty() && localHits.isEmpty() && !lyricLoading -> item {
                 EmptyState("Aucun résultat", "Essaie un autre titre, un artiste, ou une phrase des paroles.")
@@ -340,6 +413,30 @@ fun SearchScreen(s: TidalRemote.State) {
             }
         }
     }
+    }
+}
+
+/** Un son de ton historique, dans les résultats. */
+@Composable
+private fun HeardRow(e: History.Entry, modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .bounceClick(onLongClick = { TrackMenu.open(TrackMenu.Target(e.title, e.artist, e.coverUrl ?: e.artPath?.let { java.io.File(it) }, album = e.album)) }) {
+                TidalRemote.playTitle(e.title, e.artist)
+            }
+            .padding(horizontal = 6.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Cover(model = e.coverUrl ?: e.artPath?.let { java.io.File(it) }, radius = 10.dp, modifier = Modifier.size(50.dp))
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(e.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(2.dp))
+            Text(e.artist, color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (e.plays.size > 1) Text("${e.plays.size} écoutes", color = Txt2, fontSize = 12.sp)
     }
 }
 
