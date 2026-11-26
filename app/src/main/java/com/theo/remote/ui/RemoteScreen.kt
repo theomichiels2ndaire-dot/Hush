@@ -207,7 +207,7 @@ fun RemoteApp() {
                 visible = openPlaylist != null,
                 // pochette qui s'envole depuis la grille : la page apparaît en fondu ; sinon elle monte
                 enter = if (com.theo.remote.Features.flags.value.coverMorph && PlaylistAnchor.has(openPlaylist?.id)) fadeIn(tween(240))
-                else slideInVertically(spring(dampingRatio = 0.86f, stiffness = 320f)) { it } + fadeIn(tween(180)),
+                else slideInVertically(spring(dampingRatio = 0.86f, stiffness = 440f)) { it } + fadeIn(tween(180)),
                 exit = slideOutVertically(tween(260)) { it } + fadeOut(tween(220)),
             ) {
                 val p = openPlaylist ?: shownPlaylist
@@ -224,7 +224,7 @@ fun RemoteApp() {
                 targetState = details,
                 transitionSpec = {
                     if (targetState.size >= initialState.size) {
-                        (slideInVertically(spring(dampingRatio = 0.86f, stiffness = 320f)) { it } + fadeIn(tween(180))) togetherWith
+                        (slideInVertically(spring(dampingRatio = 0.86f, stiffness = 440f)) { it } + fadeIn(tween(180))) togetherWith
                             fadeOut(tween(250))
                     } else {
                         fadeIn(tween(200)) togetherWith (slideOutVertically(tween(260)) { it } + fadeOut(tween(220)))
@@ -345,7 +345,7 @@ fun RemoteApp() {
         AnimatedVisibility(
             visible = sheet != Sheet.None,
             // la pochette grandit depuis le mini-lecteur (dans PlayerScreen) : le lecteur, lui, apparaît en fondu
-            enter = if (CoverAnchor.mini != null) fadeIn(tween(240)) else slideInVertically(spring(dampingRatio = 0.86f, stiffness = 300f)) { it },
+            enter = if (CoverAnchor.mini != null) fadeIn(tween(240)) else slideInVertically(spring(dampingRatio = 0.86f, stiffness = 420f)) { it },
             exit = slideOutVertically(tween(260)) { it } + fadeOut(tween(240)),
         ) {
             AnimatedContent(
@@ -476,8 +476,11 @@ private fun MiniPlayer(s: TidalRemote.State, backdrop: Backdrop, onOpen: () -> U
     val slide = remember { androidx.compose.animation.core.Animatable(0f) }
     val miniScope = rememberCoroutineScope()
     var miniW by remember { androidx.compose.runtime.mutableIntStateOf(1) }
+    // réponse immédiate : le son touché s'affiche tout de suite, sans attendre que Tidal le charge
+    val pendingLaunch = s.launch?.takeIf { it.status == TidalRemote.LaunchStatus.Pending && com.theo.remote.Features.flags.value.instantUi }
+    val shownTitle = pendingLaunch?.expected ?: t.title
     val (subtitle, subColor) = when (s.launch?.status) {
-        TidalRemote.LaunchStatus.Pending -> "Envoi à Tidal…" to Txt2
+        TidalRemote.LaunchStatus.Pending -> (pendingLaunch?.artist?.takeIf { it.isNotBlank() }?.let { "$it · lancement…" } ?: "Lancement…") to Txt2
         TidalRemote.LaunchStatus.OtherVersion -> "Autre version lancée · touche pour réessayer" to Warn
         TidalRemote.LaunchStatus.NoChange -> "Tidal n'a pas changé de titre" to Ko
         else -> t.artist to Txt2
@@ -485,7 +488,7 @@ private fun MiniPlayer(s: TidalRemote.State, backdrop: Backdrop, onOpen: () -> U
 
     Box(
         Modifier
-            .padding(horizontal = 10.dp)
+            .padding(horizontal = 12.dp)
             .fillMaxWidth()
             .height(64.dp)
             .shadow(18.dp, shape, ambientColor = tintA, spotColor = tintA)
@@ -566,11 +569,11 @@ private fun MiniPlayer(s: TidalRemote.State, backdrop: Backdrop, onOpen: () -> U
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 AnimatedContent(
-                    targetState = t.title,
-                    transitionSpec = { (slideInVertically { it } + fadeIn()) togetherWith (slideOutVertically { -it } + fadeOut()) },
+                    targetState = shownTitle,
+                    transitionSpec = { (slideInVertically(tween(220)) { it } + fadeIn(tween(220))) togetherWith (slideOutVertically(tween(180)) { -it } + fadeOut(tween(180))) },
                     label = "miniTitle",
                 ) { title ->
-                    Text(title, color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Text(
                     subtitle, color = subColor, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
@@ -744,9 +747,9 @@ fun SetupCard(s: TidalRemote.State) {
             Spacer(Modifier.height(6.dp))
             Text(
                 "Pour piloter Tidal, Android demande l'« accès aux notifications ». Active Hush dans la liste, puis reviens.",
-                color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
             )
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
             PillButton("Ouvrir les réglages") {
                 ctx.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
@@ -755,9 +758,9 @@ fun SetupCard(s: TidalRemote.State) {
             Spacer(Modifier.height(6.dp))
             Text(
                 "Lance un son dans Tidal une fois (même en pause ensuite) : Hush s'y branche tout seul.",
-                color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
             )
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
             PillButton("Ouvrir Tidal") { TidalRemote.openTidal(ctx) }
         }
     }
@@ -772,9 +775,9 @@ fun PillButton(label: String, filled: Boolean = true, onClick: () -> Unit) {
             .clip(shape)
             .background(if (filled) (tint ?: Txt) else Color.White.copy(alpha = 0.08f))
             .bounceClick(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 11.dp),
+            .padding(horizontal = 20.dp, vertical = 11.dp),
     ) {
-        Text(label, color = if (filled) Ink else Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(label, color = if (filled) Ink else Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -857,14 +860,14 @@ private fun BottomBar(text: String, action: String?, onClose: (() -> Unit)? = nu
             Spacer(Modifier.width(10.dp))
             Text(
                 action, color = Txt, fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
-                modifier = Modifier.clip(PillShape).background(Ink).clickable(onClick = onAction).padding(horizontal = 14.dp, vertical = 8.dp),
+                modifier = Modifier.clip(PillShape).background(Ink).clickable(onClick = onAction).padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
         if (onClose != null) {
             Spacer(Modifier.width(4.dp))
             Text(
                 "Plus tard", color = Ink.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.clip(PillShape).clickable(onClick = onClose).padding(horizontal = 10.dp, vertical = 8.dp),
+                modifier = Modifier.clip(PillShape).clickable(onClick = onClose).padding(horizontal = 12.dp, vertical = 8.dp),
             )
         }
     }

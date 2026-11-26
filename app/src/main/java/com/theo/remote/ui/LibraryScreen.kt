@@ -231,7 +231,7 @@ fun LibraryScreen(s: TidalRemote.State, onOpen: (TidalApi.Playlist) -> Unit) {
                     GlassCircle(Icons.Rounded.Refresh, "Resynchroniser") { reload++ }
                 }
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(12.dp))
             Text("Bibliothèque", color = Txt, fontSize = 34.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.6).sp)
             Spacer(Modifier.height(12.dp))
             // une playlist faite à partir d'une phrase
@@ -243,7 +243,7 @@ fun LibraryScreen(s: TidalRemote.State, onOpen: (TidalApi.Playlist) -> Unit) {
                 ) {
                     Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = Txt, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(10.dp))
-                    Text("Playlist instantanée : « rap FR calme pour la nuit »…", color = Txt2, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                    Text("Playlist instantanée : « rap FR calme pour la nuit »…", color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 }
                 Spacer(Modifier.height(12.dp))
             }
@@ -265,9 +265,9 @@ fun LibraryScreen(s: TidalRemote.State, onOpen: (TidalApi.Playlist) -> Unit) {
                     Spacer(Modifier.height(6.dp))
                     Text(
                         "Pour retrouver tes playlists ici. Tu te connectes sur la page officielle de Tidal : Hush ne voit jamais ton mot de passe.",
-                        color = Txt2, fontSize = 14.sp, lineHeight = 20.sp,
+                        color = Txt2, fontSize = 13.sp, lineHeight = 20.sp,
                     )
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(16.dp))
                     PillButton("Se connecter à Tidal") { TidalAuth.login(ctx) }
                     authError?.let {
                         Spacer(Modifier.height(12.dp))
@@ -283,7 +283,7 @@ fun LibraryScreen(s: TidalRemote.State, onOpen: (TidalApi.Playlist) -> Unit) {
             error != null -> item {
                 Column {
                     Text(error!!, color = Ko, fontSize = 13.sp, lineHeight = 18.sp)
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
                     PillButton("Se reconnecter", filled = false) { TidalAuth.logout(); TidalAuth.login(ctx) }
                 }
             }
@@ -324,7 +324,7 @@ fun LibraryScreen(s: TidalRemote.State, onOpen: (TidalApi.Playlist) -> Unit) {
                     Text("Créer et modifier tes playlists", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
                     Text("Reconnecte ton compte une fois pour donner ce droit à Hush.", color = Txt2, fontSize = 13.sp, lineHeight = 18.sp)
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
                     PillButton("Reconnecter Tidal", filled = false) { TidalAuth.logout(); PlaylistStore.clear(); TidalAuth.login(ctx) }
                 }
             }
@@ -378,7 +378,7 @@ private fun LibTile(title: String, sub: String, icon: androidx.compose.ui.graphi
     ) {
         Icon(icon, contentDescription = null, tint = Txt, modifier = Modifier.size(26.dp))
         Column {
-            Text(title, color = Txt, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(title, color = Txt, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(sub, color = Txt.copy(alpha = 0.82f), fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
@@ -428,7 +428,7 @@ private fun PlaylistCard(p: TidalApi.Playlist, modifier: Modifier, onLong: (() -
                 contentAlignment = Alignment.Center,
             ) { EqBars(playing = st.isPlaying, height = 12.dp) }
         }
-        Spacer(Modifier.height(9.dp))
+        Spacer(Modifier.height(8.dp))
         Text(p.name, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text("${p.count} titre${if (p.count > 1) "s" else ""}" + if (isNow) " · en cours" else "", color = Txt2, fontSize = 12.sp)
     }
@@ -534,6 +534,14 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                 val key = PlaylistFull.key(p.id, isFav)
                 val known = PlaylistFull.known(pctx, key)
                 // jamais vue en entier : on attend la liste complète (sinon le 1er son sortirait toujours du début)
+                // pas encore en mémoire : plutôt que d'attendre tout le chargement, Tidal mélange lui-même
+                // la playlist entière tout de suite ; la liste complète se charge en fond pour la prochaine fois
+                if (known == null && !isFav && locals.isEmpty()) {
+                    NowPlaylist.set(p.id)
+                    TidalRemote.playPlaylistShuffled(p.name, p.id)
+                    PlaylistFull.fetch(pctx, key) { page(it) }
+                    return@launch
+                }
                 val all = known ?: run {
                     TidalRemote.showToast("Mélange de toute la playlist…")
                     PlaylistFull.fetch(pctx, key) { page(it) } ?: loaded
@@ -719,7 +727,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
             if (editing && !isFav && flags.playlistCovers) {
                 Box(Modifier.fillMaxWidth().padding(top = 10.dp), contentAlignment = Alignment.Center) {
                     Text(
-                        "Changer la pochette", color = Txt2, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                        "Changer la pochette", color = Txt2, fontSize = 15.sp, fontWeight = FontWeight.Bold,
                         modifier = Modifier.clip(RoundedCornerShape(8.dp))
                             .bounceClick(pressedScale = 0.96f) { com.theo.remote.PlaylistCovers.editing.value = p.id to name }.padding(6.dp),
                     )
@@ -729,7 +737,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
             if (editing) {
                 val shape = Rounded(14)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(Modifier.weight(1f).height(50.dp).glass(shape, fill = 0.10f, edge = 0.18f).padding(horizontal = 14.dp), contentAlignment = Alignment.CenterStart) {
+                    Box(Modifier.weight(1f).height(50.dp).glass(shape, fill = 0.10f, edge = 0.18f).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
                         androidx.compose.foundation.text.BasicTextField(
                             value = name,
                             onValueChange = { name = it.take(80) },
@@ -755,9 +763,9 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                 text = 
                 if (isFav) "$count titre${if (count > 1) "s" else ""}" + if (next != null) " · chargement…" else "" else "${p.count} titre${if (p.count > 1) "s" else ""}" + if (locals.isNotEmpty()) " + ${locals.size} fichier${if (locals.size > 1) "s" else ""} local${if (locals.size > 1) "aux" else ""}" else "",
-                color = Txt2, fontSize = 14.sp,
+                color = Txt2, fontSize = 13.sp,
             )
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 ActionPill(Icons.Rounded.PlayArrow, "Lire", filled = true, modifier = Modifier.weight(1f)) {
                     // tri par énergie : on lit la playlist dans cet ordre-là (montée ou descente en puissance)
@@ -781,10 +789,10 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                 }
             }
             if (editing) {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
                 Text(
                     if (confirmDelete) "Touche encore pour supprimer définitivement" else "Supprimer la playlist",
-                    color = Ko, fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                    color = Ko, fontSize = 15.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.clip(RoundedCornerShape(8.dp)).bounceClick(pressedScale = 0.96f) {
                         if (!confirmDelete) confirmDelete = true else scope.launch {
                             try {
@@ -804,19 +812,19 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
             val spot = if (!isFav && flags.resumePlaylist) spots[p.id] else null
             val spotIdx = remember(spot, tracks.size) { spot?.let { com.theo.remote.PlaylistResume.indexIn(it, tracks) } ?: -1 }
             if (spot != null && spotIdx >= 0) {
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
                 val shape = BtnShape
                 Row(
                     Modifier.fillMaxWidth().clip(shape).glass(shape, fill = 0.08f, edge = 0.14f)
                         .bounceClick(pressedScale = 0.98f) { com.theo.remote.PlaylistResume.resume(pctx, p.id, tracks) }
-                        .padding(horizontal = 14.dp, vertical = 11.dp),
+                        .padding(horizontal = 16.dp, vertical = 11.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Rounded.PlayArrow, contentDescription = null, tint = Txt, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
                         "Reprendre · ${spot.title} · ${spot.posMs / 60000}:${"%02d".format((spot.posMs / 1000) % 60)}",
-                        color = Txt, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
                     Text("Oublier", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Bold,
@@ -824,10 +832,10 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                 }
             }
             if (isFav || flags.playlistSort) {
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(16.dp))
                 val shape = Rounded(14)
                 Row(
-                    Modifier.fillMaxWidth().height(46.dp).glass(shape, fill = 0.08f, edge = 0.14f).padding(horizontal = 14.dp),
+                    Modifier.fillMaxWidth().height(46.dp).glass(shape, fill = 0.08f, edge = 0.14f).padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Rounded.Search, contentDescription = null, tint = Txt2, modifier = Modifier.size(20.dp))
@@ -844,7 +852,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                         )
                     }
                 }
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
                 androidx.compose.foundation.lazy.LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(Sort.entries.filter { it != Sort.EnergyUp && it != Sort.EnergyDown && it != Sort.Duration }) { o ->
                         val on = o == sort
@@ -853,7 +861,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                             Modifier.clip(shape2)
                                 .then(if (on) Modifier.background(Txt) else Modifier.glass(shape2, fill = 0.08f, edge = 0.14f))
                                 .bounceClick { sort = o }
-                                .padding(horizontal = 14.dp, vertical = 8.dp),
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                         ) {
                             Text(o.label, color = if (on) Ink else Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                         }
@@ -892,7 +900,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                     .padding(horizontal = 6.dp, vertical = 7.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(Modifier.size(48.dp).clip(RoundedCornerShape(10.dp))) {
+                Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp))) {
                     Cover(model = r.coverUrl, radius = 10.dp, modifier = Modifier.fillMaxSize())
                     if (playing) PlayingOverlay(s.isPlaying, Modifier.fillMaxSize())
                 }
@@ -939,7 +947,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
             when {
                 error != null -> Column(Modifier.padding(top = 8.dp)) {
                     Text(error!!, color = Ko, fontSize = 13.sp)
-                    Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(12.dp))
                     PillButton("Réessayer", filled = false) { loadMore() }
                 }
                 loading && tracks.isEmpty() && preview.isEmpty() -> SkeletonList(8)
@@ -948,7 +956,7 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                     if (isFav) "Aucun favori" else "Playlist vide",
                     if (isFav) "Touche le cœur dans le lecteur pour garder un son ici." else "Ajoute des sons depuis la recherche, ou avec ⋯ → Ajouter à une playlist.",
                 )
-                isFav && filter.isNotBlank() && shown.isEmpty() -> Text("Rien ne correspond.", color = Txt2, fontSize = 14.sp)
+                isFav && filter.isNotBlank() && shown.isEmpty() -> Text("Rien ne correspond.", color = Txt2, fontSize = 13.sp)
             }
         }
 
@@ -1022,11 +1030,11 @@ private fun PlaylistRecs(p: TidalApi.Playlist, tracks: List<TidalApi.Result>, ca
             }
             GlassCircle(Icons.Rounded.Refresh, "Autres suggestions") { round++ }
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(12.dp))
         val l = recs
         when {
             l == null -> SkeletonList(4)
-            l.isEmpty() -> Text("Pas de suggestion pour l'instant.", color = Txt2, fontSize = 14.sp)
+            l.isEmpty() -> Text("Pas de suggestion pour l'instant.", color = Txt2, fontSize = 13.sp)
             else -> l.forEach { r ->
                 Row(
                     Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
