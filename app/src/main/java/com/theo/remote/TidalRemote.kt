@@ -896,7 +896,7 @@ object TidalRemote {
                     it.copy(launch = launch.copy(status = if (ok) LaunchStatus.Ok else LaunchStatus.OtherVersion, actual = track.title))
                 }
                 if (ok) lastGoodLaunch = launch
-                if (ok && launch.viaLink) { linkIgnored = 0; if (trackLinkMode != 1) trackLinkMode = 1 }
+                if (ok && (launch.viaLink || launch.tries == 1)) { linkIgnored = 0; if (trackLinkMode != 1) trackLinkMode = 1 }
                 else if (ok && launch.tries > 0) { log("Bonne version retrouvée : ${launch.expected}"); Diag.add(Diag.Kind.Fixed, launch.expected) }
             }
         }
@@ -1075,8 +1075,8 @@ object TidalRemote {
                             // chargée mais en pause : on lance la lecture
                             if (!loading && pbState != PlaybackState.STATE_PLAYING) ctl.transportControls.play()
                         }
-                        loading && waited < 10_000 -> main.postDelayed(this, 300)
-                        waited < 3500 -> main.postDelayed(this, 300)
+                        loading && waited < 10_000 -> main.postDelayed(this, 200)
+                        waited < 1200 -> main.postDelayed(this, 200)
                         else -> {
                             playlistIgnored++
                             if (playlistIgnored >= 2 && playlistLinkMode == -1) { playlistLinkMode = 0; log("Tidal ignore les liens de playlists : recherche par nom") }
@@ -1086,7 +1086,7 @@ object TidalRemote {
                     }
                 }
             }
-            main.postDelayed(watch, 500)
+            main.postDelayed(watch, 300)
         } else searchPlaylist(c, name)
         appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putString("lastPlaylistName", name)?.apply()
         reapplyShuffleSoon()
@@ -1312,7 +1312,8 @@ object TidalRemote {
         }
         playlistSentAt = 0L
         // avec l'identifiant Tidal du son : on le lance par son lien exact (pas de recherche qui tombe sur un autre son)
-        val exact = id.isNotEmpty() && id.all { it.isDigit() } && Features.flags.value.exactLaunch && trackLinkMode != 0
+        // lien exact seulement quand on sait que Tidal le suit (sinon on perdait 2 s à attendre) : la recherche part tout de suite
+        val exact = id.isNotEmpty() && id.all { it.isDigit() } && Features.flags.value.exactLaunch && trackLinkMode == 1
         val launch = Launch(trackId = id, expected = expected, status = LaunchStatus.Pending, query = query, artist = artist,
             tries = if (exact) 1 else 0, viaLink = exact)
         _state.update { it.copy(launch = launch) }

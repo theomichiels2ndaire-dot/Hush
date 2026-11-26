@@ -799,7 +799,8 @@ fun PlaylistScreen(p: TidalApi.Playlist, s: TidalRemote.State, onBack: () -> Uni
                     // tri par énergie : on lit la playlist dans cet ordre-là (montée ou descente en puissance)
                     if (sort != Sort.Recent) playInOrder(shown, 0)
                     // favoris et playlists avec fichiers locaux : Hush enchaîne lui-même toute la liste
-                    else if (locals.isNotEmpty() || isFav) playMixed(false)
+                    // Hush enchaîne lui-même la playlist : ça démarre direct, et la file se réordonne au doigt
+                    else if (locals.isNotEmpty() || isFav || com.theo.remote.Features.flags.value.hushChain) playMixed(false)
                     else {
                         TidalRemote.setShuffle(false)
                         NowPlaylist.set(p.id)

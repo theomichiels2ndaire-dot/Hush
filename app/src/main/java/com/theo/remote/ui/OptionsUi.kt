@@ -172,6 +172,7 @@ fun DisplayCard() {
         OptionRow("Bouton Annuler", "5 s pour revenir en arrière après avoir retiré un son, vidé la file ou changé l'ordre", f.undoBar) { Features.set(f.copy(undoBar = it)) }
         OptionRow("Lancer le bon son", "Lance tes playlists et tes sons par leur lien exact, pas par une recherche (évite qu'un autre son ou une autre playlist démarre)", f.exactLaunch) { Features.set(f.copy(exactLaunch = it)) }
         OptionRow("Recherche maline", "Tes sons déjà écoutés apparaissent dès la première lettre, et les fautes de frappe sont corrigées (« drak » → Drake)", f.smartSearch) { Features.set(f.copy(smartSearch = it)) }
+        OptionRow("Playlists enchaînées par Hush", "« Lire » démarre tout de suite et tu peux réordonner ou retirer chaque son de la suite", f.hushChain) { Features.set(f.copy(hushChain = it)) }
         OptionRow("Écrans allégés", "Accueil et lecteur sans les sections et petits textes secondaires (date, album, cartes…)", f.lightUi) { Features.set(f.copy(lightUi = it)) }
         OptionRow("Playlists gardées sur le téléphone", "En Wi-Fi et en charge, Hush garde tes playlists en entier : tout s'ouvre et se mélange direct, même hors connexion", f.preloadPlaylists) { Features.set(f.copy(preloadPlaylists = it)) }
         OptionRow("Mises à jour prêtes d'avance", "En Wi-Fi, la nouvelle version se télécharge en fond : « Installer » est immédiat", f.prefetchUpdate) { Features.set(f.copy(prefetchUpdate = it)) }
@@ -696,6 +697,7 @@ object SettingsIndex {
         Flag("Bouton Annuler", "Revenir en arrière après avoir retiré un son ou vidé la file", "Affichage", { it.undoBar }, { f, v -> f.copy(undoBar = v) }),
         Flag("Lancer le bon son", "Lancer tes playlists et tes sons par leur lien exact plutôt que par une recherche", "Playlists", { it.exactLaunch }, { f, v -> f.copy(exactLaunch = v) }),
         Flag("Recherche maline", "Résultats dès la première lettre et fautes de frappe corrigées", "Lecture", { it.smartSearch }, { f, v -> f.copy(smartSearch = v) }),
+        Flag("Playlists enchaînées par Hush", "Lire une playlist par Hush : démarrage direct et file modifiable", "Playlists", { it.hushChain }, { f, v -> f.copy(hushChain = v) }),
         Flag("Écrans allégés", "Accueil et lecteur avec l'essentiel seulement", "Affichage", { it.lightUi }, { f, v -> f.copy(lightUi = v) }),
         Flag("Playlists gardées sur le téléphone", "Charger tes playlists en entier en Wi-Fi et en charge", "Playlists", { it.preloadPlaylists }, { f, v -> f.copy(preloadPlaylists = v) }),
         Flag("Mises à jour prêtes d'avance", "Télécharger la nouvelle version en fond en Wi-Fi", "Avancé", { it.prefetchUpdate }, { f, v -> f.copy(prefetchUpdate = v) }),
