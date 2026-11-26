@@ -430,7 +430,7 @@ private fun ResumeCard(s: TidalRemote.State) {
             Text(sp.artist, color = Txt2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Box(
-            Modifier.size(36.dp).clip(PillShape).bounceClick(pressedScale = 0.85f) { com.theo.remote.LastPlay.dismiss(); spot = null },
+            Modifier.size(44.dp).clip(PillShape).bounceClick(pressedScale = 0.85f) { com.theo.remote.LastPlay.dismiss(); spot = null },
             contentAlignment = Alignment.Center,
         ) {
             Icon(androidx.compose.material.icons.Icons.Rounded.Close, contentDescription = "Ignorer", tint = Txt2, modifier = Modifier.size(18.dp))

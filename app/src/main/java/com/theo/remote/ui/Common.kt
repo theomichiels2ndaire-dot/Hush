@@ -74,8 +74,8 @@ object SeasonInk {
     }
 }
 val Txt = Color(0xFFF4F6FA)
-val Txt2 = Color(0xFFA3AAB8)
-val Txt3 = Color(0xFF6B7282)
+val Txt2 = Color(0xFFB0B6C3) // un peu plus clair : textes secondaires plus lisibles
+val Txt3 = Color(0xFF7D8494)
 /** Couleur d'accent (réglable : vert, violet, bleu, rose, orange ou celle de la pochette). */
 val Ok: Color get() = Color(com.theo.remote.Accent.current())
 val Warn = Color(0xFFFFC46B)
@@ -284,7 +284,8 @@ fun Cover(
     ) {
         when {
             bitmap != null -> Image(
-                bitmap = bitmap.asImageBitmap(),
+                // conversion faite une seule fois par image (pas à chaque image de l'animation ou du défilement)
+                bitmap = remember(bitmap) { bitmap.asImageBitmap() },
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),

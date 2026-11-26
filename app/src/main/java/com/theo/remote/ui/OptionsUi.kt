@@ -430,7 +430,7 @@ fun HomeSectionsCard() {
 @Composable
 private fun ArrowBtn(label: String, enabled: Boolean, onClick: () -> Unit) {
     Box(
-        Modifier.size(32.dp).clip(PillShape).bounceClick(enabled = enabled, pressedScale = 0.85f, onClick = onClick),
+        Modifier.size(38.dp).clip(PillShape).bounceClick(enabled = enabled, pressedScale = 0.85f, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) { Text(label, color = if (enabled) Txt else Txt3.copy(alpha = 0.4f), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold) }
 }

@@ -218,7 +218,7 @@ private fun Stories(r: Recap, onClose: () -> Unit) {
             }
             Row(Modifier.fillMaxWidth().padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("Récap ${r.of}", color = Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                Box(Modifier.size(36.dp).clip(PillShape).bounceClick(pressedScale = 0.85f, onClick = onClose), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(44.dp).clip(PillShape).bounceClick(pressedScale = 0.85f, onClick = onClose), contentAlignment = Alignment.Center) {
                     Icon(Icons.Rounded.Close, contentDescription = "Fermer", tint = Txt, modifier = Modifier.size(24.dp))
                 }
             }

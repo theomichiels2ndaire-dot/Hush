@@ -480,7 +480,7 @@ fun RatePromptBubble() {
                 Text(x.title, color = Txt, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Row(Modifier.padding(top = 4.dp)) {
                     for (i in 1..5) Box(
-                        Modifier.size(34.dp).clip(PillShape).bounceClick {
+                        Modifier.size(40.dp).clip(PillShape).bounceClick {
                             Ratings.set(Ratings.Target(Ratings.Kind.Track, x.title, x.artist, null), i.toFloat(), "")
                             TidalRemote.showToast("Noté $i/5")
                             RatePrompt.ask.value = null

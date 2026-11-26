@@ -607,7 +607,7 @@ fun PlayerCardGem(title: String, artist: String) {
     val cards by SongCards.cards.collectAsState()
     val c = remember(cards, title, artist) { SongCards.find(title, artist) } ?: return
     Box(
-        Modifier.padding(start = 8.dp).size(30.dp).clip(PillShape).bounceClick { CardsState.open = c },
+        Modifier.padding(start = 8.dp).size(38.dp).clip(PillShape).bounceClick { CardsState.open = c },
         contentAlignment = Alignment.Center,
     ) { TierDot(c.tier, 15.dp) }
 }

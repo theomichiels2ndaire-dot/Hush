@@ -310,7 +310,7 @@ fun QuotesPanel() {
                     Text("${q.title} · ${q.artist}", color = Txt2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Box(
-                    Modifier.align(Alignment.TopEnd).size(30.dp).clip(PillShape).bounceClick(pressedScale = 0.85f) { LyricQuotes.remove(q) },
+                    Modifier.align(Alignment.TopEnd).size(38.dp).clip(PillShape).bounceClick(pressedScale = 0.85f) { LyricQuotes.remove(q) },
                     contentAlignment = Alignment.Center,
                 ) { Icon(Icons.Rounded.Close, contentDescription = "Retirer", tint = Txt3, modifier = Modifier.size(16.dp)) }
             }
