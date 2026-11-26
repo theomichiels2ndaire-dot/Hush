@@ -80,8 +80,14 @@ object LocalMusic {
         val ctx = context.applicationContext
         file = File(ctx.filesDir, "local_music.json")
         artDir = File(ctx.filesDir, "local_art").apply { mkdirs() }
+        // le fichier principal, sinon la dernière copie saine (si l'appli a été coupée pendant un enregistrement)
+        val text = SafeFile.read(file!!)
+        if (text == null && SafeFile.exists(file!!)) {
+            // illisible : on ne l'écrasera pas avec une liste vide
+            loadFailed = true
+        }
         runCatching {
-            val o = JSONObject(file!!.readText())
+            val o = JSONObject(text ?: return@runCatching)
             val t = o.optJSONArray("tracks") ?: JSONArray()
             _tracks.value = (0 until t.length()).map { i ->
                 val j = t.getJSONObject(i)
@@ -103,11 +109,15 @@ object LocalMusic {
             if (st != null) _stats.value = st.keys().asSequence().associateWith { k ->
                 val a = st.getJSONArray(k); Stat(a.getInt(0), a.getLong(1))
             }
-        }
+        }.onFailure { loadFailed = true }
     }
+
+    /** Le fichier existe mais n'a pas pu être lu : on bloque les enregistrements pour ne rien effacer. */
+    private var loadFailed = false
 
     private fun save() {
         val f = file ?: return
+        if (loadFailed && _tracks.value.isEmpty() && _playlists.value.isEmpty()) return
         val o = JSONObject()
         o.put("tracks", JSONArray().apply {
             _tracks.value.forEach { t ->
@@ -123,7 +133,7 @@ object LocalMusic {
         o.put("tidal", History.encodeResults(used.mapNotNull { tidalItems[it] }))
         o.put("attached", JSONObject().apply { _attached.value.forEach { (k, v) -> if (v.isNotEmpty()) put(k, JSONArray(v)) } })
         o.put("stats", JSONObject().apply { _stats.value.forEach { (k, v) -> put(k, JSONArray().put(v.plays).put(v.ms)) } })
-        runCatching { f.writeText(o.toString()) }
+        SafeFile.write(f, o.toString())
     }
 
     fun entriesOf(p: Playlist): List<Entry> = p.ids.mapNotNull { id ->
@@ -294,5 +304,44 @@ object LocalMusic {
     fun deletePlaylist(playlistId: String) {
         _playlists.value = _playlists.value.filterNot { it.id == playlistId }
         save()
+    }
+}
+
+/**
+ * Écriture sûre : on écrit dans un fichier à côté puis on le met à la place d'un coup,
+ * et on garde une copie de la version d'avant. Si l'appli est coupée en plein milieu
+ * (pendant une mise à jour par exemple), rien n'est perdu.
+ */
+object SafeFile {
+    private fun backup(f: File) = File(f.parentFile, f.name + ".bak")
+    private fun temp(f: File) = File(f.parentFile, f.name + ".tmp")
+
+    fun exists(f: File) = f.exists() || backup(f).exists()
+
+    fun write(f: File, text: String): Boolean = runCatching {
+        val tmp = temp(f)
+        tmp.writeText(text)
+        if (f.exists() && isValid(f.readText())) f.copyTo(backup(f), overwrite = true)
+        if (!tmp.renameTo(f)) { f.writeText(text); tmp.delete() }
+        true
+    }.getOrDefault(false)
+
+    /** Le contenu du fichier s'il est complet, sinon celui de la copie, sinon null. */
+    fun read(f: File): String? {
+        val main = runCatching { f.readText() }.getOrNull()
+        if (main != null && isValid(main)) return main
+        val bak = runCatching { backup(f).readText() }.getOrNull()
+        if (bak != null && isValid(bak)) return bak
+        return null
+    }
+
+    /** Un JSON complet (pas coupé au milieu). */
+    fun isValid(text: String): Boolean {
+        val t = text.trim()
+        if (t.isEmpty()) return false
+        return runCatching {
+            if (t.startsWith("[")) org.json.JSONArray(t) else org.json.JSONObject(t)
+            true
+        }.getOrDefault(false)
     }
 }

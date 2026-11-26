@@ -51,8 +51,12 @@ jobs:
           fi
           printf 'tidal.clientId=%s\ntidal.clientSecret=%s\n' "$TIDAL_CLIENT_ID" "$TIDAL_CLIENT_SECRET" > local.properties
 
+      # Si un test casse, rien n'est publié
+      - name: Tests
+        run: chmod +x gradlew && ./gradlew :app:testDebugUnitTest --no-daemon --stacktrace
+
       - name: Compiler
-        run: chmod +x gradlew && ./gradlew :app:assembleDebug --no-daemon --stacktrace
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: Renommer
         run: cp app/build/outputs/apk/debug/app-debug.apk Hush.apk

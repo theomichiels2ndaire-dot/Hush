@@ -7,6 +7,7 @@ plugins {
 }
 
 android {
+    testOptions { unitTests.isReturnDefaultValues = true }
     namespace = "com.theo.remote"
     compileSdk = 35
 
@@ -92,4 +93,8 @@ dependencies {
     implementation("com.google.mlkit:language-id:17.0.6")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.1")
     implementation("androidx.compose.material:material-icons-extended")
+
+    // tests lancés avant chaque version
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }

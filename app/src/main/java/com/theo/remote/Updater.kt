@@ -33,7 +33,10 @@ object Updater {
     private var lastCheck = 0L
 
     /** Numéro de cette version (1.N → N). */
-    fun current(): Int = BuildConfig.VERSION_NAME.substringAfter('.', "0").toIntOrNull() ?: 0
+    fun current(): Int = number(BuildConfig.VERSION_NAME)
+
+    /** "v1.23" ou "1.23" → 23. */
+    fun number(tag: String): Int = tag.trim().removePrefix("v").substringAfter('.', "0").toIntOrNull() ?: 0
 
     fun dismiss() { _available.value = null }
 
@@ -52,7 +55,7 @@ object Updater {
                 return@runCatching
             }
             val j = JSONObject(c.inputStream.bufferedReader().readText())
-            val n = j.optString("tag_name").removePrefix("v").substringAfter('.', "0").toIntOrNull() ?: 0
+            val n = Updater.number(j.optString("tag_name"))
             val assets = j.optJSONArray("assets")
             val apk = (0 until (assets?.length() ?: 0)).mapNotNull { assets?.optJSONObject(it) }
                 .firstOrNull { it.optString("name").endsWith(".apk") }
@@ -138,10 +141,9 @@ object WhatsNew {
             val a = org.json.JSONArray(c.inputStream.bufferedReader().readText())
             val out = (0 until a.length()).mapNotNull { i ->
                 val r = a.getJSONObject(i)
-                val n = r.optString("tag_name").removePrefix("v").substringAfter('.', "0").toIntOrNull() ?: return@mapNotNull null
+                val n = Updater.number(r.optString("tag_name")).takeIf { it > 0 } ?: return@mapNotNull null
                 if (n <= seen || n > cur) return@mapNotNull null
-                val lines = r.optString("body").lines().map { it.trim() }.filter { it.startsWith("- ") }.map { it.removePrefix("- ").trim() }
-                    .filter { it.isNotBlank() }
+                val lines = notesLines(r.optString("body"))
                 if (lines.isEmpty()) null else n to Notes("1.$n", lines)
             }.sortedByDescending { it.first }.map { it.second }
             _notes.value = out
@@ -150,6 +152,10 @@ object WhatsNew {
     }
 
     fun dismiss() { _notes.value = emptyList() }
+
+    /** Les lignes « - … » des notes d'une version. */
+    fun notesLines(body: String): List<String> =
+        body.lines().map { it.trim() }.filter { it.startsWith("- ") }.map { it.removePrefix("- ").trim() }.filter { it.isNotBlank() }
 }
 
 /** Petite notif quand un son est coupé avant la fin, avec qui l'a passé. */
