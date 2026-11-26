@@ -116,7 +116,9 @@ fun HomeScreen(
 
     val blocked by com.theo.remote.Blocked.items.collectAsState()
     val features by com.theo.remote.Features.flags.collectAsState()
-    fun shown(id: String) = id !in features.hidden
+    // écrans allégés : l'essentiel seulement (le lecteur en cours est déjà en bas, les sections secondaires partent)
+    val lightHidden = setOf("now", "gem", "yearAgo", "chartsAgo", "skips", "growing", "forgotten", "upcoming", "mood")
+    fun shown(id: String) = id !in features.hidden && !(features.lightUi && id in lightHidden)
     val visible = remember(entries, blocked) { entries.filterNot { com.theo.remote.Blocked.isBlocked(it.title, it.artist) } }
     val liked = remember(visible, likes) { visible.filter { likes.contains(it.key) } }
     val nShort = if (features.compactHome) 8 else 6
@@ -138,7 +140,7 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(if (features.compactHome) Space.m else Space.l),
     ) {
         Column(Modifier.padding(horizontal = Space.gutter).cascadeIn(0, "homeHello")) {
-            Text(
+            if (!features.lightUi) Text(
                 java.text.SimpleDateFormat("EEEE d MMMM", java.util.Locale.FRANCE).format(java.util.Date()).replaceFirstChar { it.uppercase() },
                 color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
             )

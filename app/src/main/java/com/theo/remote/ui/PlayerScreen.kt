@@ -271,13 +271,14 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
                         },
                     )
                     // le rang de la carte de ce son : toucher pour la voir
-                    PlayerCardGem(title.orEmpty(), t?.artist.orEmpty())
+                    if (!com.theo.remote.Features.flags.value.lightUi) PlayerCardGem(title.orEmpty(), t?.artist.orEmpty())
                     }
                     Spacer(Modifier.height(4.dp))
                     // artiste → sa page ; album → sa page
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         val artist = t?.artist.orEmpty()
-                        val album = t?.album.orEmpty()
+                        // écrans allégés : l'artiste seul (l'album reste à un tap, sur le titre)
+                        val album = if (com.theo.remote.Features.flags.value.lightUi) "" else t?.album.orEmpty()
                         if (artist.isNotBlank()) {
                             Text(
                                 artist,
@@ -363,7 +364,7 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
             Text(fmt(shownPos), color = timeColor, fontSize = timeSize, fontFamily = timeFont, fontWeight = FontWeight.SemiBold, modifier = Modifier.align(Alignment.CenterStart))
             // qualité + petit bouton des appareils (option) juste à côté
             Row(Modifier.align(Alignment.Center), verticalAlignment = Alignment.CenterVertically) {
-                QualityBadge(t?.title, t?.artist)
+                if (!com.theo.remote.Features.flags.collectAsState().value.lightUi) QualityBadge(t?.title, t?.artist)
                 if (com.theo.remote.Features.flags.collectAsState().value.deviceChip) {
                     Spacer(Modifier.width(6.dp))
                     DeviceButton()
