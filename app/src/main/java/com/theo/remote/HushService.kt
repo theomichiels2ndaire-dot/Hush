@@ -76,6 +76,15 @@ class HushService : Service() {
             Features.flags.collect { runCatching { com.theo.remote.ui.EdgePanel.sync(this@HushService) } }
         }
         AudioFx.register(this)
+        // tes playlists gardées en entier sur le téléphone (en Wi-Fi et en charge seulement)
+        scope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(60_000)
+                runCatching { com.theo.remote.ui.PlaylistPreload.maybeRun(this@HushService) }
+                runCatching { Updater.check() } // nouvelle version : téléchargée d'avance en Wi-Fi
+                kotlinx.coroutines.delay(29 * 60_000L)
+            }
+        }
     }
 
     private val scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main)
