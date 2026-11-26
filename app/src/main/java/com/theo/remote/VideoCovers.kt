@@ -11,6 +11,8 @@ object VideoCovers {
 
     suspend fun get(title: String, artist: String, album: String): String? {
         if (album.isBlank()) return null
+        // pochettes vidéo (plusieurs Mo) : seulement en Wi-Fi quand l'économie de données est activée
+        if (Images.saveData()) return null
         val main = artist.split(",", "&", " feat").first().trim()
         val key = album.lowercase() + "|" + main.lowercase()
         cache[key]?.let { return it.ifEmpty { null } }
