@@ -166,7 +166,10 @@ fun SearchScreen(s: TidalRemote.State) {
                     val vocab = heard.asSequence().flatMap { sequenceOf(it.artist, it.title) }.take(4000).toList()
                     val fixed = com.theo.remote.Fuzzy.correct(q, vocab)
                     val exactArtist = all.artists.any { com.theo.remote.Fuzzy.norm(it.name) == com.theo.remote.Fuzzy.norm(q) }
-                    if (fixed != null && !exactArtist) {
+                    // Tidal a déjà trouvé ce que tu as tapé (titre ou artiste qui correspond) : on ne corrige rien
+                    val goodHit = all.tracks.take(5).any { com.theo.remote.Fuzzy.score(q, it.fullTitle + " " + it.artistLine) >= 80 } ||
+                        all.artists.take(3).any { com.theo.remote.Fuzzy.score(q, it.name) >= 80 }
+                    if (fixed != null && !exactArtist && !goodHit) {
                         val better = runCatching { TidalApi.searchAll(fixed) }.getOrNull()
                         if (query.trim() != q) { loading = false; return@launch }
                         if (better != null && (better.tracks.isNotEmpty() || better.artists.isNotEmpty())) {
@@ -329,12 +332,11 @@ fun SearchScreen(s: TidalRemote.State) {
         // recherche corrigée
         if (correctedTo != null && !loading) item(key = "corrected") {
             val from = correctedFrom
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 8.dp)) {
-                Text("Résultats pour « $correctedTo »", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+            Column(Modifier.padding(bottom = 8.dp)) {
+                Text("Résultats pour « $correctedTo »", color = Txt2, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (from != null) {
-                    Spacer(Modifier.width(8.dp))
                     Text(
-                        "Chercher « $from »", color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                        "Chercher « $from » à la place", color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.clip(RoundedCornerShape(8.dp)).bounceClick(pressedScale = 0.95f) {
                             correctedTo = null; correctedFrom = null
                             searchJob?.cancel()

@@ -38,6 +38,8 @@ class FuzzyTest {
         assertEquals("ninho", Fuzzy.correct("nihno", vocab))
         assertNull(Fuzzy.correct("drake", vocab))
         assertNull(Fuzzy.correct("zzzz", vocab))
+        // « les rois du monde » ne doit pas devenir « les crois du monde »
+        assertNull(Fuzzy.correct("les rois du monde", listOf("Je crois", "Drake")))
     }
 
     @Test fun distance() {

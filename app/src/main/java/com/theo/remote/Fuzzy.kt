@@ -85,9 +85,13 @@ object Fuzzy {
         var changed = false
         val out = typed.map { t ->
             if (t in known || t.length < 4) return@map t
+            // mot de 4 lettres (« rois », « love »…) : souvent juste. On ne le complète que s'il manque
+            // juste la fin (« drak » → « drake »), jamais en changeant le début (« rois » ≠ « crois »)
+            val short = t.length == 4
             val tol = allowed(t.length)
             val best = known.asSequence()
                 .filter { kotlin.math.abs(it.length - t.length) <= tol }
+                .filter { !short || (it.startsWith(t) && it.length == t.length + 1) }
                 .map { it to distance(t, it) }
                 .filter { it.second in 1..tol }
                 .minByOrNull { it.second }
