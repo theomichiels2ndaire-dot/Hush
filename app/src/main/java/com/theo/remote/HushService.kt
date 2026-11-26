@@ -26,6 +26,7 @@ class HushService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        Images.install(this)
         CrashLog.install(this)
         running = true
         val notification = buildNotification()

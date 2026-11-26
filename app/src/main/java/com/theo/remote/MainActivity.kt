@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         CrashLog.install(this)
+        Images.install(this)
         History.init(this)
         AutoResume.init(this)
         Recognizer.init(this) // partage TikTok : le jeton de reconnaissance doit être prêt tout de suite
