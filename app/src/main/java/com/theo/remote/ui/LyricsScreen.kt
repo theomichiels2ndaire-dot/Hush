@@ -325,7 +325,7 @@ private fun PlainLyrics(text: String, translated: List<String>? = null) {
  * la ligne chantée s'allume et défile, toucher une ligne y saute.
  */
 @Composable
-fun InlineLyrics(s: TidalRemote.State, modifier: Modifier = Modifier) {
+fun InlineLyrics(s: TidalRemote.State, modifier: Modifier = Modifier, fontSize: Int = 26) {
     val t = s.track
     val pos = rememberLivePosition(s)
     var lyrics by remember(t?.title, t?.artist) { mutableStateOf<Lyrics.Result?>(null) }
@@ -359,7 +359,7 @@ fun InlineLyrics(s: TidalRemote.State, modifier: Modifier = Modifier) {
             l.synced != null -> SyncedLyrics(
                 l.synced, pos,
                 onSave = if (features.quotes && t != null) { line: Lyrics.Line -> com.theo.remote.LyricQuotes.add(line.text, t.title, t.artist, line.timeMs) } else null,
-                fontSize = 26, pad = PaddingValues(start = 4.dp, end = 4.dp, top = 24.dp, bottom = 160.dp), dismissOnTop = false,
+                fontSize = fontSize, pad = PaddingValues(start = 4.dp, end = 4.dp, top = 24.dp, bottom = 160.dp), dismissOnTop = false,
             )
             else -> PlainLyrics(l.plain.orEmpty())
         }

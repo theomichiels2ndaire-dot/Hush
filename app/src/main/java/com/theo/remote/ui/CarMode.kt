@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChatBubbleOutline
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -78,6 +79,8 @@ object CarMode {
     val shown: StateFlow<Boolean> = _shown
     fun open() { _shown.value = true }
     fun close() { _shown.value = false }
+    /** Paroles en gros à la place des gros boutons (gardé d'une ouverture à l'autre). */
+    val lyrics = MutableStateFlow(false)
 }
 
 @Composable
@@ -114,7 +117,9 @@ fun CarModeScreen(s: TidalRemote.State) {
         val landscape = maxWidth > maxHeight
         // le fond (lumières de la pochette) est ce que les boutons en verre liquide tordent
         Box(Modifier.fillMaxSize().backdropSource(carGlass)) {
-            Ambient(colors, strength = 0.95f, modifier = Modifier.fillMaxSize(), animated = true)
+            // la pochette floutée en fond, comme le lecteur (sinon les couleurs de la pochette)
+            if (com.theo.remote.Features.flags.collectAsState().value.coverBackground) BlurredCover(s.track?.art)
+            else Ambient(colors, strength = 0.95f, modifier = Modifier.fillMaxSize(), animated = true)
             // voile sombre pour que le texte reste lisible en plein soleil comme de nuit
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)))
         }
@@ -179,6 +184,22 @@ private fun CarHeader(s: TidalRemote.State) {
 @Composable
 private fun CarBigButtons(s: TidalRemote.State, haptic: () -> Unit, modifier: Modifier) {
     val playing = rememberSteadyPlaying(s.isPlaying)
+    val lyricsOn by CarMode.lyrics.collectAsState()
+    if (lyricsOn) {
+        // paroles en gros, et les trois boutons sur une ligne en dessous
+        Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            InlineLyrics(s, Modifier.weight(1f).fillMaxWidth(), fontSize = 36)
+            Row(Modifier.fillMaxWidth().height(112.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                CarTile(Icons.Rounded.SkipPrevious, "Précédent", Modifier.weight(1f).fillMaxHeight(), corner = 28, iconSize = 56.dp) { haptic(); TidalRemote.previous() }
+                CarTile(
+                    if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (playing) "Pause" else "Lecture",
+                    Modifier.weight(1.3f).fillMaxHeight(), corner = 28, iconSize = 64.dp, strong = true,
+                ) { haptic(); TidalRemote.playPause() }
+                CarTile(Icons.Rounded.SkipNext, "Suivant", Modifier.weight(1f).fillMaxHeight(), corner = 28, iconSize = 56.dp) { haptic(); TidalRemote.next() }
+            }
+        }
+        return
+    }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         CarTile(
             if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (playing) "Pause" else "Lecture",
@@ -219,6 +240,10 @@ private fun CarBottomRow(s: TidalRemote.State, haptic: () -> Unit) {
         CarPill(
             Icons.Rounded.Shuffle, "Aléatoire", Modifier.weight(1f), tint = if (s.shuffle) Ok else Txt,
         ) { haptic(); TidalRemote.toggleShuffle() }
+        val lyricsOn by CarMode.lyrics.collectAsState()
+        CarPill(
+            Icons.Rounded.ChatBubbleOutline, "Paroles", Modifier.weight(1f), tint = if (lyricsOn) Ok else Txt,
+        ) { haptic(); CarMode.lyrics.value = !lyricsOn }
     }
 }
 
@@ -370,9 +395,9 @@ private fun CarPill(icon: ImageVector, label: String, modifier: Modifier, tint: 
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CarGlassLayer(shape, 34.dp, 22.dp, 13.dp)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(26.dp))
-                Spacer(Modifier.width(10.dp))
-                Text(label, color = tint, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+                Spacer(Modifier.width(7.dp))
+                Text(label, color = tint, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
             }
         }
     }
