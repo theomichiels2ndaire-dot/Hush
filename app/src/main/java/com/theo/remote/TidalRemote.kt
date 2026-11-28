@@ -708,7 +708,8 @@ object TidalRemote {
     private var power: android.os.PowerManager? = null
     private fun screenOn(): Boolean {
         val pm = power ?: appContext?.getSystemService(android.os.PowerManager::class.java)?.also { power = it } ?: return true
-        return pm.isInteractive
+        // le système Android peut redémarrer sous nos pieds (DeadSystemException) : on suppose l'écran allumé
+        return runCatching { pm.isInteractive }.getOrDefault(true)
     }
 
     private val endWatcher = object : Runnable {
