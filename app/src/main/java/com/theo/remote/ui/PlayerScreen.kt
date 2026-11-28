@@ -142,6 +142,9 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
     val duration = t?.durationMs ?: 0L
     var dragPos by remember { mutableStateOf<Float?>(null) }
     var showQueue by remember { mutableStateOf(false) }
+    val inlineLyrics = com.theo.remote.Features.flags.collectAsState().value.inlineLyrics
+    var lyricsOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val lyricsAction: () -> Unit = { if (inlineLyrics) lyricsOpen = !lyricsOpen else onLyrics() }
     // demandé depuis les paroles : on rouvre le lecteur avec la file déjà ouverte
     val askQueue by PlayerUi.openQueue.collectAsState()
     LaunchedEffect(askQueue) { if (askQueue) { showQueue = true; PlayerUi.openQueue.value = false } }
@@ -201,61 +204,66 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
         }
 
         Spacer(Modifier.height(16.dp))
-        // à l'ouverture, la pochette part de la place du mini-lecteur (en bas à gauche, en petit) et vient se poser
-        val fly = remember { androidx.compose.animation.core.Animatable(0f) }
-        LaunchedEffect(Unit) { fly.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = 230f)) }
-        // place finale de la pochette (mesurée avant l'animation) : elle grandit en continu depuis le mini-lecteur
-        var coverRect by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
-        val mini = CoverAnchor.mini
-        Box(
-            Modifier
-                .onGloballyPositioned { if (coverRect == null) coverRect = it.boundsInWindow() }
-                .graphicsLayer {
-                    val f = fly.value
-                    val k = 1f - f
-                    val r = coverRect
-                    if (mini != null && r != null && r.width > 0f) {
-                        val sc = (mini.width / r.width) + (1f - mini.width / r.width) * f
-                        scaleX = sc; scaleY = sc
-                        translationX = (mini.center.x - r.center.x) * k
-                        translationY = (mini.center.y - r.center.y) * k
-                        alpha = 1f
-                    } else if (mini != null) {
-                        alpha = 0f // pas encore mesurée : on attend une image pour ne pas sauter
-                    } else {
-                        val sc = 0.16f + 0.84f * f
-                        scaleX = sc; scaleY = sc
-                        translationX = -size.width * 0.40f * k
-                        translationY = size.height * 1.55f * k
-                        alpha = 0.3f + 0.7f * f
-                    }
-                },
-        ) {
-            // 2.0 : glisser la pochette vers le haut ouvre la file juste en dessous, sans quitter le lecteur
-            val upDensity = androidx.compose.ui.platform.LocalDensity.current
-            var upDrag by remember { mutableStateOf(0f) }
+        // 2.0 : les paroles s'ouvrent à la place de la pochette, dans le lecteur (le bouton les ouvre et les ferme)
+        if (inlineLyrics && lyricsOpen) {
+            InlineLyrics(s, Modifier.weight(1f).fillMaxWidth())
+        } else {
+            // à l'ouverture, la pochette part de la place du mini-lecteur (en bas à gauche, en petit) et vient se poser
+            val fly = remember { androidx.compose.animation.core.Animatable(0f) }
+            LaunchedEffect(Unit) { fly.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = 230f)) }
+            // place finale de la pochette (mesurée avant l'animation) : elle grandit en continu depuis le mini-lecteur
+            var coverRect by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
+            val mini = CoverAnchor.mini
             Box(
-                Modifier.pointerInput(Unit) {
-                    detectVerticalDragGestures(
-                        onDragEnd = { if (upDrag < -with(upDensity) { 60.dp.toPx() }) showQueue = true; upDrag = 0f },
-                        onDragCancel = { upDrag = 0f },
-                    ) { ch, dy -> if (dy < 0 || upDrag < 0) { upDrag += dy; ch.consume() } }
-                }.graphicsLayer { translationY = (upDrag * 0.35f).coerceAtMost(0f) },
+                Modifier
+                    .onGloballyPositioned { if (coverRect == null) coverRect = it.boundsInWindow() }
+                    .graphicsLayer {
+                        val f = fly.value
+                        val k = 1f - f
+                        val r = coverRect
+                        if (mini != null && r != null && r.width > 0f) {
+                            val sc = (mini.width / r.width) + (1f - mini.width / r.width) * f
+                            scaleX = sc; scaleY = sc
+                            translationX = (mini.center.x - r.center.x) * k
+                            translationY = (mini.center.y - r.center.y) * k
+                            alpha = 1f
+                        } else if (mini != null) {
+                            alpha = 0f // pas encore mesurée : on attend une image pour ne pas sauter
+                        } else {
+                            val sc = 0.16f + 0.84f * f
+                            scaleX = sc; scaleY = sc
+                            translationX = -size.width * 0.40f * k
+                            translationY = size.height * 1.55f * k
+                            alpha = 0.3f + 0.7f * f
+                        }
+                    },
             ) {
-                SwipeableCover(s) { if (com.theo.remote.Features.flags.value.fullCover) bigCover = true }
+                // 2.0 : glisser la pochette vers le haut ouvre la file juste en dessous, sans quitter le lecteur
+                val upDensity = androidx.compose.ui.platform.LocalDensity.current
+                var upDrag by remember { mutableStateOf(0f) }
+                Box(
+                    Modifier.pointerInput(Unit) {
+                        detectVerticalDragGestures(
+                            onDragEnd = { if (upDrag < -with(upDensity) { 60.dp.toPx() }) showQueue = true; upDrag = 0f },
+                            onDragCancel = { upDrag = 0f },
+                        ) { ch, dy -> if (dy < 0 || upDrag < 0) { upDrag += dy; ch.consume() } }
+                    }.graphicsLayer { translationY = (upDrag * 0.35f).coerceAtMost(0f) },
+                ) {
+                    SwipeableCover(s) { if (com.theo.remote.Features.flags.value.fullCover) bigCover = true }
+                }
             }
-        }
 
-        androidx.compose.foundation.layout.BoxWithConstraints(
-            Modifier.weight(1f).fillMaxWidth().clipToBounds(),
-            contentAlignment = Alignment.Center,
-        ) {
-            val lines = when {
-                maxHeight >= 64.dp -> 2
-                maxHeight >= 36.dp -> 1
-                else -> 0
+            androidx.compose.foundation.layout.BoxWithConstraints(
+                Modifier.weight(1f).fillMaxWidth().clipToBounds(),
+                contentAlignment = Alignment.Center,
+            ) {
+                val lines = when {
+                    maxHeight >= 64.dp -> 2
+                    maxHeight >= 36.dp -> 1
+                    else -> 0
+                }
+                if (lines > 0) LyricsPreview(s, lyricsAction, lines)
             }
-            if (lines > 0) LyricsPreview(s, onLyrics, lines)
         }
 
         // titre + actions (mode gaucher : cœur et menu passent à gauche)
@@ -430,9 +438,16 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
             if (com.theo.remote.Features.flags.collectAsState().value.bass) BassButton()
             // paroles : une simple icône, comme les autres boutons du bas
             Box(
-                Modifier.size(48.dp).clip(PillShape).bounceClick(pressedScale = 0.96f, onClick = onLyrics),
+                Modifier.size(48.dp).clip(PillShape)
+                    .background(if (inlineLyrics && lyricsOpen) Txt else Color.Transparent)
+                    .bounceClick(pressedScale = 0.96f, onClick = lyricsAction),
                 contentAlignment = Alignment.Center,
-            ) { Icon(Icons.Rounded.ChatBubbleOutline, contentDescription = "Paroles", tint = Txt.copy(alpha = 0.75f), modifier = Modifier.size(25.dp)) }
+            ) {
+                Icon(
+                    Icons.Rounded.ChatBubbleOutline, contentDescription = if (lyricsOpen) "Masquer les paroles" else "Paroles",
+                    tint = if (inlineLyrics && lyricsOpen) Ink else Txt.copy(alpha = 0.75f), modifier = Modifier.size(25.dp),
+                )
+            }
             if (com.theo.remote.Features.flags.collectAsState().value.ratings) QuickRateStar(s.track?.title, s.track?.artist)
             Box(
                 Modifier.size(48.dp).clip(PillShape).bounceClick(pressedScale = 0.96f) { showQueue = !showQueue },

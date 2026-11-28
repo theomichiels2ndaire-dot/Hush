@@ -56,6 +56,7 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -240,14 +241,17 @@ private fun Message(text: String) {
 }
 
 @Composable
-private fun SyncedLyrics(lines: List<Lyrics.Line>, pos: Long, translated: List<String>? = null, onSave: ((Lyrics.Line) -> Unit)? = null) {
+private fun SyncedLyrics(
+    lines: List<Lyrics.Line>, pos: Long, translated: List<String>? = null, onSave: ((Lyrics.Line) -> Unit)? = null,
+    fontSize: Int = 34, pad: PaddingValues = PaddingValues(start = 28.dp, end = 28.dp, top = 40.dp, bottom = 320.dp), dismissOnTop: Boolean = true,
+) {
     // petite avance pour que la ligne s'allume pile quand elle est chantée
     val raw = lines.indexOfLast { it.timeMs <= pos + 250 }
     // anti-yoyo : une petite correction de position vers l'arrière ne fait pas remonter la ligne
     var current by remember(lines) { mutableIntStateOf(-1) }
     if (raw > current || (raw < current && (current < 0 || pos < lines[current].timeMs - 1200))) current = raw
     val list = rememberLazyListState()
-    DismissWhenAtTop(list)
+    if (dismissOnTop) DismissWhenAtTop(list)
 
     LaunchedEffect(current) {
         if (current >= 0) list.animateScrollToItem((current - 1).coerceAtLeast(0))
@@ -256,8 +260,8 @@ private fun SyncedLyrics(lines: List<Lyrics.Line>, pos: Long, translated: List<S
     LazyColumn(
         state = list,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 28.dp, end = 28.dp, top = 40.dp, bottom = 320.dp),
-        verticalArrangement = Arrangement.spacedBy(22.dp),
+        contentPadding = pad,
+        verticalArrangement = Arrangement.spacedBy((fontSize * 0.6f).dp),
     ) {
         itemsIndexed(lines) { i, line ->
             val d = i - current
@@ -284,7 +288,7 @@ private fun SyncedLyrics(lines: List<Lyrics.Line>, pos: Long, translated: List<S
                     .clip(RoundedCornerShape(8.dp))
                     .bounceClick(pressedScale = 0.96f, onLongClick = onSave?.let { f -> { if (line.text.isNotBlank()) f(line) } }) { TidalRemote.seekTo(line.timeMs) },
             ) {
-                Text(line.text.ifBlank { "♪" }, color = color, fontSize = 34.sp, lineHeight = 39.sp, fontWeight = FontWeight.Black)
+                Text(line.text.ifBlank { "♪" }, color = color, fontSize = fontSize.sp, lineHeight = (fontSize * 1.15f).sp, fontWeight = FontWeight.Black)
                 translated?.getOrNull(i)?.takeIf { it.isNotBlank() }?.let { tl ->
                     Spacer(Modifier.height(4.dp))
                     Text(tl, color = color.copy(alpha = color.alpha * 0.75f), fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.SemiBold)
@@ -313,5 +317,51 @@ private fun PlainLyrics(text: String, translated: List<String>? = null) {
             }
         }
         Spacer(Modifier.height(200.dp))
+    }
+}
+
+/**
+ * Les paroles directement dans le lecteur (2.0), à la place de la pochette :
+ * la ligne chantée s'allume et défile, toucher une ligne y saute.
+ */
+@Composable
+fun InlineLyrics(s: TidalRemote.State, modifier: Modifier = Modifier) {
+    val t = s.track
+    val pos = rememberLivePosition(s)
+    var lyrics by remember(t?.title, t?.artist) { mutableStateOf<Lyrics.Result?>(null) }
+    var loading by remember(t?.title, t?.artist) { mutableStateOf(true) }
+    LaunchedEffect(t?.title, t?.artist) {
+        loading = true
+        lyrics = t?.let { Lyrics.fetch(it.title, it.artist, it.album, it.durationMs) }
+        loading = false
+    }
+    val features by com.theo.remote.Features.flags.collectAsState()
+    Box(
+        modifier.clipToBounds()
+            // fondu en haut et en bas : les paroles glissent sous le titre et le haut de l'écran
+            .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+            .drawWithContent {
+                drawContent()
+                drawRect(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                        0f to Color.Transparent, 0.08f to Color.Black, 0.88f to Color.Black, 1f to Color.Transparent,
+                    ),
+                    blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
+                )
+            },
+    ) {
+        val l = lyrics
+        when {
+            loading -> Box(Modifier.fillMaxSize().padding(vertical = 24.dp)) { SkeletonLines(5) }
+            l == null || l.isEmpty -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Pas de paroles pour ce son.", color = Txt.copy(alpha = 0.6f), fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            }
+            l.synced != null -> SyncedLyrics(
+                l.synced, pos,
+                onSave = if (features.quotes && t != null) { line: Lyrics.Line -> com.theo.remote.LyricQuotes.add(line.text, t.title, t.artist, line.timeMs) } else null,
+                fontSize = 26, pad = PaddingValues(start = 4.dp, end = 4.dp, top = 24.dp, bottom = 160.dp), dismissOnTop = false,
+            )
+            else -> PlainLyrics(l.plain.orEmpty())
+        }
     }
 }
