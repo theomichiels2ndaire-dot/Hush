@@ -230,7 +230,7 @@ fun SetupScreen() {
 fun buildReport(ctx: Context): String {
     val st = TidalRemote.state.value
     val f = Features.flags.value
-    val fmt = java.text.SimpleDateFormat("dd/MM HH:mm", java.util.Locale.FRANCE)
+    val fmt = java.text.SimpleDateFormat("dd/MM HH:mm:ss", java.util.Locale.FRANCE)
     val sb = StringBuilder()
     sb.appendLine("=== Rapport Hush ===")
     sb.appendLine("Version : ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")

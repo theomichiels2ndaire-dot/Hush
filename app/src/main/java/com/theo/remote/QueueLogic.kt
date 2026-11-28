@@ -34,6 +34,18 @@ object QueueLogic {
     /** Artiste principal (« Ninho, Jul » → « ninho », « Drake feat. X » → « drake »). */
     fun mainArtist(a: String) = a.split(",", "&", " feat", " ft.").first().trim().lowercase(Locale.ROOT)
 
+    /**
+     * Sauts fantômes : des « suivant » qui arrivent en rafale (chaque son coupé après quelques secondes),
+     * écran éteint. Au 3e d'affilée, on bloque cette source pendant une minute.
+     * [skips] = heures des derniers « suivant » acceptés venant de cette source (ms), du plus ancien au plus récent.
+     */
+    fun isGhostSkip(skips: List<Long>, now: Long, screenOn: Boolean, gapMs: Long = 20_000): Boolean {
+        if (screenOn) return false
+        if (skips.size < 2) return false
+        val a = skips[skips.size - 2]; val b = skips[skips.size - 1]
+        return b - a < gapMs && now - b < gapMs
+    }
+
     /** Mélange équitable (Fisher–Yates) : chaque ordre a exactement la même chance. */
     fun <T> fairShuffle(list: List<T>, rnd: java.util.Random): List<T> {
         val a = list.toMutableList()

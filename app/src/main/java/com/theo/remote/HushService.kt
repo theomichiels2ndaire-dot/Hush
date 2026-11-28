@@ -107,13 +107,32 @@ class HushService : Service() {
     }
 
     private var session: android.media.session.MediaSession? = null
+    private val ghostLog = HashMap<String, ArrayList<Long>>()
+    private val ghostBlockedUntil = HashMap<String, Long>()
     private var lastMetaKey: List<Any?>? = null
 
     private fun mediaSession(): android.media.session.MediaSession = session ?: android.media.session.MediaSession(this, "Hush").also { ms ->
         ms.setCallback(object : android.media.session.MediaSession.Callback() {
             override fun onPlay() { if (!TidalRemote.state.value.isPlaying) TidalRemote.playPause() }
             override fun onPause() { if (TidalRemote.state.value.isPlaying) TidalRemote.playPause() }
-            override fun onSkipToNext() = TidalRemote.next("bouton casque ou notification")
+            override fun onSkipToNext() {
+                // qui envoie ce « suivant » ? (écouteurs, notification, montre, voiture…) : noté dans le rapport
+                val who = if (android.os.Build.VERSION.SDK_INT >= 28) runCatching { ms.currentControllerInfo?.packageName }.getOrNull() ?: "?" else "?"
+                val now = android.os.SystemClock.elapsedRealtime()
+                val screenOn = runCatching { getSystemService(android.os.PowerManager::class.java)?.isInteractive }.getOrNull() ?: true
+                val list = ghostLog.getOrPut(who) { ArrayList() }
+                if (now < ghostBlockedUntil[who] ?: 0L ||
+                    (Features.flags.value.ghostGuard && QueueLogic.isGhostSkip(list, now, screenOn))) {
+                    if (now >= (ghostBlockedUntil[who] ?: 0L)) {
+                        ghostBlockedUntil[who] = now + 60_000
+                        TidalRemote.showToast("Sauts automatiques bloqués")
+                    }
+                    Diag.add(Diag.Kind.GhostSkip, "source : $who")
+                    return
+                }
+                list.add(now); while (list.size > 5) list.removeAt(0)
+                TidalRemote.next("bouton casque ou notification · $who")
+            }
             override fun onSkipToPrevious() = TidalRemote.previous()
             override fun onSeekTo(pos: Long) = TidalRemote.seekTo(pos)
             override fun onCustomAction(action: String, extras: android.os.Bundle?) {

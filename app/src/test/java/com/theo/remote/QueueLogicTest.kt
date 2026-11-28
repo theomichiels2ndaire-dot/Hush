@@ -85,4 +85,14 @@ class QueueLogicTest {
         val out = QueueLogic.spreadArtists(songs, window = 3) { it.second }
         for (i in 1 until out.size) for (k in 1..3) if (i - k >= 0) assertTrue("$out", out[i].second != out[i - k].second)
     }
+
+    @Test fun ghostSkips() {
+        // 3e « suivant » en rafale, écran éteint : bloqué
+        assertTrue(QueueLogic.isGhostSkip(listOf(0L, 10_000L), 21_000L, screenOn = false))
+        // écran allumé : c'est toi, jamais bloqué
+        assertFalse(QueueLogic.isGhostSkip(listOf(0L, 10_000L), 21_000L, screenOn = true))
+        // pas en rafale
+        assertFalse(QueueLogic.isGhostSkip(listOf(0L, 10_000L), 60_000L, screenOn = false))
+        assertFalse(QueueLogic.isGhostSkip(listOf(10_000L), 15_000L, screenOn = false))
+    }
 }

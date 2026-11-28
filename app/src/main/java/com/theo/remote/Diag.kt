@@ -22,6 +22,7 @@ object Diag {
         Fixed("Versions corrigées", "Hush a relancé la bonne version tout seul."),
         NotFound("Sons non trouvés sur Tidal", "Tidal n'a rien lancé pour ce son (recherche sans résultat)."),
         LocalError("Erreurs de fichiers locaux", "Un fichier n'a pas pu être lu ; Hush a réessayé ou est passé au suivant."),
+        GhostSkip("Sauts automatiques bloqués", "Des « suivant » arrivaient en rafale, écran éteint, sans que tu touches à rien : Hush les a ignorés."),
     }
 
     data class E(val at: Long, val kind: Kind, val detail: String)
