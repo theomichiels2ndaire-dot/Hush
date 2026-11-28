@@ -383,7 +383,9 @@ fun RemoteApp() {
                     val liquidSheet = liquidOn()
                     Box(Modifier.fillMaxSize().backdropSource(sheetGlass)) {
                         Box(Modifier.fillMaxSize().backdropSource(playerGlass)) {
-                            Ambient(colors, strength = 1f, animated = true)
+                            // 2.0 : la pochette en grand et floutée derrière le lecteur
+                            if (com.theo.remote.Features.flags.collectAsState().value.coverBackground) BlurredCover(s.track?.art)
+                            else Ambient(colors, strength = 1f, animated = true)
                         }
                         if (which == Sheet.Lyrics) {
                             LyricsScreen(s, onQueue = { PlayerUi.openQueue.value = true; sheet = Sheet.Player }, onClose = { sheet = Sheet.Player })

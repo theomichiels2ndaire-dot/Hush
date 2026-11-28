@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.draw.clip
@@ -388,4 +389,35 @@ fun ThickBar(
 fun fmt(ms: Long): String {
     val total = (ms / 1000).coerceAtLeast(0)
     return "%d:%02d".format(total / 60, total % 60)
+}
+
+/**
+ * Fond du lecteur : la pochette du son en plein écran, très floutée et assombrie pour que le texte reste lisible.
+ * Le flou marche sur tous les téléphones (pochette réduite puis agrandie), plus doux encore sur Android 12+.
+ */
+@Composable
+fun BlurredCover(art: android.graphics.Bitmap?, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxSize().background(Color.Black)) {
+        androidx.compose.animation.Crossfade(targetState = art, animationSpec = SongChange.spec(), label = "blurCover") { a ->
+            if (a != null) {
+                // une toute petite version de la pochette, agrandie : déjà floue, et légère à dessiner
+                val tiny = remember(a) {
+                    runCatching { android.graphics.Bitmap.createScaledBitmap(a, 40, 40, true).asImageBitmap() }.getOrNull()
+                }
+                if (tiny != null) androidx.compose.foundation.Image(
+                    bitmap = tiny,
+                    contentDescription = null,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    filterQuality = androidx.compose.ui.graphics.FilterQuality.Low,
+                    modifier = Modifier.fillMaxSize().graphicsLayer { scaleX = 1.25f; scaleY = 1.25f }.blur(48.dp),
+                )
+            }
+        }
+        // voile sombre, plus marqué en bas (là où sont les boutons)
+        Box(
+            Modifier.fillMaxSize().background(
+                Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.30f), Color.Black.copy(alpha = 0.42f), Color.Black.copy(alpha = 0.62f))),
+            ),
+        )
+    }
 }
