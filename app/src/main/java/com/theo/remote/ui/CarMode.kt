@@ -188,7 +188,7 @@ private fun CarBigButtons(s: TidalRemote.State, haptic: () -> Unit, modifier: Mo
     if (lyricsOn) {
         // paroles en gros, et les trois boutons sur une ligne en dessous
         Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            InlineLyrics(s, Modifier.weight(1f).fillMaxWidth(), fontSize = 36)
+            InlineLyrics(s, Modifier.weight(1f).fillMaxWidth(), fontSize = 36, centered = true)
             Row(Modifier.fillMaxWidth().height(112.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CarTile(Icons.Rounded.SkipPrevious, "Précédent", Modifier.weight(1f).fillMaxHeight(), corner = 28, iconSize = 56.dp) { haptic(); TidalRemote.previous() }
                 CarTile(
@@ -395,9 +395,8 @@ private fun CarPill(icon: ImageVector, label: String, modifier: Modifier, tint: 
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CarGlassLayer(shape, 34.dp, 22.dp, 13.dp)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
-                Spacer(Modifier.width(7.dp))
-                Text(label, color = tint, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, softWrap = false)
+                // juste l'icône, en grand (le nom reste lu par l'accessibilité)
+                Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(30.dp))
             }
         }
     }

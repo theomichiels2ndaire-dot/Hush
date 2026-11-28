@@ -244,6 +244,7 @@ private fun Message(text: String) {
 private fun SyncedLyrics(
     lines: List<Lyrics.Line>, pos: Long, translated: List<String>? = null, onSave: ((Lyrics.Line) -> Unit)? = null,
     fontSize: Int = 34, pad: PaddingValues = PaddingValues(start = 28.dp, end = 28.dp, top = 40.dp, bottom = 320.dp), dismissOnTop: Boolean = true,
+    centered: Boolean = false,
 ) {
     // petite avance pour que la ligne s'allume pile quand elle est chantée
     val raw = lines.indexOfLast { it.timeMs <= pos + 250 }
@@ -254,7 +255,10 @@ private fun SyncedLyrics(
     if (dismissOnTop) DismissWhenAtTop(list)
 
     LaunchedEffect(current) {
-        if (current >= 0) list.animateScrollToItem((current - 1).coerceAtLeast(0))
+        if (current < 0) return@LaunchedEffect
+        // centré : la ligne chantée se place au milieu de la zone, sinon juste sous la ligne d'avant
+        if (centered) list.animateScrollToItem(current, -(list.layoutInfo.viewportSize.height / 3))
+        else list.animateScrollToItem((current - 1).coerceAtLeast(0))
     }
 
     LazyColumn(
@@ -282,13 +286,17 @@ private fun SyncedLyrics(
                     .graphicsLayer {
                         scaleX = scale
                         scaleY = scale
-                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0f, 0.5f)
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(if (centered) 0.5f else 0f, 0.5f)
                     }
                     .blur(blur)
                     .clip(RoundedCornerShape(8.dp))
                     .bounceClick(pressedScale = 0.96f, onLongClick = onSave?.let { f -> { if (line.text.isNotBlank()) f(line) } }) { TidalRemote.seekTo(line.timeMs) },
             ) {
-                Text(line.text.ifBlank { "♪" }, color = color, fontSize = fontSize.sp, lineHeight = (fontSize * 1.15f).sp, fontWeight = FontWeight.Black)
+                Text(
+                    line.text.ifBlank { "♪" }, color = color, fontSize = fontSize.sp, lineHeight = (fontSize * 1.15f).sp, fontWeight = FontWeight.Black,
+                    textAlign = if (centered) androidx.compose.ui.text.style.TextAlign.Center else null,
+                    modifier = if (centered) Modifier.fillMaxWidth() else Modifier,
+                )
                 translated?.getOrNull(i)?.takeIf { it.isNotBlank() }?.let { tl ->
                     Spacer(Modifier.height(4.dp))
                     Text(tl, color = color.copy(alpha = color.alpha * 0.75f), fontSize = 20.sp, lineHeight = 23.sp, fontWeight = FontWeight.SemiBold)
@@ -325,7 +333,7 @@ private fun PlainLyrics(text: String, translated: List<String>? = null) {
  * la ligne chantée s'allume et défile, toucher une ligne y saute.
  */
 @Composable
-fun InlineLyrics(s: TidalRemote.State, modifier: Modifier = Modifier, fontSize: Int = 26) {
+fun InlineLyrics(s: TidalRemote.State, modifier: Modifier = Modifier, fontSize: Int = 26, centered: Boolean = false) {
     val t = s.track
     val pos = rememberLivePosition(s)
     var lyrics by remember(t?.title, t?.artist) { mutableStateOf<Lyrics.Result?>(null) }
@@ -359,7 +367,7 @@ fun InlineLyrics(s: TidalRemote.State, modifier: Modifier = Modifier, fontSize: 
             l.synced != null -> SyncedLyrics(
                 l.synced, pos,
                 onSave = if (features.quotes && t != null) { line: Lyrics.Line -> com.theo.remote.LyricQuotes.add(line.text, t.title, t.artist, line.timeMs) } else null,
-                fontSize = fontSize, pad = PaddingValues(start = 4.dp, end = 4.dp, top = 24.dp, bottom = 160.dp), dismissOnTop = false,
+                fontSize = fontSize, pad = PaddingValues(start = 4.dp, end = 4.dp, top = 24.dp, bottom = 160.dp), dismissOnTop = false, centered = centered,
             )
             else -> PlainLyrics(l.plain.orEmpty())
         }
