@@ -108,6 +108,8 @@ class MainActivity : ComponentActivity() {
                             // l'ancienne fiche fixe est remplacée par les notes de version de GitHub (WhatsNewHost)
                             com.theo.remote.ui.LevelUpDialog()
                             com.theo.remote.ui.OfflineBanner()
+                            // le soir : tout l'écran un peu adouci (par-dessus le reste, sans bloquer les touchers)
+                            com.theo.remote.ui.NightDim()
                         }
                     }
                 }

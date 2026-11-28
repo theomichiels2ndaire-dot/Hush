@@ -188,6 +188,7 @@ fun DisplayCard() {
         OptionRow("Bouton Annuler", "5 s pour revenir en arrière après avoir retiré un son, vidé la file ou changé l'ordre", f.undoBar) { Features.set(f.copy(undoBar = it)) }
         OptionRow("Lancer le bon son", "Lance tes playlists et tes sons par leur lien exact, pas par une recherche (évite qu'un autre son ou une autre playlist démarre)", f.exactLaunch) { Features.set(f.copy(exactLaunch = it)) }
         OptionRow("Recherche maline", "Tes sons déjà écoutés apparaissent dès la première lettre, et les fautes de frappe sont corrigées (« drak » → Drake)", f.smartSearch) { Features.set(f.copy(smartSearch = it)) }
+        OptionRow("Mode nuit automatique", "De 21 h à 7 h, l'écran de Hush est un peu adouci pour ne pas t'éblouir", f.nightDim) { Features.set(f.copy(nightDim = it)) }
         OptionRow("Pochette floutée en fond", "Le fond du lecteur est la pochette du son, en flou (sinon : les couleurs de la pochette)", f.coverBackground) { Features.set(f.copy(coverBackground = it)) }
         OptionRow("Paroles dans le lecteur", "Le bouton paroles les affiche à la place de la pochette, sans ouvrir une autre page", f.inlineLyrics) { Features.set(f.copy(inlineLyrics = it)) }
         OptionRow("Bloquer les sauts automatiques", "Écran éteint, si des « suivant » arrivent en rafale (3 d'affilée en moins de 20 s chacun), Hush les ignore une minute", f.ghostGuard) { Features.set(f.copy(ghostGuard = it)) }
@@ -716,6 +717,7 @@ object SettingsIndex {
         Flag("Bouton Annuler", "Revenir en arrière après avoir retiré un son ou vidé la file", "Affichage", { it.undoBar }, { f, v -> f.copy(undoBar = v) }),
         Flag("Lancer le bon son", "Lancer tes playlists et tes sons par leur lien exact plutôt que par une recherche", "Playlists", { it.exactLaunch }, { f, v -> f.copy(exactLaunch = v) }),
         Flag("Recherche maline", "Résultats dès la première lettre et fautes de frappe corrigées", "Lecture", { it.smartSearch }, { f, v -> f.copy(smartSearch = v) }),
+        Flag("Mode nuit automatique", "Adoucir l'écran le soir (21 h – 7 h)", "Affichage", { it.nightDim }, { f, v -> f.copy(nightDim = v) }),
         Flag("Pochette floutée en fond", "La pochette floutée derrière le lecteur", "Affichage", { it.coverBackground }, { f, v -> f.copy(coverBackground = v) }),
         Flag("Paroles dans le lecteur", "Afficher les paroles à la place de la pochette", "Paroles et recherche", { it.inlineLyrics }, { f, v -> f.copy(inlineLyrics = v) }),
         Flag("Bloquer les sauts automatiques", "Ignorer les « suivant » en rafale écran éteint", "Lecture", { it.ghostGuard }, { f, v -> f.copy(ghostGuard = v) }),
