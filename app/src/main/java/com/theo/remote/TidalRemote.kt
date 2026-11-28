@@ -78,10 +78,10 @@ object TidalRemote {
         fun supports(action: Long) = actions and action != 0L
     }
 
-    private const val FAVORITE_ACTION = "com.aspiro.tidal.player.action.TOGGLE_FAVORITE"
+    internal const val FAVORITE_ACTION = "com.aspiro.tidal.player.action.TOGGLE_FAVORITE"
 
     /** Lit l'état « Ma Musique » dans le libellé du bouton de Tidal (« Supprimer de… » = déjà ajouté). */
-    private fun favoriteFrom(pb: PlaybackState?): Boolean? {
+    internal fun favoriteFrom(pb: PlaybackState?): Boolean? {
         val a = pb?.customActions?.firstOrNull { it.action == FAVORITE_ACTION } ?: return null
         val n = a.name?.toString()?.lowercase(Locale.ROOT) ?: return null
         return when {
@@ -100,7 +100,7 @@ object TidalRemote {
     }
 
     /** Compare deux images rapidement (taille + 36 pixels répartis). */
-    private fun sameImage(a: Bitmap, b: Bitmap): Boolean {
+    internal fun sameImage(a: Bitmap, b: Bitmap): Boolean {
         if (a === b) return true
         if (a.width != b.width || a.height != b.height) return false
         return try {
@@ -115,7 +115,7 @@ object TidalRemote {
         }
     }
 
-    private val PLAYING_LIKE = setOf(
+    internal val PLAYING_LIKE = setOf(
         PlaybackState.STATE_PLAYING,
         PlaybackState.STATE_BUFFERING,
         PlaybackState.STATE_CONNECTING,
@@ -155,12 +155,12 @@ object TidalRemote {
         "Suivant / précédent" to (PlaybackState.ACTION_SKIP_TO_NEXT or PlaybackState.ACTION_SKIP_TO_PREVIOUS),
     )
 
-    private val _state = MutableStateFlow(State())
+    internal val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state.asStateFlow()
 
-    private val main = Handler(Looper.getMainLooper())
-    private var manager: MediaSessionManager? = null
-    private var controller: MediaController? = null
+    internal val main = Handler(Looper.getMainLooper())
+    internal var manager: MediaSessionManager? = null
+    internal var controller: MediaController? = null
 
     /** Tidal joue sur un autre appareil (Tidal Connect, Chromecast…) : nom donné par Tidal, sinon null. */
     fun remoteDevice(): String? {
@@ -169,19 +169,19 @@ object TidalRemote {
         if (info.playbackType != MediaController.PlaybackInfo.PLAYBACK_TYPE_REMOTE) return null
         return "Tidal Connect"
     }
-    private var compat: MediaControllerCompat? = null
+    internal var compat: MediaControllerCompat? = null
     var appContext: Context? = null
         private set
 
     /** Ce que TOI tu as choisi dans Hush ; c'est ça qui fait foi, pas l'état momentané de Tidal. */
-    private var wantShuffle = false
-    private var shuffleLoaded = false
-    private val clock = SimpleDateFormat("HH:mm:ss", Locale.FRANCE)
+    internal var wantShuffle = false
+    internal var shuffleLoaded = false
+    internal val clock = SimpleDateFormat("HH:mm:ss", Locale.FRANCE)
 
-    private val sessionsListener =
+    internal val sessionsListener =
         MediaSessionManager.OnActiveSessionsChangedListener { list -> attach(list.orEmpty()) }
 
-    private val callback = object : MediaController.Callback() {
+    internal val callback = object : MediaController.Callback() {
         override fun onMetadataChanged(metadata: MediaMetadata?) {
             refresh()
             // le son a changé : on réagit tout de suite (sans attendre la prochaine vérif), pour que
@@ -214,19 +214,19 @@ object TidalRemote {
 
     // ---------- File « À suivre » de Hush ----------
 
-    private val _upNext = MutableStateFlow<List<TidalApi.Result>>(emptyList())
+    internal val _upNext = MutableStateFlow<List<TidalApi.Result>>(emptyList())
     val upNext: StateFlow<List<TidalApi.Result>> = _upNext.asStateFlow()
 
-    private val _toast = MutableStateFlow<String?>(null)
+    internal val _toast = MutableStateFlow<String?>(null)
     val toast: StateFlow<String?> = _toast.asStateFlow()
-    private val clearToast = Runnable { _toast.value = null }
+    internal val clearToast = Runnable { _toast.value = null }
 
     // ---------- Annuler ----------
     /** Bandeau « Annuler » : 5 s pour revenir sur une action (son retiré, file vidée, ordre changé). */
     data class Undo(val label: String, val key: String, val action: () -> Unit, val at: Long)
-    private val _undo = MutableStateFlow<Undo?>(null)
+    internal val _undo = MutableStateFlow<Undo?>(null)
     val undo: StateFlow<Undo?> = _undo.asStateFlow()
-    private val clearUndo = Runnable { _undo.value = null }
+    internal val clearUndo = Runnable { _undo.value = null }
 
     /**
      * Propose d'annuler. Plusieurs actions de suite du même genre (ex. un glisser qui déplace plusieurs fois)
@@ -255,45 +255,10 @@ object TidalRemote {
         main.postDelayed(clearToast, 2200)
     }
 
-    private fun saveUpNext() {
-        appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()
-            ?.putString("upNext", History.encodeResults(_upNext.value))?.apply()
-    }
 
-    fun addToQueue(r: TidalApi.Result) {
-        _upNext.update { it + r }
-        saveUpNext()
-        showToast("Ajouté à la file : ${r.fullTitle}")
-    }
 
-    /** Remplace la file « À suivre » d'un coup (ex. lire tes favoris). */
-    fun replaceQueue(list: List<TidalApi.Result>) {
-        _upNext.value = list
-        saveUpNext()
-    }
 
-    /** Vide la file « À suivre » (et oublie la suite de lecture gardée de côté). */
-    fun clearQueue() {
-        val up = _upNext.value
-        val ctx = _context.value
-        val mix = MixQueue.snapshot()
-        _upNext.value = emptyList()
-        saveUpNext()
-        clearContext()
-        offerUndo("File d'attente vidée") {
-            _upNext.value = up; saveUpNext()
-            _context.value = ctx
-            MixQueue.restore(mix)
-        }
-    }
 
-    /** Déplace un son de la file « À suivre ». */
-    fun moveInQueue(from: Int, to: Int) {
-        val before = _upNext.value
-        if (from != to && from in before.indices && to in before.indices) offerUndo("Ordre changé", "moveQueue") { _upNext.value = before; saveUpNext() }
-        _upNext.update { list -> QueueLogic.move(list, from, to) }
-        saveUpNext()
-    }
 
     /**
      * Relance la musique (casque / voiture branchés).
@@ -313,12 +278,6 @@ object TidalRemote {
         am.dispatchMediaKeyEvent(android.view.KeyEvent(now, now, android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_MEDIA_PLAY, 0))
     }
 
-    fun removeFromQueue(index: Int) {
-        val before = _upNext.value
-        before.getOrNull(index)?.let { r -> offerUndo("Retiré de la file : ${r.title}") { _upNext.value = before; saveUpNext() } }
-        _upNext.update { list -> QueueLogic.removeAt(list, index) }
-        saveUpNext()
-    }
 
     // ---------- Suite de ta lecture ----------
     // Quand un son de la file Hush passe devant, Tidal oublie sa propre file (le son est lancé
@@ -326,82 +285,23 @@ object TidalRemote {
 
     data class Ctx(val title: String, val artist: String)
 
-    private val _context = MutableStateFlow<List<Ctx>>(emptyList())
+    internal val _context = MutableStateFlow<List<Ctx>>(emptyList())
     val context: StateFlow<List<Ctx>> = _context.asStateFlow()
 
-    private fun clearContext() {
-        if (_context.value.isNotEmpty()) _context.value = emptyList()
-        MixQueue.clear()
-    }
 
-    /**
-     * Une nouvelle playlist démarre : les vieux sons de « À suivre » (ajoutés il y a longtemps, réveil…)
-     * passaient avant elle et donnaient l'impression que la playlist lançait n'importe quoi.
-     */
-    fun startingPlaylist() {
-        cancelLaunch()
-        if (!Features.flags.value.freshQueue) return
-        val up = _upNext.value
-        if (up.isEmpty()) return
-        _upNext.value = emptyList(); saveUpNext()
-        offerUndo("File « À suivre » vidée (${up.size})", "freshQueue") { _upNext.value = up; saveUpNext() }
-    }
 
-    /** On oublie le dernier son demandé : sinon la vérif « bonne version » relançait l'ancien son par-dessus. */
-    private fun cancelLaunch() {
-        if (_state.value.launch?.status == LaunchStatus.Pending) _state.update { it.copy(launch = null) }
-    }
 
-    private fun captureContext() {
-        if (_context.value.isNotEmpty()) return
-        val st = _state.value
-        val i = st.queue.indexOfFirst { it.id == st.activeQueueId }
-        if (i < 0) return
-        _context.value = st.queue.drop(i + 1).take(60).map { Ctx(it.title, it.subtitle) }
-    }
 
-    /**
-     * Joue une liste de sons (titre, artiste) à la suite : le premier tout de suite,
-     * les autres deviennent « la suite de ta lecture » (Mix du jour, humeur, dormir…).
-     */
-    fun playSequence(list: List<Pair<String, String>>) {
-        val first = list.firstOrNull() ?: return
-        playTitle(first.first, first.second)
-        // anti-répétition : on évite les sons déjà passés ces 2 dernières heures
-        val rest = AntiRepeat.filter(list.drop(1), { it.first }, { it.second })
-        _context.value = rest.take(80).map { Ctx(it.first, it.second) }
-    }
 
-    private fun hasPending() = _upNext.value.isNotEmpty() || MixQueue.hasNext() || _context.value.isNotEmpty()
+    internal fun hasPending() = _upNext.value.isNotEmpty() || MixQueue.hasNext() || _context.value.isNotEmpty()
 
-    /** Ce qui vient après : la file Hush d'abord, puis la suite de ta lecture. */
-    fun peekNext(): Pair<String, String>? =
-        _upNext.value.firstOrNull()?.let { it.title to it.artistLine } ?: _context.value.firstOrNull()?.let { it.title to it.artist }
 
     /** Un son voisin, pour l'aperçu quand tu glisses le mini-lecteur (cover = lien, fichier ou null). */
     data class Peek(val title: String, val artist: String, val cover: Any?)
 
-    /** Le son qui arrivera si tu passes au suivant (true) ou au précédent (false). null = on ne sait pas. */
-    fun peekAdjacent(next: Boolean): Peek? {
-        if (LocalPlayer.active) return null
-        val st = _state.value
-        val qi = st.queue.indexOfFirst { it.id == st.activeQueueId }
-        if (!next) {
-            if (MixQueue.active || st.livePosition() > 3000) return null // revient au début du son, ou géré par Hush
-            return st.queue.getOrNull(qi - 1)?.takeIf { qi > 0 }?.let { Peek(it.title, it.subtitle, null) }
-        }
-        _upNext.value.firstOrNull()?.let { return Peek(it.fullTitle, it.artistLine, it.coverUrl) }
-        if (MixQueue.hasNext()) when (val e = MixQueue.peekNext()) {
-            is LocalMusic.Entry.T -> return Peek(e.r.fullTitle, e.r.artistLine, e.r.coverUrl)
-            is LocalMusic.Entry.L -> return Peek(e.t.title, e.t.artist, e.t.art?.let { java.io.File(it) })
-            null -> {}
-        }
-        _context.value.firstOrNull()?.let { return Peek(it.title, it.artist, null) }
-        return st.queue.getOrNull(qi + 1)?.takeIf { qi >= 0 }?.let { Peek(it.title, it.subtitle, null) }
-    }
 
     /** Lance le prochain son prévu. Renvoie false s'il n'y a rien. */
-    private fun fireNext(): Boolean {
+    internal fun fireNext(): Boolean {
         val n = _upNext.value.firstOrNull()
         if (n != null) {
             captureContext()
@@ -417,22 +317,22 @@ object TidalRemote {
         return true
     }
 
-    private var upNextFiredFor: String? = null
-    private var lastKey: String? = null
-    private var lastRemaining = Long.MAX_VALUE
+    internal var upNextFiredFor: String? = null
+    internal var lastKey: String? = null
+    internal var lastRemaining = Long.MAX_VALUE
     // qui a demandé le dernier « suivant » / « précédent » (pour expliquer un son coupé avant la fin)
-    private var lastNextAt = 0L
-    private var lastNextFrom: String? = null
-    private var lastPrevAt = 0L
-    private var lastFireAt = 0L
+    internal var lastNextAt = 0L
+    internal var lastNextFrom: String? = null
+    internal var lastPrevAt = 0L
+    internal var lastFireAt = 0L
 
     // ---------- Silence le temps du passage au son suivant ----------
     // Quand un son se termine, Tidal lance parfois SON son suivant pendant ~1 s avant que celui de Hush
     // arrive. On coupe le son du téléphone à ce moment-là et on le remet dès que le bon son démarre.
-    private var hushMuted = false
-    private val unmuteSafety = Runnable { unmuteHandoff() }
+    internal var hushMuted = false
+    internal val unmuteSafety = Runnable { unmuteHandoff() }
 
-    private fun muteHandoff() {
+    internal fun muteHandoff() {
         if (!Features.flags.value.silentHandoff) return
         val am = appContext?.getSystemService(android.media.AudioManager::class.java) ?: return
         if (!hushMuted) runCatching { am.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, android.media.AudioManager.ADJUST_MUTE, 0) }
@@ -441,21 +341,21 @@ object TidalRemote {
         main.postDelayed(unmuteSafety, 6000) // filet de sécurité : jamais coupé plus de 6 s
     }
 
-    private fun unmuteHandoff() {
+    internal fun unmuteHandoff() {
         main.removeCallbacks(unmuteSafety)
         if (!hushMuted) return
         hushMuted = false
         val am = appContext?.getSystemService(android.media.AudioManager::class.java) ?: return
         runCatching { am.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, android.media.AudioManager.ADJUST_UNMUTE, 0) }
     }
-    private var keyChangedAt = 0L
-    private var preMutedFor: String? = null
+    internal var keyChangedAt = 0L
+    internal var preMutedFor: String? = null
 
     /**
      * Coupe le son ~0,3 s avant la fin quand Hush va enchaîner lui-même (Tidal mettrait sinon son propre
      * son suivant pendant un instant). Si finalement le son continue, on remet le son au bout de 2,5 s.
      */
-    private fun maybePreMute(st: State, t: Track, key: String, remaining: Long) {
+    internal fun maybePreMute(st: State, t: Track, key: String, remaining: Long) {
         if (!Features.flags.value.silentHandoff || hushMuted || preMutedFor == key) return
         if (!st.isPlaying || !hasPending() || queuedNext != null || LocalPlayer.active) return
         // on ne se fie qu'à une position donnée récemment par Tidal près de la fin (horloge de Hush seule = pas fiable)
@@ -466,7 +366,7 @@ object TidalRemote {
     }
 
     /** Quand le son en cours se termine, on lance le prochain de la file Hush. */
-    private fun checkUpNext(): Boolean {
+    internal fun checkUpNext(): Boolean {
         val st = _state.value
         val t = st.track ?: return hasPending()
         val key = "${t.title}|${t.artist}"
@@ -483,7 +383,7 @@ object TidalRemote {
                 (st.launch != null && st.launch.status == LaunchStatus.Pending && now - st.launch.sentAt < 6000)
             // Tidal est passé tout seul au suivant juste avant nous : on rattrape tout de suite
             // (20 s de marge : l'horloge de Hush peut être un peu en avance ou en retard sur le vrai son)
-            val missed = prevKey != null && prevRemaining <= 20_000 && upNextFiredFor != prevKey && !ours && hasPending()
+            val missed = PlaybackRules.isMissedHandoff(prevKey != null, prevRemaining, upNextFiredFor == prevKey, ours, hasPending())
             // son coupé avant la fin : on cherche qui l'a passé, et on prévient (pas pour tes propres « suivant »)
             if (prevKey != null && prevRemaining in 20_000..3_600_000 && !LocalPlayer.active) {
                 val cause = when {
@@ -536,11 +436,7 @@ object TidalRemote {
 
         // Anti-saut : on ne croit la position que si Tidal l'a donnée APRÈS le changement de son
         // (sinon c'est la position de l'ancien son → « fin » détectée à tort et le son saute)
-        val freshPos = st.positionUpdatedAt == 0L || st.positionUpdatedAt >= keyChangedAt - 300 || st.positionMs < 10_000
-        val settled = now - keyChangedAt > 4000
-        // position extrapolée depuis trop longtemps (Tidal bloqué / en chargement sans le dire) : pas fiable
-        val sane = st.positionUpdatedAt == 0L || now - st.positionUpdatedAt < t.durationMs + 5000
-        if (!freshPos || !settled || !sane) return true
+        if (!PlaybackRules.trustPosition(st.positionUpdatedAt, st.positionMs, keyChangedAt, t.durationMs, now)) return true
 
         // dernières millisecondes du son : on coupe le son juste avant que Tidal enchaîne sur le sien
         maybePreMute(st, t, key, remaining)
@@ -548,8 +444,7 @@ object TidalRemote {
         // Pendant la lecture, on ne coupe plus d'après l'horloge de Hush (elle pouvait être en avance
         // sur le vrai son → coupé en plein milieu). On attend la vraie fin : Tidal s'arrête ou enchaîne,
         // et on rattrape aussitôt. Exception : Tidal vient lui-même de donner une position proche de la fin.
-        val ending = (st.isPlaying && remaining in 0..1200 && t.durationMs - st.positionMs < 15_000) ||
-            (!st.isPlaying && t.durationMs - st.positionMs < 5000 && ((pos > 0 && remaining < 1500) || (nearEndKey == key && now - nearEndAt < 8000)))
+        val ending = PlaybackRules.isEnding(st.isPlaying, t.durationMs, st.positionMs, pos, nearEndKey == key && now - nearEndAt < 8000)
         if (ending && now - lastFireAt > 2500) {
             upNextFiredFor = key
             lastFireAt = now
@@ -566,18 +461,18 @@ object TidalRemote {
     // ---------- Enchaînement sans blanc : on glisse le son suivant dans la file de Tidal ----------
 
     /** Formats d'identifiant essayés pour que Tidal accepte un son dans sa file. */
-    private val GAP_FORMATS = listOf<(String) -> String>({ it }, { "track:$it" }, { "tidal://track/$it" }, { "https://tidal.com/browse/track/$it" })
-    private var queuedFor: String? = null
-    private var queuedNext: String? = null
-    private var gapProbe = 0
-    private var tidalCompatCache: Pair<MediaSession.Token, MediaControllerCompat>? = null
+    internal val GAP_FORMATS = listOf<(String) -> String>({ it }, { "track:$it" }, { "tidal://track/$it" }, { "https://tidal.com/browse/track/$it" })
+    internal var queuedFor: String? = null
+    internal var queuedNext: String? = null
+    internal var gapProbe = 0
+    internal var tidalCompatCache: Pair<MediaSession.Token, MediaControllerCompat>? = null
 
     /** -1 = pas encore testé, -2 = Tidal refuse, sinon l'index du format qui marche. */
-    private var gapFormat: Int
+    internal var gapFormat: Int
         get() = appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.getInt("gapFmt", -1) ?: -1
         set(v) { appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putInt("gapFmt", v)?.apply() }
 
-    private fun tidalCompat(): MediaControllerCompat? {
+    internal fun tidalCompat(): MediaControllerCompat? {
         val c = tidalCtl ?: return null
         val ctx = appContext ?: return null
         tidalCompatCache?.let { if (it.first == c.sessionToken) return it.second }
@@ -585,7 +480,7 @@ object TidalRemote {
             ?.also { tidalCompatCache = c.sessionToken to it }
     }
 
-    private fun maybeQueueNext(key: String, now: Long) {
+    internal fun maybeQueueNext(key: String, now: Long) {
         if (!Features.flags.value.gapless || !MixQueue.active || LocalPlayer.active) return
         if (queuedFor == key || now - keyChangedAt < 3500) return
         val st = _state.value
@@ -630,12 +525,12 @@ object TidalRemote {
     fun gaplessState(): Int = gapFormat
 
     // les sons locaux sont comptés à part (LocalMusic), pas dans l'historique Tidal
-    private val recordStable = Runnable { if (!LocalPlayer.active) _state.value.track?.let { History.record(it) } }
+    internal val recordStable = Runnable { if (!LocalPlayer.active) _state.value.track?.let { History.record(it) } }
 
     // ---------- Sons similaires quand la file est finie ----------
 
-    private const val MIX_ACTION = "com.aspiro.tidal.player.action.PLAY_TRACK_MIX"
-    private var autoMixDoneFor: String? = null
+    internal const val MIX_ACTION = "com.aspiro.tidal.player.action.PLAY_TRACK_MIX"
+    internal var autoMixDoneFor: String? = null
 
     var autoMix: Boolean = true
         set(v) {
@@ -645,9 +540,9 @@ object TidalRemote {
         }
 
     /** Dernière action « radio » vue pendant la lecture (Tidal peut la retirer une fois arrêté). */
-    private var lastMixAction: PlaybackState.CustomAction? = null
+    internal var lastMixAction: PlaybackState.CustomAction? = null
 
-    private fun mixAction(): PlaybackState.CustomAction? =
+    internal fun mixAction(): PlaybackState.CustomAction? =
         controller?.playbackState?.customActions?.firstOrNull { it.action == MIX_ACTION }
             ?: controller?.playbackState?.customActions?.firstOrNull { it.action.contains("MIX", ignoreCase = true) }
 
@@ -669,15 +564,15 @@ object TidalRemote {
         return true
     }
 
-    private var nearEndKey: String? = null
-    private var nearEndAt = 0L
+    internal var nearEndKey: String? = null
+    internal var nearEndAt = 0L
 
     /**
      * La musique ne doit jamais s'arrêter : si Tidal arrive à la fin de sa file et s'arrête,
      * on enchaîne sur des sons similaires. On attend que Tidal s'arrête VRAIMENT
      * (au lieu de couper avant la fin), pour ne jamais passer devant un son qu'il avait prévu.
      */
-    private fun checkEndOfQueue() {
+    internal fun checkEndOfQueue() {
         if (LocalPlayer.active) return
         if (checkUpNext()) return
         val st = _state.value
@@ -705,14 +600,14 @@ object TidalRemote {
         }
     }
 
-    private var power: android.os.PowerManager? = null
-    private fun screenOn(): Boolean {
+    internal var power: android.os.PowerManager? = null
+    internal fun screenOn(): Boolean {
         val pm = power ?: appContext?.getSystemService(android.os.PowerManager::class.java)?.also { power = it } ?: return true
         // le système Android peut redémarrer sous nos pieds (DeadSystemException) : on suppose l'écran allumé
         return runCatching { pm.isInteractive }.getOrDefault(true)
     }
 
-    private val endWatcher = object : Runnable {
+    internal val endWatcher = object : Runnable {
         override fun run() {
             checkEndOfQueue()
             runCatching { Transitions.tick() }
@@ -747,7 +642,7 @@ object TidalRemote {
         }
     }
 
-    private val compatCallback = object : MediaControllerCompat.Callback() {
+    internal val compatCallback = object : MediaControllerCompat.Callback() {
         override fun onShuffleModeChanged(shuffleMode: Int) {
             // Tidal remet souvent l'aléatoire à zéro quand on change de son : on le réactive
             if (wantShuffle && shuffleMode == PlaybackStateCompat.SHUFFLE_MODE_NONE) {
@@ -790,20 +685,20 @@ object TidalRemote {
         }
     }
 
-    private var lastSessions: List<MediaController> = emptyList()
+    internal var lastSessions: List<MediaController> = emptyList()
     /** La session de Tidal (même quand c'est un son local qui joue). */
-    private var tidalCtl: MediaController? = null
+    internal var tidalCtl: MediaController? = null
 
     /** À appeler quand la lecture locale démarre ou s'arrête. */
     fun reattach() { main.post { attach(lastSessions) } }
 
     /** Session Tidal pour lancer un son : coupe d'abord un éventuel son local. */
-    private fun tidal(): MediaController? {
+    internal fun tidal(): MediaController? {
         if (LocalPlayer.active) LocalPlayer.stop()
         return tidalCtl ?: controller?.takeIf { it.packageName.contains("tidal", ignoreCase = true) }
     }
 
-    private fun attach(sessions: List<MediaController>) {
+    internal fun attach(sessions: List<MediaController>) {
         lastSessions = sessions
         _state.update { it.copy(activeSessions = sessions.map { s -> s.packageName }.distinct()) }
 
@@ -836,7 +731,7 @@ object TidalRemote {
         refresh()
     }
 
-    private fun refresh() {
+    internal fun refresh() {
         val c = controller
         if (c == null) {
             _state.update {
@@ -932,7 +827,7 @@ object TidalRemote {
 
     // ---------- Commandes ----------
 
-    private val controls get() = controller?.transportControls
+    internal val controls get() = controller?.transportControls
 
     fun playPause() {
         val c = controls
@@ -972,13 +867,13 @@ object TidalRemote {
     // ---------- Sons d'avant ----------
     // Les sons lancés par Hush (lien exact, file « À suivre »…) n'ont pas d'historique côté Tidal :
     // « précédent » n'y faisait rien. Hush retient donc lui-même les derniers sons passés.
-    private data class Back(val title: String, val artist: String, val id: String?)
-    private val backStack = ArrayDeque<Back>()
-    private var goingBack = false
+    internal data class Back(val title: String, val artist: String, val id: String?)
+    internal val backStack = ArrayDeque<Back>()
+    internal var goingBack = false
     /** Le dernier son lancé par Hush et bien parti (pour retrouver son lien exact en revenant dessus). */
-    private var lastGoodLaunch: Launch? = null
+    internal var lastGoodLaunch: Launch? = null
 
-    private fun rememberPlayed(prev: Track) {
+    internal fun rememberPlayed(prev: Track) {
         if (goingBack) { goingBack = false; return }
         val l = lastGoodLaunch
         val id = l?.trackId?.takeIf { it.isNotEmpty() && it.all { c -> c.isDigit() } && QueueLogic.sameTitle(prev.title, l.expected) }
@@ -1012,414 +907,65 @@ object TidalRemote {
         controls?.seekTo(ms)
     }
 
-    /** Comme playSequence, mais sans filtre : la liste est jouée telle quelle (trajet). */
-    fun playExact(list: List<Pair<String, String>>) {
-        val first = list.firstOrNull() ?: return
-        playTitle(first.first, first.second)
-        _context.value = list.drop(1).take(80).map { Ctx(it.first, it.second) }
-    }
 
     // ---------- Lancer un résultat de recherche ----------
 
-    fun play(result: TidalApi.Result) {
-        clearContext()
-        launch(result.id, result.fullTitle, result.playQuery, result.artists.firstOrNull().orEmpty())
-    }
 
-    /** Relancer un titre de l'historique (titre + artiste tels que Tidal les affiche). */
-    fun playTitle(title: String, artist: String) {
-        clearContext()
-        launch("$title|$artist", title, listOf(title, artist).filter { it.isNotBlank() }.joinToString(" "))
-    }
 
-    /**
-     * Lance une playlist. Avec son identifiant : par son lien exact (TA playlist, pas une autre qui porte le même nom) ;
-     * si Tidal ignore le lien, ou sans identifiant : recherche par nom.
-     */
-    fun playPlaylist(name: String, id: String? = null, woke: Boolean = false) {
-        clearContext()
-        startingPlaylist()
-        val c = tidal() ?: run {
-            // Tidal fermé (coupé par Android) : on le réveille et on relance une fois
-            if (!woke) {
-                appContext?.let { wakeInBackground(it) }
-                showToast("Tidal se réveille…")
-                main.postDelayed({ if (tidalCtl != null) playPlaylist(name, id, woke = true) else showToast("Ouvre Tidal une fois, puis relance") }, 2500)
-            }
-            return log("Pas de session Tidal active — réveil de Tidal")
-        }
-        val sent = SystemClock.elapsedRealtime()
-        playlistSentAt = sent
-        if (id != null && Features.flags.value.exactLaunch && playlistLinkMode != 0) {
-            val beforeTrack = _state.value.track?.title
-            val beforeQueue = c.queueTitle?.toString()
-            val beforeIds = _state.value.queue.map { it.id }
-            c.transportControls.playFromUri(Uri.parse("https://tidal.com/browse/playlist/$id"), Bundle())
-            log("Playlist lancée (lien exact) : $name")
-            // on vérifie que Tidal a VRAIMENT lancé la playlist, sinon recherche par nom
-            val watch = object : Runnable {
-                override fun run() {
-                    if (playlistSentAt != sent) return // une autre lecture a été lancée entre-temps
-                    val ctl = tidal() ?: return
-                    val st = _state.value
-                    val pbState = ctl.playbackState?.state
-                    val qTitle = ctl.queueTitle?.toString()
-                    val named = qTitle != null && QueueLogic.norm(qTitle) == QueueLogic.norm(name)
-                    val changed = named || st.track?.title != beforeTrack ||
-                        (qTitle != beforeQueue && qTitle != null) || st.queue.map { it.id } != beforeIds
-                    val loading = pbState == PlaybackState.STATE_BUFFERING || pbState == PlaybackState.STATE_CONNECTING
-                    val waited = SystemClock.elapsedRealtime() - sent
-                    when {
-                        changed -> {
-                            playlistIgnored = 0
-                            if (playlistLinkMode != 1) playlistLinkMode = 1
-                            // chargée mais en pause : on lance la lecture
-                            if (!loading && pbState != PlaybackState.STATE_PLAYING) ctl.transportControls.play()
-                        }
-                        loading && waited < 10_000 -> main.postDelayed(this, 200)
-                        waited < 1200 -> main.postDelayed(this, 200)
-                        else -> {
-                            playlistIgnored++
-                            if (playlistIgnored >= 2 && playlistLinkMode == -1) { playlistLinkMode = 0; log("Tidal ignore les liens de playlists : recherche par nom") }
-                            log("Lien ignoré par Tidal → recherche par nom")
-                            searchPlaylist(ctl, name)
-                        }
-                    }
-                }
-            }
-            main.postDelayed(watch, 300)
-        } else searchPlaylist(c, name)
-        appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putString("lastPlaylistName", name)?.apply()
-        reapplyShuffleSoon()
-    }
 
     /** -1 pas encore su, 1 Tidal accepte les liens de playlists, 0 il les ignore. */
-    private var playlistLinkMode: Int
+    internal var playlistLinkMode: Int
         get() = appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.getInt("plLink", -1) ?: -1
         set(v) { appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putInt("plLink", v)?.apply() }
-    private var playlistIgnored = 0
+    internal var playlistIgnored = 0
 
-    private var playlistSentAt = 0L
-
-    private fun searchPlaylist(c: MediaController, name: String) {
-        val extras = Bundle().apply {
-            putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/playlist")
-            putString("android.intent.extra.playlist", name)
-        }
-        c.transportControls.playFromSearch(name, extras)
-        log("Playlist lancée : $name")
-    }
+    internal var playlistSentAt = 0L
 
 
-    /**
-     * Lance une playlist dans Tidal puis saute directement au son touché :
-     * la suite reste exactement l'ordre de la playlist. Si Tidal ne montre pas ce son dans sa file
-     * (playlist très longue), [fallback] prend le relais.
-     */
-    fun playPlaylistFrom(name: String, fullTitle: String, title: String, occurrence: Int, id: String? = null, fallback: () -> Unit) {
-        val before = _state.value.queue.map { it.id to it.title }
-        setShuffle(false)
-        playPlaylist(name, id)
-        val started = SystemClock.elapsedRealtime()
-        val check = object : Runnable {
-            override fun run() {
-                val st = _state.value
-                val q = st.queue
-                val waited = SystemClock.elapsedRealtime() - started
-                val fresh = q.isNotEmpty() && (q.map { it.id to it.title } != before || waited > 1200)
-                if (fresh) {
-                    val hits = q.filter { matches(it.title, fullTitle) || matches(it.title, title) }
-                    val hit = hits.getOrNull(occurrence) ?: hits.firstOrNull()
-                    if (hit != null) {
-                        if (hit.id != st.activeQueueId) controls?.skipToQueueItem(hit.id)
-                        log("Playlist « $name » lancée à partir de « $title »")
-                        return
-                    }
-                    if (waited > 2000) { log("« $title » pas dans la file de Tidal : Hush enchaîne la playlist"); fallback(); return }
-                }
-                if (waited > 5000) { fallback(); return }
-                main.postDelayed(this, 150)
-            }
-        }
-        main.postDelayed(check, 150)
-    }
 
-    private var upNextOriginal: List<TidalApi.Result>? = null
 
-    fun setShuffle(on: Boolean) {
-        wantShuffle = on
-        appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putBoolean("shuffle", on)?.apply()
-        _state.update { it.copy(shuffle = on) }
-        dumpShuffleInfo("avant")
-        applyShuffle(on)
-        main.postDelayed({ dumpShuffleInfo("après") }, 800)
-    }
+    internal var upNextOriginal: List<TidalApi.Result>? = null
 
-    /** Écrit dans Logcat (filtre « HushDiag ») tout ce que Tidal expose pour l'aléatoire. */
-    fun dumpShuffleInfo(tag: String) {
-        val pb = controller?.playbackState
-        val c = compat
-        android.util.Log.i("HushDiag", "[$tag] compat=${c != null} shuffleMode=${c?.shuffleMode} repeat=${c?.repeatMode}")
-        android.util.Log.i("HushDiag", "[$tag] actions=0x${java.lang.Long.toHexString(pb?.actions ?: 0)} compatActions=0x${java.lang.Long.toHexString(c?.playbackState?.actions ?: 0)}")
-        android.util.Log.i("HushDiag", "[$tag] SET_SHUFFLE supported=${((c?.playbackState?.actions ?: 0) and PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE) != 0L}")
-        pb?.customActions?.forEach {
-            val icon = try {
-                appContext?.packageManager?.getResourcesForApplication(TIDAL_PACKAGE)?.getResourceEntryName(it.icon)
-            } catch (e: Exception) { "?" }
-            android.util.Log.i("HushDiag", "[$tag] customAction action='${it.action}' name='${it.name}' icon=$icon")
-        }
-        android.util.Log.i("HushDiag", "[$tag] tidalShuffleOn=${tidalShuffleOn()} want=$wantShuffle")
-        if (pb?.customActions.isNullOrEmpty()) android.util.Log.i("HushDiag", "[$tag] aucune customAction")
-        pb?.extras?.keySet()?.forEach { k -> android.util.Log.i("HushDiag", "[$tag] pbExtra $k=${pb.extras?.get(k)}") }
-        c?.extras?.keySet()?.forEach { k -> android.util.Log.i("HushDiag", "[$tag] sessionExtra $k=${c.extras?.get(k)}") }
-    }
 
-    private const val SHUFFLE_ACTION = "com.aspiro.tidal.player.action.TOGGLE_SHUFFLE"
 
-    private fun shuffleAction() =
-        controller?.playbackState?.customActions?.firstOrNull { it.action == SHUFFLE_ACTION }
-            ?: controller?.playbackState?.customActions?.firstOrNull { it.action.contains("shuffle", ignoreCase = true) }
+    internal const val SHUFFLE_ACTION = "com.aspiro.tidal.player.action.TOGGLE_SHUFFLE"
 
-    /**
-     * État réel de l'aléatoire dans Tidal, deviné depuis le nom de l'icône de son bouton
-     * (ex. « ic_shuffle_on » / « ic_shuffle_off »). null = impossible à savoir.
-     */
-    private fun tidalShuffleOn(): Boolean? {
-        val a = shuffleAction() ?: return null
-        val name = try {
-            appContext?.packageManager?.getResourcesForApplication(TIDAL_PACKAGE)?.getResourceEntryName(a.icon)
-        } catch (e: Exception) {
-            null
-        } ?: return null
-        val tokens = name.lowercase(Locale.ROOT).split('_', '.', '-')
-        return when {
-            tokens.any { it in setOf("off", "disabled", "inactive", "unselected", "outline") } -> false
-            tokens.any { it in setOf("on", "active", "selected", "enabled", "checked", "filled") } -> true
-            else -> null
-        }
-    }
 
-    /** Remet Tidal dans l'état choisi dans Hush s'il a dévié (seulement si on connaît son état). */
-    private fun enforceShuffle() {
-        // playlist enchaînée par Hush : c'est Hush qui mélange, Tidal doit rester dans l'ordre
-        if (MixQueue.active) return
-        val c = compat
-        val supportsStandard = ((c?.playbackState?.actions ?: 0) and PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE) != 0L
-        if (supportsStandard && c != null) {
-            val m = c.shuffleMode
-            val isOn = m != PlaybackStateCompat.SHUFFLE_MODE_NONE && m != PlaybackStateCompat.SHUFFLE_MODE_INVALID
-            if (isOn != wantShuffle) applyShuffle(wantShuffle)
-            return
-        }
-        val real = tidalShuffleOn() ?: return
-        if (real != wantShuffle) shuffleAction()?.let { controls?.sendCustomAction(it, null) }
-    }
 
-    /** Applique un choix fait par toi dans Hush. */
-    private fun applyShuffle(on: Boolean) {
-        val c = compat
-        val supportsStandard = ((c?.playbackState?.actions ?: 0) and PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE) != 0L
-        if (supportsStandard && c != null) {
-            c.transportControls.setShuffleMode(if (on) PlaybackStateCompat.SHUFFLE_MODE_ALL else PlaybackStateCompat.SHUFFLE_MODE_NONE)
-            return
-        }
-        // Tidal : bouton « bascule » maison. On ne bascule que si son état diffère (ou s'il est inconnu).
-        val action = shuffleAction() ?: return
-        val real = tidalShuffleOn()
-        if (real == null || real != on) controls?.sendCustomAction(action, null)
-    }
 
-    /** Après un lancement, Tidal recrée sa file : on réapplique l'aléatoire un peu après. */
-    private fun reapplyShuffleSoon() {
-        if (!wantShuffle) return
-        main.postDelayed({ enforceShuffle() }, 350)
-        main.postDelayed({ enforceShuffle() }, 1500)
-    }
 
-    /** Aléatoire géré par Hush (playlist mélangée par Hush) : on allume juste le bouton du lecteur. */
-    fun markShuffle(on: Boolean) {
-        wantShuffle = on
-        _state.update { it.copy(shuffle = on) }
-    }
 
-    /** Bouton aléatoire du lecteur. */
-    fun toggleShuffle() {
-        val on = !_state.value.shuffle
-        // une playlist lancée par Hush (mixte ou file « À suivre ») : c'est Hush qui mélange, pas Tidal
-        if (MixQueue.active || _upNext.value.size > 1) {
-            wantShuffle = on
-            _state.update { it.copy(shuffle = on) }
-            if (MixQueue.active) { MixQueue.setShuffle(on); log(if (on) "Aléatoire : playlist mélangée" else "Aléatoire coupé : ordre de la playlist"); return }
-            if (_upNext.value.size > 1) {
-                if (on) {
-                    upNextOriginal = _upNext.value
-                    _upNext.value = SmartShuffle.order(_upNext.value, { it.fullTitle }, { it.artistLine })
-                } else upNextOriginal?.let { o -> val left = _upNext.value.toSet(); _upNext.value = o.filter { it in left } }
-                if (!on) upNextOriginal = null
-                saveUpNext()
-                return
-            }
-        }
-        setShuffle(on)
-    }
 
-    /** Playlist en aléatoire : on active l'aléatoire puis on la lance. */
-    fun playPlaylistShuffled(name: String, id: String? = null) {
-        setShuffle(true)
-        main.postDelayed({ playPlaylist(name, id) }, 80)
-    }
 
-    /** Lance les sons d'un artiste (recherche « artiste » côté Tidal). */
-    fun playArtist(name: String) {
-        clearContext()
-        cancelLaunch(); playlistSentAt = 0L
-        val c = tidal() ?: return log("Pas de session Tidal active — lance un son dans Tidal d'abord")
-        val extras = Bundle().apply {
-            putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/artist")
-            putString(android.provider.MediaStore.EXTRA_MEDIA_ARTIST, name)
-        }
-        c.transportControls.playFromSearch(name, extras)
-        log("Artiste lancé : $name")
-        reapplyShuffleSoon()
-    }
 
-    /** Lance un album (recherche « album » côté Tidal). */
-    fun playAlbum(title: String, artist: String) {
-        clearContext()
-        cancelLaunch(); playlistSentAt = 0L
-        val c = tidal() ?: return log("Pas de session Tidal active — lance un son dans Tidal d'abord")
-        val extras = Bundle().apply {
-            putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/album")
-            putString(android.provider.MediaStore.EXTRA_MEDIA_ALBUM, title)
-            if (artist.isNotBlank()) putString(android.provider.MediaStore.EXTRA_MEDIA_ARTIST, artist)
-        }
-        c.transportControls.playFromSearch(listOf(title, artist).filter { it.isNotBlank() }.joinToString(" "), extras)
-        log("Album lancé : $title")
-        reapplyShuffleSoon()
-    }
 
-    fun skipToQueueItem(id: Long) {
-        clearContext()
-        cancelLaunch()
-        controls?.skipToQueueItem(id)
-    }
 
-    private fun launch(id: String, expected: String, query: String, artist: String = "") {
-        val c = tidal() ?: run {
-            // Tidal fermé entre deux sons : on le réveille et on réessaie une fois
-            appContext?.let { wakeInBackground(it) }
-            main.postDelayed({ if (tidalCtl != null) launch(id, expected, query, artist) }, 2500)
-            return log("Tidal se réveille…")
-        }
-        playlistSentAt = 0L
-        // avec l'identifiant Tidal du son : on le lance par son lien exact (pas de recherche qui tombe sur un autre son)
-        // lien exact seulement quand on sait que Tidal le suit (sinon on perdait 2 s à attendre) : la recherche part tout de suite
-        val exact = id.isNotEmpty() && id.all { it.isDigit() } && Features.flags.value.exactLaunch && trackLinkMode == 1
-        val launch = Launch(trackId = id, expected = expected, status = LaunchStatus.Pending, query = query, artist = artist,
-            tries = if (exact) 1 else 0, viaLink = exact)
-        _state.update { it.copy(launch = launch) }
-        if (exact) {
-            c.transportControls.playFromUri(Uri.parse("https://tidal.com/browse/track/$id"), Bundle())
-            log("Lancé (lien exact) : $expected")
-            // Tidal n'a pas bougé : il ignore les liens de sons → recherche classique
-            main.postDelayed({
-                val l = _state.value.launch
-                if (l != null && l.sentAt == launch.sentAt && l.status == LaunchStatus.Pending) {
-                    val cur = _state.value.track?.title
-                    if (cur != null && matches(cur, expected)) return@postDelayed
-                    linkIgnored++
-                    if (linkIgnored >= 2 && trackLinkMode == -1) { trackLinkMode = 0; log("Tidal ignore les liens de sons : recherche classique") }
-                    val again = l.copy(tries = 0, viaLink = false, sentAt = SystemClock.elapsedRealtime())
-                    _state.update { it.copy(launch = again) }
-                    tidal()?.transportControls?.playFromSearch(query, Bundle())
-                }
-            }, 2200)
-        } else {
-            c.transportControls.playFromSearch(query, Bundle())
-            log("Lancé : $expected")
-        }
-        reapplyShuffleSoon()
 
-        // Si le titre en cours était déjà celui-là, ou si rien ne bouge, on le dit au bout de 6 s
-        main.postDelayed({
-            val l = _state.value.launch
-            if (l != null && l.sentAt == launch.sentAt && l.status == LaunchStatus.Pending) {
-                val current = _state.value.track?.title
-                val status = if (current != null && matches(current, launch.expected)) LaunchStatus.Ok else LaunchStatus.NoChange
-                _state.update { it.copy(launch = l.copy(status = status, actual = current)) }
-                if (status == LaunchStatus.NoChange) Diag.add(Diag.Kind.NotFound, launch.expected)
-            }
-        }, 6000)
-    }
 
     /** -1 pas encore su, 1 Tidal accepte les liens de sons, 0 il les ignore. */
-    private var trackLinkMode: Int
+    internal var trackLinkMode: Int
         get() = appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.getInt("trackLink", -1) ?: -1
         set(v) { appContext?.getSharedPreferences("hush", Context.MODE_PRIVATE)?.edit()?.putInt("trackLink", v)?.apply() }
-    private var linkIgnored = 0
+    internal var linkIgnored = 0
 
-    /** Nouvel essai pour lancer la bonne version : d'abord le lien exact du son, puis une recherche plus précise. */
-    private fun retryLaunch(prev: Launch) {
-        val c = tidal() ?: return
-        // entre-temps tu as lancé autre chose (une playlist…) : on ne relance pas l'ancien son par-dessus
-        val now = _state.value.launch
-        if (now == null || now.sentAt != prev.sentAt) return
-        val l = prev.copy(status = LaunchStatus.Pending, tries = prev.tries + 1, sentAt = SystemClock.elapsedRealtime(), actual = null)
-        _state.update { it.copy(launch = l) }
-        if (l.tries == 1) {
-            c.transportControls.playFromUri(Uri.parse("https://tidal.com/browse/track/${l.trackId}"), Bundle())
-        } else {
-            val extras = Bundle().apply {
-                putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/audio")
-                putString(android.provider.MediaStore.EXTRA_MEDIA_TITLE, l.expected)
-            }
-            c.transportControls.playFromSearch("\"${l.expected}\" " + l.query.removePrefix(l.expected).trim(), extras)
-        }
-        // rien n'a bougé : essai suivant, ou on s'arrête là
-        main.postDelayed({
-            val cur = _state.value.launch
-            if (cur != null && cur.sentAt == l.sentAt && cur.status == LaunchStatus.Pending) {
-                if (l.tries < 2) retryLaunch(l)
-                else _state.update { it.copy(launch = cur.copy(status = LaunchStatus.OtherVersion, actual = _state.value.track?.title)) }
-            }
-        }, 4500)
-    }
 
-    /** Relancer à la main la bonne version (bouton du mini-lecteur). */
-    fun retryVersion() {
-        val l = _state.value.launch ?: return
-        if (!l.trackId.all { it.isDigit() }) return
-        retryLaunch(l.copy(tries = 0))
-    }
 
-    private fun norm(s: String) = s.lowercase(Locale.ROOT).replace(Regex("[^\\p{L}\\p{N}]"), "")
+    internal fun norm(s: String) = s.lowercase(Locale.ROOT).replace(Regex("[^\\p{L}\\p{N}]"), "")
 
     /** Titre identique, version comprise (« MEMORIZING (SLOWED) » ≠ « MEMORIZING »). */
-    private fun matches(actual: String, expected: String): Boolean = norm(actual) == norm(expected)
+    internal fun matches(actual: String, expected: String): Boolean = norm(actual) == norm(expected)
 
     // ---------- Tests : lancer un titre précis sans ouvrir Tidal ----------
 
-    fun testPlayFromSearch(query: String) {
-        val c = controller ?: return log("Pas de session Tidal active")
-        if (query.isBlank()) return log("Tape un titre + artiste d'abord")
-        c.transportControls.playFromSearch(query, Bundle())
-        log("Recherche envoyée : « $query » → regarde si le titre change")
-    }
 
-    fun testPlayFromUri(link: String) {
-        val c = controller ?: return log("Pas de session Tidal active")
-        if (link.isBlank()) return log("Colle un lien Tidal d'abord")
-        c.transportControls.playFromUri(Uri.parse(link.trim()), Bundle())
-        log("Lien envoyé : $link → regarde si le titre change")
-    }
 
-    private var lastWake = 0L
+    internal var lastWake = 0L
 
     /**
      * - Tidal se remet à jouer pendant qu'un son local est en pause → on rend la main à Tidal.
      * - Plus de session Tidal (appli tuée) → on la réveille en arrière-plan, au plus une fois par minute.
      */
-    private fun watchSessions() {
+    internal fun watchSessions() {
         val t = tidalCtl
         if (LocalPlayer.active && !LocalPlayer.wantsPlay && t?.playbackState?.state == PlaybackState.STATE_PLAYING) {
             LocalPlayer.stop()
@@ -1434,8 +980,8 @@ object TidalRemote {
         }
     }
 
-    private var browser: android.media.browse.MediaBrowser? = null
-    private var browserController: MediaController? = null
+    internal var browser: android.media.browse.MediaBrowser? = null
+    internal var browserController: MediaController? = null
 
     /**
      * Réveille Tidal sans l'afficher : on se branche à son service média (celui qu'utilise Android Auto).
@@ -1474,7 +1020,7 @@ object TidalRemote {
     /** Pour le rapport de bug. */
     fun note(message: String) = log(message)
 
-    private fun log(message: String) {
+    internal fun log(message: String) {
         val line = "${clock.format(Date())}  $message"
         _state.update { it.copy(log = (listOf(line) + it.log).take(40)) }
     }

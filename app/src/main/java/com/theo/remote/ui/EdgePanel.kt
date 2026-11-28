@@ -1,5 +1,8 @@
 package com.theo.remote.ui
 
+import com.theo.remote.playPlaylist
+import com.theo.remote.setShuffle
+
 import android.content.ComponentCallbacks
 import android.content.Context
 import android.content.Intent

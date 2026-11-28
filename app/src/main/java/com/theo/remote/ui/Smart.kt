@@ -1,5 +1,8 @@
 package com.theo.remote.ui
 
+import com.theo.remote.playPlaylist
+import com.theo.remote.playSequence
+
 import android.content.Context
 import com.theo.remote.History
 import com.theo.remote.LastFm

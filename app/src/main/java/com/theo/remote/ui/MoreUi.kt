@@ -1,5 +1,8 @@
 package com.theo.remote.ui
 
+import com.theo.remote.playAlbum
+import com.theo.remote.playTitle
+
 import android.content.Context
 import android.content.Intent
 import android.net.Uri

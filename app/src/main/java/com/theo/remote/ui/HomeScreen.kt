@@ -1,5 +1,7 @@
 package com.theo.remote.ui
 
+import com.theo.remote.playTitle
+
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.PlayArrow

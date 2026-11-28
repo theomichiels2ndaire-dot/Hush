@@ -1,5 +1,8 @@
 package com.theo.remote.ui
 
+import com.theo.remote.peekAdjacent
+import com.theo.remote.retryVersion
+
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.toArgb
 import android.content.Intent

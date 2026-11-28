@@ -1,5 +1,9 @@
 package com.theo.remote.ui
 
+import com.theo.remote.addToQueue
+import com.theo.remote.play
+import com.theo.remote.playTitle
+
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult

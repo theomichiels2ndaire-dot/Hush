@@ -1,5 +1,7 @@
 package com.theo.remote.ui
 
+import com.theo.remote.playTitle
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateFloatAsState

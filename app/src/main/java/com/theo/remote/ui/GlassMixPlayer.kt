@@ -1,5 +1,7 @@
 package com.theo.remote.ui
 
+import com.theo.remote.toggleShuffle
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState

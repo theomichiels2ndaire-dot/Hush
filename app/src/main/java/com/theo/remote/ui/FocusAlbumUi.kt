@@ -1,5 +1,8 @@
 package com.theo.remote.ui
 
+import com.theo.remote.playAlbum
+import com.theo.remote.setShuffle
+
 import android.app.Activity
 import android.app.NotificationManager
 import android.content.Context

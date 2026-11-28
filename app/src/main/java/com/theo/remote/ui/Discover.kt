@@ -1,5 +1,8 @@
 package com.theo.remote.ui
 
+import com.theo.remote.play
+import com.theo.remote.playSequence
+
 import android.content.Context
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background

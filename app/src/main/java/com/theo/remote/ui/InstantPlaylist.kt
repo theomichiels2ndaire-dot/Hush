@@ -1,5 +1,8 @@
 package com.theo.remote.ui
 
+import com.theo.remote.markShuffle
+import com.theo.remote.setShuffle
+
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background

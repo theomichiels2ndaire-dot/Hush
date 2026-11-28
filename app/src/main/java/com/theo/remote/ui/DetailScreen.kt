@@ -1,5 +1,10 @@
 package com.theo.remote.ui
 
+import com.theo.remote.play
+import com.theo.remote.playAlbum
+import com.theo.remote.playArtist
+import com.theo.remote.setShuffle
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

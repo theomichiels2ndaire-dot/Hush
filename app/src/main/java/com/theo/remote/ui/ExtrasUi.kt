@@ -1,5 +1,7 @@
 package com.theo.remote.ui
 
+import com.theo.remote.playSequence
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween

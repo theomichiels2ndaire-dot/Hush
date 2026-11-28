@@ -1,5 +1,10 @@
 package com.theo.remote.ui
 
+import com.theo.remote.addToQueue
+import com.theo.remote.play
+import com.theo.remote.playArtist
+import com.theo.remote.playTitle
+
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures

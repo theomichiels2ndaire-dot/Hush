@@ -1,5 +1,12 @@
 package com.theo.remote.ui
 
+import com.theo.remote.markShuffle
+import com.theo.remote.play
+import com.theo.remote.playPlaylist
+import com.theo.remote.playPlaylistFrom
+import com.theo.remote.playPlaylistShuffled
+import com.theo.remote.setShuffle
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background

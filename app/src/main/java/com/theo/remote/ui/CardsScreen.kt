@@ -1,5 +1,7 @@
 package com.theo.remote.ui
 
+import com.theo.remote.playTitle
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable

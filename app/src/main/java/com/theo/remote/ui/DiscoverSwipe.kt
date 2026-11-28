@@ -1,5 +1,7 @@
 package com.theo.remote.ui
 
+import com.theo.remote.play
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween

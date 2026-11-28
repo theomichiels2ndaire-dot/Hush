@@ -1,5 +1,7 @@
 package com.theo.remote.ui
 
+import com.theo.remote.toggleShuffle
+
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.ui.zIndex
