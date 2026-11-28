@@ -179,8 +179,13 @@ object Features {
         // première ouverture (pas encore de réglages enregistrés) : l'appli démarre en mode simple
         val fresh = !p.contains("fTranslate")
         _flags.value = read(p)
+        applyingProfile = true
         if (fresh) set(simplified(_flags.value))
+        applyingProfile = false
+        loadProfile()
     }
+
+    private var applyingProfile = false
 
     private fun read(p: android.content.SharedPreferences): Flags =
             Flags(
@@ -357,6 +362,16 @@ object Features {
 
     /** Allume / coupe le mode simple. En le coupant, on retrouve exactement les réglages d'avant. */
     fun setSimple(on: Boolean) {
+        val was = applyingProfile
+        applyingProfile = true
+        try { setSimpleInner(on) } finally { applyingProfile = was }
+        if (!was) {
+            _profile.value = if (on) Profile.Simple else Profile.Perso
+            appContext?.getSharedPreferences("hush_profile", Context.MODE_PRIVATE)?.edit()?.putString("p", _profile.value.name)?.apply()
+        }
+    }
+
+    private fun setSimpleInner(on: Boolean) {
         val p = prefs ?: return
         val ctx = appContext ?: return
         val backup = ctx.getSharedPreferences("hush_full", Context.MODE_PRIVATE)
@@ -386,9 +401,69 @@ object Features {
         }
     }
 
+    // ---------- Profils (2.0) ----------
+    /** Simple : l'essentiel. Complet : tout Hush, réglé par défaut. Perso : tes propres réglages. */
+    enum class Profile(val label: String, val desc: String) {
+        Simple("Simple", "Juste l'essentiel : accueil, recherche, biblio et lecteur. Idéal pour démarrer."),
+        Complet("Complet", "Tout Hush, avec les réglages conseillés."),
+        Perso("Perso", "Tes réglages à toi, gardés tels quels."),
+    }
+
+    private val _profile = MutableStateFlow(Profile.Perso)
+    val profile: StateFlow<Profile> = _profile
+
+    private fun copyF(from: android.content.SharedPreferences, to: android.content.SharedPreferences, clear: Boolean) {
+        val e = to.edit(); if (clear) e.clear()
+        for ((k, v) in from.all) if (k.startsWith("f")) when (v) {
+            is Boolean -> e.putBoolean(k, v); is Int -> e.putInt(k, v); is Long -> e.putLong(k, v)
+            is String -> e.putString(k, v); is Float -> e.putFloat(k, v)
+            is Set<*> -> e.putStringSet(k, v.filterIsInstance<String>().toSet())
+        }
+        e.commit()
+    }
+
+    fun loadProfile() {
+        val ctx = appContext ?: return
+        val name = ctx.getSharedPreferences("hush_profile", Context.MODE_PRIVATE).getString("p", null)
+        _profile.value = name?.let { n -> Profile.entries.firstOrNull { it.name == n } } ?: if (_flags.value.simpleMode) Profile.Simple else Profile.Perso
+    }
+
+    fun setProfile(to: Profile) {
+        applyingProfile = true
+        try { applyProfile(to) } finally { applyingProfile = false }
+    }
+
+    private fun applyProfile(to: Profile) {
+        val p = prefs ?: return
+        val ctx = appContext ?: return
+        val perso = ctx.getSharedPreferences("hush_perso", Context.MODE_PRIVATE)
+        val from = _profile.value
+        if (from == to) return
+        // en quittant Perso, on met tes réglages de côté pour pouvoir y revenir
+        if (from == Profile.Perso) copyF(p, perso, clear = true)
+        when (to) {
+            Profile.Simple -> { if (!_flags.value.simpleMode) setSimple(true) }
+            Profile.Complet -> {
+                if (_flags.value.simpleMode) setSimple(false)
+                set(Flags(homeOrder = HOME_DEFAULT))
+            }
+            Profile.Perso -> {
+                if (_flags.value.simpleMode) setSimple(false)
+                if (perso.all.isNotEmpty()) { copyF(perso, p, clear = false); set(read(p).copy(simpleMode = false)) }
+            }
+        }
+        _profile.value = to
+        ctx.getSharedPreferences("hush_profile", Context.MODE_PRIVATE).edit().putString("p", to.name).apply()
+    }
+
     fun set(f: Flags) {
         val old = _flags.value
         _flags.value = f
+        // tu changes une option à la main : tes réglages deviennent « Perso »
+        if (!applyingProfile && old != f && _profile.value != Profile.Perso && prefs != null) {
+            _profile.value = Profile.Perso
+            appContext?.getSharedPreferences("hush_profile", Context.MODE_PRIVATE)?.edit()?.putString("p", Profile.Perso.name)?.apply()
+        }
         prefs?.edit()
             ?.putBoolean("fTranslate", f.translate)?.putBoolean("fSquare", f.squareWidget)
             ?.putBoolean("fVoice", f.voice)?.putBoolean("fTime", f.timeTheme)?.putBoolean("fBackup", f.autoBackup)

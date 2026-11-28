@@ -103,14 +103,30 @@ private fun SettingsCard(content: @Composable () -> Unit) {
 /** Mode simple : en haut des Réglages, bien visible. */
 @Composable
 fun SimpleModeCard() {
-    val f by Features.flags.collectAsState()
+    // 2.0 : trois profils au lieu d'un seul interrupteur
+    val prof by Features.profile.collectAsState()
     SettingsCard {
-        OptionRow(
-            "Mode simple",
-            if (f.simpleMode) "Juste l'essentiel : accueil, recherche, biblio et lecteur. Coupe-le pour retrouver toutes les fonctions"
-            else "Cache les fonctions avancées (cartes, stats, défis…). Tes réglages actuels sont gardés et reviennent quand tu le coupes",
-            f.simpleMode,
-        ) { Features.setSimple(it) }
+        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Ton Hush", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            ProfilePicker(prof) { Features.setProfile(it) }
+            Text(prof.desc, color = Txt2, fontSize = 13.sp, lineHeight = 18.sp)
+        }
+    }
+}
+
+/** Les trois profils côte à côte. */
+@Composable
+fun ProfilePicker(current: Features.Profile, onPick: (Features.Profile) -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Features.Profile.entries.forEach { p ->
+            val on = p == current
+            Box(
+                Modifier.weight(1f).height(44.dp).clip(PillShape)
+                    .background(if (on) Txt else Color.White.copy(alpha = 0.08f))
+                    .bounceClick { onPick(p) },
+                contentAlignment = Alignment.Center,
+            ) { Text(p.label, color = if (on) Ink else Txt, fontSize = 15.sp, fontWeight = FontWeight.Bold) }
+        }
     }
 }
 

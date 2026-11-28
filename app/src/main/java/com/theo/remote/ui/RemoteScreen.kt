@@ -386,7 +386,7 @@ fun RemoteApp() {
                             Ambient(colors, strength = 1f, animated = true)
                         }
                         if (which == Sheet.Lyrics) {
-                            LyricsScreen(s, onClose = { sheet = Sheet.Player })
+                            LyricsScreen(s, onQueue = { PlayerUi.openQueue.value = true; sheet = Sheet.Player }, onClose = { sheet = Sheet.Player })
                         } else {
                             androidx.compose.runtime.CompositionLocalProvider(
                                 LocalPlayerGlass provides (if (liquidSheet) playerGlass else null),
@@ -426,6 +426,7 @@ fun RemoteApp() {
         CleanupHost()
         WhatsNewHost()
         CrashPromptHost()
+        V2WelcomeHost()
         SetupScreen()
 
         // ajout à une playlist (par-dessus tout)

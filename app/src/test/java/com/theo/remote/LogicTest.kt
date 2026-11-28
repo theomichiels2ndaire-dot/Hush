@@ -18,7 +18,7 @@ class LogicTest {
     }
 
     @Test fun settingsGroups() {
-        val groups = setOf("Lecture", "Affichage", "Playlists", "Notifications", "Avancé")
+        val groups = setOf("Lecture", "Affichage", "Playlists", "Notifications", "Avancé", "Labo")
         listOf("Lecture", "Paroles et recherche", "Affichage", "Fun et découverte", "Stats", "Tes notes",
             "Playlists", "Fichiers locaux", "Tes goûts", "Widgets et notifications", "Données")
             .forEach { assert(settingsGroup(it) in groups) { "$it n'a pas de groupe" } }

@@ -314,12 +314,6 @@ private fun SettingsScreen() {
         FoldSection("Affichage") {
         DisplayCard()
         HomeSectionsCard()
-        SettingsHeader("Fun et découverte")
-        FunOptionsCard()
-        SettingsHeader("Stats")
-        StatsOptionsCard()
-        SettingsHeader("Tes notes")
-        NotesOptionsCard()
         }
 
         FoldSection("Playlists") {
@@ -327,6 +321,19 @@ private fun SettingsScreen() {
         CleanupNowCard()
         SettingsHeader("Fichiers locaux")
         LocalOptionsCard()
+        }
+
+        FoldSection("Notifications") { WidgetsNotifCard() }
+
+        // 2.0 : les options rares et expérimentales, rangées à part
+        FoldSection("Labo") {
+        Text("Options rares ou expérimentales. Tout marche, mais tu n'en as pas besoin au quotidien.", color = Txt2, fontSize = 13.sp, lineHeight = 18.sp)
+        SettingsHeader("Fun et découverte")
+        FunOptionsCard()
+        SettingsHeader("Stats")
+        StatsOptionsCard()
+        SettingsHeader("Tes notes")
+        NotesOptionsCard()
         SettingsHeader("Tes goûts")
         FollowCard()
         StatsExcludeCard()
@@ -334,8 +341,6 @@ private fun SettingsScreen() {
         if (com.theo.remote.Features.flags.collectAsState().value.setlists) SetlistKeyCard()
         BlockedCard()
         }
-
-        FoldSection("Notifications") { WidgetsNotifCard() }
 
         FoldSection("Avancé") {
         BackupCard()
@@ -484,8 +489,9 @@ private fun PanelFrame(glassy: Boolean, content: @Composable () -> Unit) {
 /** Les anciennes rubriques des Réglages, rangées dans les 5 groupes. */
 internal fun settingsGroup(section: String): String = when (section) {
     "Lecture", "Paroles et recherche" -> "Lecture"
-    "Affichage", "Fun et découverte", "Stats", "Tes notes" -> "Affichage"
-    "Playlists", "Fichiers locaux", "Tes goûts" -> "Playlists"
+    "Affichage" -> "Affichage"
+    "Fun et découverte", "Stats", "Tes notes", "Tes goûts", "Labo" -> "Labo"
+    "Playlists", "Fichiers locaux" -> "Playlists"
     "Widgets et notifications" -> "Notifications"
     "Données" -> "Avancé"
     else -> section

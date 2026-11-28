@@ -365,3 +365,32 @@ fun CrashPromptHost() {
         }
     }
 }
+
+/** Hush 2.0 : une fois, à la première ouverture, on présente la nouveauté et on choisit son profil. */
+@Composable
+fun V2WelcomeHost() {
+    val ctx = LocalContext.current
+    val notes by com.theo.remote.WhatsNew.notes.collectAsState()
+    val p = remember { ctx.getSharedPreferences("hush_v2", Context.MODE_PRIVATE) }
+    var show by remember { mutableStateOf(!p.getBoolean("seen", false)) }
+    if (!show || notes.isNotEmpty()) return
+    val prof by Features.profile.collectAsState()
+    fun done() { p.edit().putBoolean("seen", true).apply(); show = false }
+    BackHandler { done() }
+    Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)).clickable { done() })
+        GlassPlate(
+            Rounded(30), 30.dp,
+            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(10.dp).fillMaxWidth(),
+        ) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Hush 2.0", color = Txt, fontSize = 30.sp, fontWeight = FontWeight.Black)
+                Text("Glisse la pochette vers le haut pour la file, et passe aux paroles d'un tap. Les réglages sont rangés autrement, avec une section Labo pour les options rares. Et Android Auto est arrivé.", color = Txt2, fontSize = 15.sp, lineHeight = 21.sp)
+                Text("Choisis ton Hush", color = Txt, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                ProfilePicker(prof) { Features.setProfile(it) }
+                Text(prof.desc, color = Txt2, fontSize = 13.sp, lineHeight = 18.sp)
+                PillButton("C'est parti") { done() }
+            }
+        }
+    }
+}
