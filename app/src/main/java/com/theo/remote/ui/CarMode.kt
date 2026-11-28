@@ -1,5 +1,7 @@
 package com.theo.remote.ui
 
+import com.theo.remote.toggleShuffle
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
@@ -35,6 +37,7 @@ import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Radio
+import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
@@ -115,45 +118,107 @@ fun CarModeScreen(s: TidalRemote.State) {
             // voile sombre pour que le texte reste lisible en plein soleil comme de nuit
             Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.28f)))
         }
-        androidx.compose.runtime.CompositionLocalProvider(LocalCarGlass provides (if (liquidOn()) carGlass else null)) {
+        // 2.0 : le mode voiture est toujours en verre liquide (si le téléphone le permet)
+        val carLiquid = android.os.Build.VERSION.SDK_INT >= 33 && !com.theo.remote.Features.flags.collectAsState().value.eco
+        androidx.compose.runtime.CompositionLocalProvider(LocalCarGlass provides (if (carLiquid) carGlass else null)) {
 
         if (landscape) {
-            Row(
-                Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 28.dp, vertical = 18.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                CarCover(s, colors, Modifier.fillMaxHeight())
-                Spacer(Modifier.width(32.dp))
-                Column(Modifier.weight(1f).fillMaxHeight()) {
+            // paysage (tel sur support) : infos à gauche, gros boutons à droite
+            Row(Modifier.fillMaxSize().systemBarsPadding().padding(20.dp), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                Column(Modifier.width(330.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     CarTopBar()
+                    CarHeader(s)
                     Spacer(Modifier.weight(1f))
-                    CarInfo(s, haptic)
-                    Spacer(Modifier.height(20.dp))
                     CarProgress(s)
-                    Spacer(Modifier.weight(1f))
-                    CarControls(s, haptic, compact = true)
+                    CarBottomRow(s, haptic)
                 }
+                CarBigButtons(s, haptic, Modifier.weight(1f).fillMaxHeight())
             }
         } else {
+            // portrait : le son en haut, une énorme pause, précédent / suivant en deux gros pavés, puis J'aime et Aléatoire
             Column(
-                Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 26.dp, vertical = 14.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 20.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
                 CarTopBar()
-                Box(Modifier.weight(1f).fillMaxWidth().padding(vertical = 18.dp), contentAlignment = Alignment.Center) {
-                    CarCover(s, colors, Modifier.fillMaxHeight())
-                }
-                CarInfo(s, haptic)
-                Spacer(Modifier.height(20.dp))
+                CarHeader(s)
                 CarProgress(s)
-                Spacer(Modifier.height(20.dp))
-                CarControls(s, haptic, compact = false)
-                Spacer(Modifier.height(24.dp))
-                CarPill(Icons.Rounded.Radio, "Sons similaires", Modifier.fillMaxWidth()) { haptic(); TidalRemote.playSimilar() }
-                Spacer(Modifier.height(6.dp))
+                CarBigButtons(s, haptic, Modifier.weight(1f).fillMaxWidth())
+                CarBottomRow(s, haptic)
             }
         }
         }
+    }
+}
+
+/** Petite pochette + titre en très grand + artiste. */
+@Composable
+private fun CarHeader(s: TidalRemote.State) {
+    val t = s.track
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Crossfade(targetState = t?.art, animationSpec = tween(400), label = "carCover") { art ->
+            Cover(bitmap = art, radius = 18.dp, modifier = Modifier.size(104.dp).shadow(24.dp, Rounded(18)))
+        }
+        Spacer(Modifier.width(16.dp))
+        AnimatedContent(
+            targetState = (t?.title ?: "Rien en lecture") to (t?.artist ?: "Lance un son dans Tidal"),
+            transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) },
+            label = "carTitle",
+            modifier = Modifier.weight(1f),
+        ) { (title, artist) ->
+            Column {
+                Text(title, color = Txt, fontSize = 34.sp, lineHeight = 38.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(4.dp))
+                Text(artist, color = Color.White.copy(alpha = 0.7f), fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+/** L'énorme pause sur toute la largeur, précédent et suivant en deux gros pavés de verre dessous. */
+@Composable
+private fun CarBigButtons(s: TidalRemote.State, haptic: () -> Unit, modifier: Modifier) {
+    val playing = rememberSteadyPlaying(s.isPlaying)
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        CarTile(
+            if (playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow, if (playing) "Pause" else "Lecture",
+            Modifier.weight(1f).fillMaxWidth(), corner = 32, iconSize = 88.dp, strong = true,
+        ) { haptic(); TidalRemote.playPause() }
+        Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            CarTile(Icons.Rounded.SkipPrevious, "Précédent", Modifier.weight(1f).fillMaxHeight(), corner = 28, iconSize = 64.dp) { haptic(); TidalRemote.previous() }
+            CarTile(Icons.Rounded.SkipNext, "Suivant", Modifier.weight(1f).fillMaxHeight(), corner = 28, iconSize = 64.dp) { haptic(); TidalRemote.next() }
+        }
+    }
+}
+
+/** Un gros pavé en verre liquide (la pause est plus claire pour se repérer d'un coup d'œil). */
+@Composable
+private fun CarTile(icon: ImageVector, label: String, modifier: Modifier, corner: Int, iconSize: Dp, strong: Boolean = false, onClick: () -> Unit) {
+    val shape = Rounded(corner)
+    Box(
+        modifier.carGlass(shape) { glass(shape, fill = if (strong) 0.9f else 0.12f) }.bounceClick(pressedScale = 0.95f, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        CarGlassLayer(shape, corner.dp, 30.dp, 18.dp)
+        if (strong && LocalCarGlass.current != null) Box(Modifier.fillMaxSize().background(Color.White.copy(alpha = 0.16f)))
+        Icon(icon, contentDescription = label, tint = if (strong && LocalCarGlass.current == null) Color.Black else Txt, modifier = Modifier.size(iconSize))
+    }
+}
+
+/** J'aime et Aléatoire, en deux pilules de verre. */
+@Composable
+private fun CarBottomRow(s: TidalRemote.State, haptic: () -> Unit) {
+    val t = s.track
+    val likes by History.likes.collectAsState()
+    val liked = s.tidalFavorite ?: (t != null && likes.contains(History.keyOf(t.title, t.artist)))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        CarPill(
+            if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder, if (liked) "Aimé" else "J'aime",
+            Modifier.weight(1f), tint = if (liked) Color(0xFFFF4D6D) else Txt,
+        ) { haptic(); t?.let { toggleHeart(s, it) } }
+        CarPill(
+            Icons.Rounded.Shuffle, "Aléatoire", Modifier.weight(1f), tint = if (s.shuffle) Ok else Txt,
+        ) { haptic(); TidalRemote.toggleShuffle() }
     }
 }
 
@@ -295,19 +360,19 @@ private fun CarIcon(icon: ImageVector, label: String, size: Dp, ratio: Float, on
 }
 
 @Composable
-private fun CarPill(icon: ImageVector, label: String, modifier: Modifier, onClick: () -> Unit) {
+private fun CarPill(icon: ImageVector, label: String, modifier: Modifier, tint: Color = Txt, onClick: () -> Unit) {
     val shape = PillShape
     Row(
-        modifier.height(68.dp).carGlass(shape) { glass(shape, fill = 0.14f) }.bounceClick(pressedScale = 0.96f, onClick = onClick),
+        modifier.height(64.dp).carGlass(shape) { glass(shape, fill = 0.14f) }.bounceClick(pressedScale = 0.96f, onClick = onClick),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CarGlassLayer(shape, 34.dp, 22.dp, 13.dp)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, contentDescription = null, tint = Txt, modifier = Modifier.size(28.dp))
+                Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(26.dp))
                 Spacer(Modifier.width(10.dp))
-                Text(label, color = Txt, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(label, color = tint, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
     }
