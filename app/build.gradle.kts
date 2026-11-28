@@ -18,7 +18,7 @@ android {
         // numéro de version donné par GitHub (1.N) ; en local : 1.0
         val run = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()
         versionCode = if (run != null) 100 + run else 10
-        versionName = "1.${run ?: 0}"
+        versionName = "2.${run ?: 0}"
 
         // Identifiants de l'API Tidal, lus depuis local.properties (fichier local, jamais partagé)
         val local = Properties().apply {

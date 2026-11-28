@@ -2,7 +2,7 @@ name: Compiler l'APK
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, v2 ]
   workflow_dispatch:
 
 permissions:
@@ -78,6 +78,7 @@ jobs:
 
       # notes de version : les titres des modifs depuis la version d'avant (affichées dans « Quoi de neuf »)
       - name: Notes de version
+        if: github.ref == 'refs/heads/main'
         run: |
           PREV=$(git describe --tags --abbrev=0 2>/dev/null || true)
           RANGE=${PREV:+$PREV..}HEAD
@@ -86,11 +87,11 @@ jobs:
           cat notes.md
 
       - name: Publier la version
-        if: env.PUBLISH == 'true' && env.NOKEY != 'true'
+        if: github.ref == 'refs/heads/main' && env.PUBLISH == 'true' && env.NOKEY != 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.${{ github.run_number }}
-          name: Hush 1.${{ github.run_number }}
+          tag_name: v2.${{ github.run_number }}
+          name: Hush 2.${{ github.run_number }}
           files: Hush.apk
           body_path: notes.md
           make_latest: true
