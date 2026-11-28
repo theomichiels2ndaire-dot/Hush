@@ -231,7 +231,10 @@ internal fun TidalRemote.launch(id: String, expected: String, query: String, art
             }
         }, 2200)
     } else {
-        c.transportControls.playFromSearch(query, Bundle())
+        // version précise (« Challenge Version », « Remix », « Sped Up »…) : la recherche simple de Tidal
+        // tombe sur l'original ; on demande tout de suite le titre exact entre guillemets
+        if (QueueLogic.hasVersion(expected)) c.transportControls.playFromSearch(preciseQuery(expected, artist, query), preciseExtras(expected))
+        else c.transportControls.playFromSearch(query, Bundle())
         log("Lancé : $expected")
     }
     reapplyShuffleSoon()
@@ -254,21 +257,21 @@ internal fun TidalRemote.retryLaunch(prev: Launch) {
     // entre-temps tu as lancé autre chose (une playlist…) : on ne relance pas l'ancien son par-dessus
     val now = _state.value.launch
     if (now == null || now.sentAt != prev.sentAt) return
-    val l = prev.copy(status = LaunchStatus.Pending, tries = prev.tries + 1, sentAt = SystemClock.elapsedRealtime(), actual = null)
+    // Tidal ignore les liens de sons sur ce téléphone : on saute cet essai (4,5 s de gagnées)
+    val step = if (prev.tries == 0 && trackLinkMode == 0) 2 else prev.tries + 1
+    val l = prev.copy(status = LaunchStatus.Pending, tries = step, sentAt = SystemClock.elapsedRealtime(), actual = null)
     _state.update { it.copy(launch = l) }
     if (l.tries == 1) {
         c.transportControls.playFromUri(Uri.parse("https://tidal.com/browse/track/${l.trackId}"), Bundle())
     } else {
-        val extras = Bundle().apply {
-            putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/audio")
-            putString(android.provider.MediaStore.EXTRA_MEDIA_TITLE, l.expected)
-        }
-        c.transportControls.playFromSearch("\"${l.expected}\" " + l.query.removePrefix(l.expected).trim(), extras)
+        c.transportControls.playFromSearch(preciseQuery(l.expected, l.artist, l.query), preciseExtras(l.expected))
     }
     // rien n'a bougé : essai suivant, ou on s'arrête là
     main.postDelayed({
         val cur = _state.value.launch
         if (cur != null && cur.sentAt == l.sentAt && cur.status == LaunchStatus.Pending) {
+            // le lien exact n'a rien donné : après deux fois, on n'essaie plus les liens
+            if (l.tries == 1) { linkIgnored++; if (linkIgnored >= 2 && trackLinkMode == -1) trackLinkMode = 0 }
             if (l.tries < 2) retryLaunch(l)
             else _state.update { it.copy(launch = cur.copy(status = LaunchStatus.OtherVersion, actual = _state.value.track?.title)) }
         }
@@ -294,4 +297,13 @@ fun TidalRemote.testPlayFromUri(link: String) {
     if (link.isBlank()) return log("Colle un lien Tidal d'abord")
     c.transportControls.playFromUri(Uri.parse(link.trim()), Bundle())
     log("Lien envoyé : $link → regarde si le titre change")
+}
+
+/** Recherche précise : le titre exact entre guillemets, puis le reste (artiste). */
+internal fun preciseQuery(expected: String, artist: String, query: String): String =
+    QueueLogic.preciseQuery(expected, artist, query)
+
+internal fun preciseExtras(expected: String) = Bundle().apply {
+    putString(android.provider.MediaStore.EXTRA_MEDIA_FOCUS, "vnd.android.cursor.item/audio")
+    putString(android.provider.MediaStore.EXTRA_MEDIA_TITLE, expected)
 }

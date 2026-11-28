@@ -95,4 +95,16 @@ class QueueLogicTest {
         assertFalse(QueueLogic.isGhostSkip(listOf(0L, 10_000L), 60_000L, screenOn = false))
         assertFalse(QueueLogic.isGhostSkip(listOf(10_000L), 15_000L, screenOn = false))
     }
+
+    @Test fun versions() {
+        assertTrue(QueueLogic.hasVersion("My House (Challenge Version)"))
+        assertTrue(QueueLogic.hasVersion("Cake (Sped Up)"))
+        assertFalse(QueueLogic.hasVersion("Pilote (feat. Hamza)"))
+        assertFalse(QueueLogic.hasVersion("Jamais"))
+    }
+
+    @Test fun preciseQuery() {
+        assertEquals("\"My House (Challenge Version)\" Beyoncé", QueueLogic.preciseQuery("My House (Challenge Version)", "Beyoncé", "My House Challenge Version Beyoncé"))
+        assertEquals("\"Karma\" JUL", QueueLogic.preciseQuery("Karma", "", "Karma JUL"))
+    }
 }

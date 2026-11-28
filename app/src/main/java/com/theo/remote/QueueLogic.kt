@@ -46,6 +46,20 @@ object QueueLogic {
         return b - a < gapMs && now - b < gapMs
     }
 
+    /** Le titre précise une version (« Challenge Version », « Remix », « Sped Up »…). */
+    fun hasVersion(title: String): Boolean = Regex("""\(([^)]*)\)\s*$""").containsMatchIn(title.trim()) &&
+        !Regex("""\((feat|ft|with)[ .]""", RegexOption.IGNORE_CASE).containsMatchIn(title)
+
+    /** « "My House (Challenge Version)" Artiste » : le titre exact entre guillemets, puis l'artiste. */
+    fun preciseQuery(expected: String, artist: String, query: String): String {
+        val who = artist.ifBlank {
+            // pas d'artiste connu : ce qui reste de la recherche une fois les mots du titre enlevés
+            val titleWords = Fuzzy.words(expected).toSet()
+            query.split(" ").filter { it.isNotBlank() && Fuzzy.norm(it) !in titleWords }.joinToString(" ")
+        }
+        return "\"$expected\" $who".trim()
+    }
+
     /** Mélange équitable (Fisher–Yates) : chaque ordre a exactement la même chance. */
     fun <T> fairShuffle(list: List<T>, rnd: java.util.Random): List<T> {
         val a = list.toMutableList()

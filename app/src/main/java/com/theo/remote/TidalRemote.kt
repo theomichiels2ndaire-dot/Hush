@@ -389,6 +389,8 @@ object TidalRemote {
                 val cause = when {
                     now - lastPrevAt < 4000 -> null
                     now - lastNextAt < 4000 -> lastNextFrom
+                    // c'est la bonne version demandée qui arrive (Hush a corrigé) : pas une coupure
+                    st.launch != null && matches(t.title, st.launch.expected) && now - st.launch.sentAt < 15_000 -> null
                     now - lastFireAt < 6000 -> "Hush (file d'attente)"
                     st.launch != null && st.launch.status == LaunchStatus.Pending && now - st.launch.sentAt < 6000 -> null
                     else -> "Tidal ou une autre appli (pas Hush)"
