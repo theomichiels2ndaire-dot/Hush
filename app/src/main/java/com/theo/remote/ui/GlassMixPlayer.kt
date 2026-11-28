@@ -279,7 +279,7 @@ internal fun GlassMixPlayer(s: TidalRemote.State, onClose: () -> Unit, onLyrics:
             }
         }
     }
-    if (showQueue) QueueOverlay(s) { showQueue = false }
+    if (showQueue) QueueOverlay(s, onLyrics = { showQueue = false; onLyrics() }) { showQueue = false }
 }
 
 /** Liseré de verre : clair en haut à gauche, plus discret en bas à droite. */

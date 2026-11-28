@@ -47,6 +47,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.runtime.rememberCoroutineScope
@@ -141,6 +142,9 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
     val duration = t?.durationMs ?: 0L
     var dragPos by remember { mutableStateOf<Float?>(null) }
     var showQueue by remember { mutableStateOf(false) }
+    // demandé depuis les paroles : on rouvre le lecteur avec la file déjà ouverte
+    val askQueue by PlayerUi.openQueue.collectAsState()
+    LaunchedEffect(askQueue) { if (askQueue) { showQueue = true; PlayerUi.openQueue.value = false } }
     var bigCover by remember { mutableStateOf(false) }
     val likes by History.likes.collectAsState()
     val liked = t != null && likes.contains(History.keyOf(t.title, t.artist))
@@ -227,7 +231,19 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
                     }
                 },
         ) {
-            SwipeableCover(s) { if (com.theo.remote.Features.flags.value.fullCover) bigCover = true }
+            // 2.0 : glisser la pochette vers le haut ouvre la file juste en dessous, sans quitter le lecteur
+            val upDensity = androidx.compose.ui.platform.LocalDensity.current
+            var upDrag by remember { mutableStateOf(0f) }
+            Box(
+                Modifier.pointerInput(Unit) {
+                    detectVerticalDragGestures(
+                        onDragEnd = { if (upDrag < -with(upDensity) { 60.dp.toPx() }) showQueue = true; upDrag = 0f },
+                        onDragCancel = { upDrag = 0f },
+                    ) { ch, dy -> if (dy < 0 || upDrag < 0) { upDrag += dy; ch.consume() } }
+                }.graphicsLayer { translationY = (upDrag * 0.35f).coerceAtMost(0f) },
+            ) {
+                SwipeableCover(s) { if (com.theo.remote.Features.flags.value.fullCover) bigCover = true }
+            }
         }
 
         androidx.compose.foundation.layout.BoxWithConstraints(
@@ -446,7 +462,7 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
             }
         }
     }
-    if (showQueue) QueueOverlay(s) { showQueue = false }
+    if (showQueue) QueueOverlay(s, onLyrics = { showQueue = false; onLyrics() }) { showQueue = false }
     androidx.compose.animation.AnimatedVisibility(
         visible = bigCover,
         enter = androidx.compose.animation.fadeIn(tween(250)) + androidx.compose.animation.scaleIn(tween(320), initialScale = 0.9f),
@@ -1226,4 +1242,9 @@ fun PlayerGlassOverlays(glass: Backdrop) {
             }
         }
     }
+}
+
+/** Liens entre le lecteur, la file et les paroles (un seul écran en 2.0). */
+object PlayerUi {
+    val openQueue = kotlinx.coroutines.flow.MutableStateFlow(false)
 }

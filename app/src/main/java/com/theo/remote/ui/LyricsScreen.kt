@@ -65,7 +65,7 @@ import com.theo.remote.Lyrics
 import com.theo.remote.TidalRemote
 
 @Composable
-fun LyricsScreen(s: TidalRemote.State, onClose: () -> Unit) {
+fun LyricsScreen(s: TidalRemote.State, onQueue: (() -> Unit)? = null, onClose: () -> Unit) {
     val t = s.track
     val pos = rememberLivePosition(s)
     val likes by History.likes.collectAsState()
@@ -124,6 +124,16 @@ fun LyricsScreen(s: TidalRemote.State, onClose: () -> Unit) {
                         Icon(Icons.Rounded.Translate, contentDescription = "Traduire les paroles", tint = if (showTr) Ink else Txt, modifier = Modifier.size(22.dp))
                     }
                     Spacer(Modifier.width(8.dp))
+                }
+                // 2.0 : la file d'attente en un tap depuis les paroles
+                if (onQueue != null) {
+                    Box(
+                        Modifier.size(44.dp).clip(PillShape).bounceClick { onQueue() },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.AutoMirrored.Rounded.QueueMusic, contentDescription = "File d'attente", tint = Txt, modifier = Modifier.size(22.dp))
+                    }
+                    Spacer(Modifier.width(4.dp))
                 }
                 HeartButton(s.tidalFavorite ?: liked) { t?.let { toggleHeart(s, it) } }
             }

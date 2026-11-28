@@ -124,7 +124,7 @@ import kotlinx.coroutines.delay
 // File d'attente du lecteur : la liste « À suivre », réorganisable et glissable.
 
 @Composable
-internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
+internal fun QueueOverlay(s: TidalRemote.State, onLyrics: (() -> Unit)? = null, onClose: () -> Unit) {
     val upNext by TidalRemote.upNext.collectAsState()
     val ctxQueue by TidalRemote.context.collectAsState()
     val mixUp by com.theo.remote.MixQueue.upcoming.collectAsState()
@@ -159,6 +159,15 @@ internal fun QueueOverlay(s: TidalRemote.State, onClose: () -> Unit) {
                     val qf by com.theo.remote.Features.flags.collectAsState()
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("File d'attente", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black, letterSpacing = (-0.4).sp, modifier = Modifier.weight(1f))
+                        // 2.0 : passer aux paroles sans revenir au lecteur
+                        if (onLyrics != null) {
+                            Box(
+                                Modifier.height(40.dp).clip(PillShape).background(Color.White.copy(alpha = 0.08f))
+                                    .bounceClick { onLyrics() }.padding(horizontal = 14.dp),
+                                contentAlignment = Alignment.Center,
+                            ) { Text("Paroles", color = Txt, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+                            Spacer(Modifier.width(8.dp))
+                        }
                         // passer de la liste aux pochettes (et inversement)
                         Box(
                             Modifier.size(40.dp).clip(PillShape).background(Color.White.copy(alpha = 0.08f))
