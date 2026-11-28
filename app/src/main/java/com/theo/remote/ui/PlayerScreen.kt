@@ -204,8 +204,101 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
         }
 
         Spacer(Modifier.height(16.dp))
+        // titre + cœur + ⋯ (en haut quand les paroles sont ouvertes, sous la pochette sinon)
+        val titleRow: @Composable () -> Unit = {
+            // titre + actions (mode gaucher : cœur et menu passent à gauche)
+            val leftHanded = com.theo.remote.Features.flags.collectAsState().value.leftHanded
+            val handDir = if (leftHanded) androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
+            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides handDir) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AnimatedContent(
+                    targetState = t?.title to listOfNotNull(t?.artist?.ifBlank { null }, t?.album?.ifBlank { null }).joinToString(" — "),
+                    transitionSpec = {
+                        // le titre part pendant que la pochette commence son fondu, et le nouveau finit en même temps qu'elle
+                        (slideInHorizontally(SongChange.spec(160)) { it / 6 } + fadeIn(SongChange.spec(160))) togetherWith
+                            (slideOutHorizontally(tween(200)) { -it / 6 } + fadeOut(tween(160)))
+                    },
+                    modifier = Modifier.weight(1f),
+                    label = "title",
+                ) { (title, sub) ->
+                    androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+                    Column {
+                        // toucher le titre : la page de l'album (ou de l'artiste si l'album est inconnu)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            title ?: "—", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp)).bounceClick(pressedScale = 0.97f, onLongClick = { t?.let { TrackMenu.open(TrackMenu.Target(it.title, it.artist, it.art, album = it.album)) } }) {
+                                val ar = t?.artist.orEmpty()
+                                val al = t?.album.orEmpty()
+                                when {
+                                    al.isNotBlank() -> openDetail(Detail.AlbumByName(al, ar))
+                                    ar.isNotBlank() -> openDetail(Detail.ArtistByName(ar.split(",", "&").first().trim()))
+                                }
+                            },
+                        )
+                        // le rang de la carte de ce son : toucher pour la voir
+                        if (!com.theo.remote.Features.flags.value.lightUi) PlayerCardGem(title.orEmpty(), t?.artist.orEmpty())
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        // artiste → sa page ; album → sa page
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            val artist = t?.artist.orEmpty()
+                            // écrans allégés : l'artiste seul (l'album reste à un tap, sur le titre)
+                            val album = if (com.theo.remote.Features.flags.value.lightUi) "" else t?.album.orEmpty()
+                            if (artist.isNotBlank()) {
+                                Text(
+                                    artist,
+                                    color = Txt.copy(alpha = 0.62f), fontSize = 17.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp))
+                                        .bounceClick(pressedScale = 0.96f) { openDetail(Detail.ArtistByName(artist.split(",", "&").first().trim())) },
+                                )
+                            }
+                            if (album.isNotBlank()) {
+                                Text(" — ", color = Txt.copy(alpha = 0.62f), fontSize = 17.sp, fontWeight = FontWeight.Medium, maxLines = 1)
+                                Text(
+                                    album,
+                                    color = Txt.copy(alpha = 0.62f), fontSize = 17.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp))
+                                        .bounceClick(pressedScale = 0.96f) { openDetail(Detail.AlbumByName(album, artist)) },
+                                )
+                            }
+                        }
+                    }
+                    }
+                }
+                Spacer(Modifier.width(12.dp))
+                HeartButton(s.tidalFavorite ?: liked) { t?.let { toggleHeart(s, it) } }
+                Spacer(Modifier.width(10.dp))
+                Box {
+                    androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+                    var menu by remember { mutableStateOf(false) }
+                    val sheetGlass = LocalSheetGlass.current
+                    var anchor by remember { mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
+                    // contenu du menu ⋯ (le même en verre liquide ou en menu classique)
+                    val menuContent: @Composable (close: () -> Unit) -> Unit = { closeMenu -> PlayerMoreMenu(t, ctx, closeMenu) }
+                    Box(Modifier.onGloballyPositioned { anchor = it.boundsInRoot() }) {
+                        GlassCircle(Icons.Rounded.MoreHoriz, "Plus d'options", backdrop = LocalPlayerGlass.current) {
+                            if (sheetGlass != null) { PlayerOverlay.menuAnchor = anchor; PlayerOverlay.menu = menuContent } else menu = true
+                        }
+                    }
+                    androidx.compose.material3.DropdownMenu(
+                        expanded = menu && sheetGlass == null,
+                        onDismissRequest = { menu = false },
+                        shape = Rounded(18),
+                        containerColor = Color(0xFF1C1C24),
+                    ) {
+                        menuContent { menu = false }
+                    }
+                    }
+                }
+            }
+            }
+        }
         // 2.0 : les paroles s'ouvrent à la place de la pochette, dans le lecteur (le bouton les ouvre et les ferme)
         if (inlineLyrics && lyricsOpen) {
+            // titre, cœur et ⋯ remontent en haut : toute la place pour les paroles
+            titleRow()
+            Spacer(Modifier.height(8.dp))
             InlineLyrics(s, Modifier.weight(1f).fillMaxWidth())
         } else {
             // à l'ouverture, la pochette part de la place du mini-lecteur (en bas à gauche, en petit) et vient se poser
@@ -266,93 +359,7 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
             }
         }
 
-        // titre + actions (mode gaucher : cœur et menu passent à gauche)
-        val leftHanded = com.theo.remote.Features.flags.collectAsState().value.leftHanded
-        val handDir = if (leftHanded) androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
-        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides handDir) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            AnimatedContent(
-                targetState = t?.title to listOfNotNull(t?.artist?.ifBlank { null }, t?.album?.ifBlank { null }).joinToString(" — "),
-                transitionSpec = {
-                    // le titre part pendant que la pochette commence son fondu, et le nouveau finit en même temps qu'elle
-                    (slideInHorizontally(SongChange.spec(160)) { it / 6 } + fadeIn(SongChange.spec(160))) togetherWith
-                        (slideOutHorizontally(tween(200)) { -it / 6 } + fadeOut(tween(160)))
-                },
-                modifier = Modifier.weight(1f),
-                label = "title",
-            ) { (title, sub) ->
-                androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
-                Column {
-                    // toucher le titre : la page de l'album (ou de l'artiste si l'album est inconnu)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        title ?: "—", color = Txt, fontSize = 26.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp)).bounceClick(pressedScale = 0.97f, onLongClick = { t?.let { TrackMenu.open(TrackMenu.Target(it.title, it.artist, it.art, album = it.album)) } }) {
-                            val ar = t?.artist.orEmpty()
-                            val al = t?.album.orEmpty()
-                            when {
-                                al.isNotBlank() -> openDetail(Detail.AlbumByName(al, ar))
-                                ar.isNotBlank() -> openDetail(Detail.ArtistByName(ar.split(",", "&").first().trim()))
-                            }
-                        },
-                    )
-                    // le rang de la carte de ce son : toucher pour la voir
-                    if (!com.theo.remote.Features.flags.value.lightUi) PlayerCardGem(title.orEmpty(), t?.artist.orEmpty())
-                    }
-                    Spacer(Modifier.height(4.dp))
-                    // artiste → sa page ; album → sa page
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        val artist = t?.artist.orEmpty()
-                        // écrans allégés : l'artiste seul (l'album reste à un tap, sur le titre)
-                        val album = if (com.theo.remote.Features.flags.value.lightUi) "" else t?.album.orEmpty()
-                        if (artist.isNotBlank()) {
-                            Text(
-                                artist,
-                                color = Txt.copy(alpha = 0.62f), fontSize = 17.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp))
-                                    .bounceClick(pressedScale = 0.96f) { openDetail(Detail.ArtistByName(artist.split(",", "&").first().trim())) },
-                            )
-                        }
-                        if (album.isNotBlank()) {
-                            Text(" — ", color = Txt.copy(alpha = 0.62f), fontSize = 17.sp, fontWeight = FontWeight.Medium, maxLines = 1)
-                            Text(
-                                album,
-                                color = Txt.copy(alpha = 0.62f), fontSize = 17.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f, fill = false).clip(RoundedCornerShape(6.dp))
-                                    .bounceClick(pressedScale = 0.96f) { openDetail(Detail.AlbumByName(album, artist)) },
-                            )
-                        }
-                    }
-                }
-                }
-            }
-            Spacer(Modifier.width(12.dp))
-            HeartButton(s.tidalFavorite ?: liked) { t?.let { toggleHeart(s, it) } }
-            Spacer(Modifier.width(10.dp))
-            Box {
-                androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
-                var menu by remember { mutableStateOf(false) }
-                val sheetGlass = LocalSheetGlass.current
-                var anchor by remember { mutableStateOf(androidx.compose.ui.geometry.Rect.Zero) }
-                // contenu du menu ⋯ (le même en verre liquide ou en menu classique)
-                val menuContent: @Composable (close: () -> Unit) -> Unit = { closeMenu -> PlayerMoreMenu(t, ctx, closeMenu) }
-                Box(Modifier.onGloballyPositioned { anchor = it.boundsInRoot() }) {
-                    GlassCircle(Icons.Rounded.MoreHoriz, "Plus d'options", backdrop = LocalPlayerGlass.current) {
-                        if (sheetGlass != null) { PlayerOverlay.menuAnchor = anchor; PlayerOverlay.menu = menuContent } else menu = true
-                    }
-                }
-                androidx.compose.material3.DropdownMenu(
-                    expanded = menu && sheetGlass == null,
-                    onDismissRequest = { menu = false },
-                    shape = Rounded(18),
-                    containerColor = Color(0xFF1C1C24),
-                ) {
-                    menuContent { menu = false }
-                }
-                }
-            }
-        }
-        }
+        if (!(inlineLyrics && lyricsOpen)) titleRow()
 
         t?.let { NoteBadge(it.title, it.artist, Modifier.padding(top = 12.dp)) }
 
@@ -411,14 +418,17 @@ fun PlayerScreen(s: TidalRemote.State, onClose: () -> Unit, onLyrics: () -> Unit
             BigButton(Icons.Rounded.FastForward, "Suivant", 52.dp) { TidalRemote.next() }
         }
 
-        // volume
-        Spacer(Modifier.height(16.dp))
-        VolumeBar()
+        // volume (caché quand les paroles sont ouvertes : plus de place pour elles)
+        if (!(inlineLyrics && lyricsOpen)) {
+            Spacer(Modifier.height(16.dp))
+            VolumeBar()
+        }
 
         // paroles + file
         Spacer(Modifier.height(20.dp))
         val rowBd = LocalPlayerGlass.current
         val capsule = PillShape
+        val handDir = if (com.theo.remote.Features.flags.collectAsState().value.leftHanded) androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides handDir) {
         Box(
             Modifier.fillMaxWidth().padding(bottom = 12.dp)
